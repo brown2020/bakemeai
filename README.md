@@ -14,7 +14,7 @@ BakeMe.ai is an AI-powered recipe generator that helps you create personalized r
 
 ## Tech Stack 🛠️
 
-- **Frontend**: Next.js 15, React, TypeScript
+- **Frontend**: Next.js 15, React 19, TypeScript
 - **Styling**: Tailwind CSS
 - **Authentication**: Firebase Auth
 - **Database**: Firestore
