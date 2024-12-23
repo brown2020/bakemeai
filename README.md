@@ -2,7 +2,7 @@
 
 BakeMe.ai is an AI-powered recipe generator that helps you create personalized recipes based on your ingredients, dietary preferences, and cooking experience.
 
-![BakeMe.ai Screenshot](screenshot.png)
+![BakeMe.ai Screenshot](/public/screenshot.png)
 
 ## Features ✨
 
