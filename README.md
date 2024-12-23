@@ -97,6 +97,66 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Vercel](https://vercel.com) for hosting and deployment
 - All contributors who have helped shape BakeMe.ai
 
+## Roadmap 🗺️
+
+We're excited about the future of BakeMe.ai! Here are some features we're planning:
+
+### Near-term
+
+- [ ] Recipe difficulty ratings and time estimates
+- [ ] Ingredient substitution suggestions
+- [ ] Unit conversion (metric/imperial)
+- [ ] Print-friendly recipe format
+- [ ] Share recipes with friends
+
+### Mid-term
+
+- [ ] Meal planning calendar
+- [ ] Shopping list generation
+- [ ] Recipe scaling
+- [ ] Nutritional information
+- [ ] Recipe collections and categories
+- [ ] Mobile app version
+
+### Long-term
+
+- [ ] Integration with smart kitchen devices
+- [ ] Voice-guided cooking instructions
+- [ ] Community recipe sharing
+- [ ] AI-powered meal plan optimization
+- [ ] Cooking technique videos
+- [ ] Ingredient inventory management
+
+### Developer Experience
+
+- [ ] Improved test coverage
+- [ ] API documentation
+- [ ] Developer guides
+- [ ] Performance optimizations
+- [ ] Accessibility improvements
+
+## Calling All Cooking Coders! 👩‍🍳👨‍💻
+
+Are you passionate about both cooking and coding? We'd love your help in making BakeMe.ai the ultimate cooking companion! Whether you're a:
+
+- Frontend developer who loves crafting delicious UIs
+- Backend engineer with a taste for robust architectures
+- ML enthusiast interested in recipe generation
+- UX designer who wants to make cooking more enjoyable
+- Food enthusiast with technical skills
+
+Your contributions are welcome! Check out our [Contributing Guide](CONTRIBUTING.md) to get started.
+
+Some great first issues to tackle:
+
+- Improving recipe parsing accuracy
+- Adding more dietary preference options
+- Enhancing the mobile experience
+- Implementing new recipe features
+- Writing tests and documentation
+
+Join our community of cooking coders and help make home cooking smarter and more accessible for everyone!
+
 ---
 
 Made with ❤️ by Ignite Channel
