@@ -113,13 +113,15 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen p-8">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Cooking Preferences</h1>
+    <div className="min-h-screen p-4 sm:p-8">
+      <div className="max-w-2xl mx-auto w-full">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8">
+          Cooking Preferences
+        </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
           <div>
-            <label className="block text-lg font-medium mb-4">
+            <label className="block text-base sm:text-lg font-medium mb-3 sm:mb-4">
               Dietary Preferences
             </label>
             <div className="flex flex-wrap gap-2">
@@ -128,7 +130,7 @@ export default function Profile() {
                   key={option}
                   type="button"
                   onClick={() => handleMultiSelect("dietary", option)}
-                  className={`px-4 py-2 rounded-full text-sm ${
+                  className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-sm ${
                     profile.dietary?.includes(option)
                       ? "bg-blue-500 text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -183,7 +185,7 @@ export default function Profile() {
           </div>
 
           <div>
-            <label className="block text-lg font-medium mb-4">
+            <label className="block text-base sm:text-lg font-medium mb-3 sm:mb-4">
               Preferred Cuisines
             </label>
             <div className="flex flex-wrap gap-2">
@@ -194,7 +196,7 @@ export default function Profile() {
                   onClick={() =>
                     handleMultiSelect("preferredCuisines", cuisine)
                   }
-                  className={`px-4 py-2 rounded-full text-sm ${
+                  className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-sm ${
                     profile.preferredCuisines?.includes(cuisine)
                       ? "bg-blue-500 text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -207,10 +209,10 @@ export default function Profile() {
           </div>
 
           <div>
-            <label className="block text-lg font-medium mb-4">
+            <label className="block text-base sm:text-lg font-medium mb-3 sm:mb-4">
               Cooking Experience
             </label>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-2 sm:gap-4">
               {EXPERIENCE_LEVELS.map((level) => (
                 <button
                   key={level.value}
@@ -222,7 +224,7 @@ export default function Profile() {
                         level.value as UserProfile["cookingExperience"],
                     }))
                   }
-                  className={`px-4 py-2 rounded-lg ${
+                  className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm ${
                     profile.cookingExperience === level.value
                       ? "bg-blue-500 text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
