@@ -1,8 +1,8 @@
-# BakeMe.ai 🧑‍🍳
+# Bake.me 🧑‍🍳
 
-BakeMe.ai is an AI-powered recipe generator that helps you create personalized recipes based on your ingredients, dietary preferences, and cooking experience.
+Bake.me is an AI-powered recipe generator that helps you create personalized recipes based on your ingredients, dietary preferences, and cooking experience.
 
-![BakeMe.ai Screenshot](/public/screenshot.png)
+![Bake.me Screenshot](/public/screenshot.png)
 
 ## Features ✨
 
@@ -95,11 +95,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [OpenAI](https://openai.com) for providing the AI capabilities
 - [Firebase](https://firebase.google.com) for authentication and database services
 - [Vercel](https://vercel.com) for hosting and deployment
-- All contributors who have helped shape BakeMe.ai
+- All contributors who have helped shape Bake.me
 
 ## Roadmap 🗺️
 
-We're excited about the future of BakeMe.ai! Here are some features we're planning:
+We're excited about the future of Bake.me! Here are some features we're planning:
 
 ### Near-term
 
@@ -137,7 +137,7 @@ We're excited about the future of BakeMe.ai! Here are some features we're planni
 
 ## Calling All Cooking Coders! 👩‍🍳👨‍💻
 
-Are you passionate about both cooking and coding? We'd love your help in making BakeMe.ai the ultimate cooking companion! Whether you're a:
+Are you passionate about both cooking and coding? We'd love your help in making Bake.me the ultimate cooking companion! Whether you're a:
 
 - Frontend developer who loves crafting delicious UIs
 - Backend engineer with a taste for robust architectures
