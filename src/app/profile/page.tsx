@@ -121,7 +121,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen p-4 sm:p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold">
             Cooking Preferences
           </h1>
