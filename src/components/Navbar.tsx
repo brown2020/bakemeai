@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { auth } from "@/lib/firebase";
 import Image from "next/image";
+import { Wand2, BookMarked } from "lucide-react";
 
 export default function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -42,7 +43,8 @@ export default function Navbar() {
                       : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
                   }`}
                 >
-                  Generate Recipe
+                  <span className="hidden sm:inline">Generate Recipe</span>
+                  <Wand2 className="w-5 h-5 sm:hidden" />
                 </Link>
                 <Link
                   href="/saved"
@@ -52,7 +54,8 @@ export default function Navbar() {
                       : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
                   }`}
                 >
-                  Saved Recipes
+                  <span className="hidden sm:inline">Saved Recipes</span>
+                  <BookMarked className="w-5 h-5 sm:hidden" />
                 </Link>
                 <div className="relative">
                   <button
