@@ -91,10 +91,12 @@ export default function Profile() {
   if (!user) {
     return (
       <div className="min-h-screen p-4 sm:p-8">
-        <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-4">
-            Please sign in to view your profile
-          </h1>
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold">
+              Please sign in to view your preferences
+            </h1>
+          </div>
         </div>
       </div>
     );
@@ -104,14 +106,29 @@ export default function Profile() {
     return (
       <div className="min-h-screen p-4 sm:p-8">
         <div className="max-w-6xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold">
               Cooking Preferences
             </h1>
           </div>
-          <div className="animate-pulse space-y-8">
-            <div className="h-8 bg-gray-200 rounded w-1/4" />
-            <div className="h-32 bg-gray-200 rounded" />
+          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6 border border-surface-200 max-w-2xl">
+            <div className="space-y-6">
+              <div className="animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-1/4 mb-3" />
+                <div className="flex flex-wrap gap-2">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="h-8 w-20 bg-gray-200 rounded-full"
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-1/4 mb-3" />
+                <div className="h-10 bg-gray-200 rounded w-full" />
+              </div>
+            </div>
           </div>
         </div>
       </div>

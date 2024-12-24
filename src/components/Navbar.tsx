@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { auth } from "@/lib/firebase";
 import Image from "next/image";
-import { Wand2, BookMarked } from "lucide-react";
+import { Wand2, BookMarked, Settings } from "lucide-react";
 
 export default function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -32,12 +32,12 @@ export default function Navbar() {
             </Link>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {user ? (
               <>
                 <Link
                   href="/generate"
-                  className={`px-3 py-2 text-sm font-medium rounded-md ${
+                  className={`px-2 sm:px-3 py-2 text-sm font-medium rounded-md ${
                     isActive("/generate")
                       ? "bg-blue-50 text-blue-600"
                       : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
@@ -48,7 +48,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   href="/saved"
-                  className={`px-3 py-2 text-sm font-medium rounded-md ${
+                  className={`px-2 sm:px-3 py-2 text-sm font-medium rounded-md ${
                     isActive("/saved")
                       ? "bg-blue-50 text-blue-600"
                       : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
@@ -57,10 +57,21 @@ export default function Navbar() {
                   <span className="hidden sm:inline">Saved Recipes</span>
                   <BookMarked className="w-5 h-5 sm:hidden" />
                 </Link>
+                <Link
+                  href="/profile"
+                  className={`px-2 sm:px-3 py-2 text-sm font-medium rounded-md ${
+                    isActive("/profile")
+                      ? "bg-blue-50 text-blue-600"
+                      : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+                  }`}
+                >
+                  <span className="hidden sm:inline">Preferences</span>
+                  <Settings className="w-5 h-5 sm:hidden" />
+                </Link>
                 <div className="relative">
                   <button
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
-                    className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-100"
+                    className="flex items-center p-1 sm:p-2 rounded-full hover:bg-gray-100"
                   >
                     <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
                       <span className="text-blue-600 font-medium">
@@ -74,12 +85,6 @@ export default function Navbar() {
                       <div className="px-4 py-2 text-sm text-gray-700 border-b">
                         {user.email}
                       </div>
-                      <Link
-                        href="/profile"
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        Profile Settings
-                      </Link>
                       <button
                         onClick={() => auth.signOut()}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -94,13 +99,13 @@ export default function Navbar() {
               <>
                 <Link
                   href="/login"
-                  className="text-gray-500 hover:text-blue-600 px-3 py-2 text-sm font-medium"
+                  className="text-gray-500 hover:text-blue-600 px-2 sm:px-3 py-2 text-sm font-medium"
                 >
                   Sign in
                 </Link>
                 <Link
                   href="/signup"
-                  className="bg-blue-500 text-white hover:bg-blue-600 px-3 py-2 text-sm font-medium rounded-md"
+                  className="bg-blue-500 text-white hover:bg-blue-600 px-2 sm:px-3 py-2 text-sm font-medium rounded-md"
                 >
                   Sign up
                 </Link>
