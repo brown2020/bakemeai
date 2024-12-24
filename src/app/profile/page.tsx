@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { getUserProfile, saveUserProfile } from "@/lib/db";
 import { UserProfile } from "@/lib/types";
-import PageLayout from "@/components/PageLayout";
 
 const DIETARY_OPTIONS = [
   "Vegetarian",
@@ -91,9 +90,9 @@ export default function Profile() {
 
   if (!user) {
     return (
-      <div className="min-h-screen p-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-2xl font-bold mb-4">
+      <div className="min-h-screen p-4 sm:p-8">
+        <div className="max-w-6xl mx-auto text-center">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-4">
             Please sign in to view your profile
           </h1>
         </div>
@@ -103,166 +102,177 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <PageLayout title="Profile">
-        <div className="animate-pulse space-y-8">
-          <div className="h-8 bg-gray-200 rounded w-1/4" />
-          <div className="h-32 bg-gray-200 rounded" />
+      <div className="min-h-screen p-4 sm:p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold">
+              Cooking Preferences
+            </h1>
+          </div>
+          <div className="animate-pulse space-y-8">
+            <div className="h-8 bg-gray-200 rounded w-1/4" />
+            <div className="h-32 bg-gray-200 rounded" />
+          </div>
         </div>
-      </PageLayout>
+      </div>
     );
   }
 
   return (
     <div className="min-h-screen p-4 sm:p-8">
-      <div className="max-w-2xl mx-auto w-full">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8">
-          Cooking Preferences
-        </h1>
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold">
+            Cooking Preferences
+          </h1>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
-          <div>
-            <label className="block text-base sm:text-lg font-medium mb-3 sm:mb-4">
-              Dietary Preferences
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {DIETARY_OPTIONS.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => handleMultiSelect("dietary", option)}
-                  className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-sm ${
-                    profile.dietary?.includes(option)
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {option}
-                </button>
-              ))}
+        <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6 border border-surface-200 max-w-2xl">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-base sm:text-lg font-medium mb-3">
+                Dietary Preferences
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {DIETARY_OPTIONS.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => handleMultiSelect("dietary", option)}
+                    className={`px-3 py-1.5 rounded-full text-sm ${
+                      profile.dietary?.includes(option)
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-lg font-medium mb-2">
-              Allergies & Intolerances
-            </label>
-            <input
-              type="text"
-              value={profile.allergies?.join(", ")}
-              onChange={(e) =>
-                setProfile((prev) => ({
-                  ...prev,
-                  allergies: e.target.value
-                    .split(",")
-                    .map((item) => item.trim())
-                    .filter(Boolean),
-                }))
-              }
-              placeholder="e.g., peanuts, shellfish (comma separated)"
-              className="w-full p-3 border rounded-lg"
-            />
-          </div>
-
-          <div>
-            <label className="block text-lg font-medium mb-2">
-              Ingredients You Dislike
-            </label>
-            <input
-              type="text"
-              value={profile.dislikedIngredients?.join(", ")}
-              onChange={(e) =>
-                setProfile((prev) => ({
-                  ...prev,
-                  dislikedIngredients: e.target.value
-                    .split(",")
-                    .map((item) => item.trim())
-                    .filter(Boolean),
-                }))
-              }
-              placeholder="e.g., cilantro, olives (comma separated)"
-              className="w-full p-3 border rounded-lg"
-            />
-          </div>
-
-          <div>
-            <label className="block text-base sm:text-lg font-medium mb-3 sm:mb-4">
-              Preferred Cuisines
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {CUISINE_OPTIONS.map((cuisine) => (
-                <button
-                  key={cuisine}
-                  type="button"
-                  onClick={() =>
-                    handleMultiSelect("preferredCuisines", cuisine)
-                  }
-                  className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-sm ${
-                    profile.preferredCuisines?.includes(cuisine)
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {cuisine}
-                </button>
-              ))}
+            <div>
+              <label className="block text-base sm:text-lg font-medium mb-3">
+                Allergies & Intolerances
+              </label>
+              <input
+                type="text"
+                value={profile.allergies?.join(", ")}
+                onChange={(e) =>
+                  setProfile((prev) => ({
+                    ...prev,
+                    allergies: e.target.value
+                      .split(",")
+                      .map((item) => item.trim())
+                      .filter(Boolean),
+                  }))
+                }
+                placeholder="e.g., peanuts, shellfish (comma separated)"
+                className="w-full p-2 border rounded-lg"
+              />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-base sm:text-lg font-medium mb-3 sm:mb-4">
-              Cooking Experience
-            </label>
-            <div className="flex flex-wrap gap-2 sm:gap-4">
-              {EXPERIENCE_LEVELS.map((level) => (
-                <button
-                  key={level.value}
-                  type="button"
-                  onClick={() =>
-                    setProfile((prev) => ({
-                      ...prev,
-                      cookingExperience:
-                        level.value as UserProfile["cookingExperience"],
-                    }))
-                  }
-                  className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm ${
-                    profile.cookingExperience === level.value
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {level.label}
-                </button>
-              ))}
+            <div>
+              <label className="block text-base sm:text-lg font-medium mb-3">
+                Ingredients You Dislike
+              </label>
+              <input
+                type="text"
+                value={profile.dislikedIngredients?.join(", ")}
+                onChange={(e) =>
+                  setProfile((prev) => ({
+                    ...prev,
+                    dislikedIngredients: e.target.value
+                      .split(",")
+                      .map((item) => item.trim())
+                      .filter(Boolean),
+                  }))
+                }
+                placeholder="e.g., cilantro, olives (comma separated)"
+                className="w-full p-2 border rounded-lg"
+              />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-lg font-medium mb-2">
-              Default Serving Size
-            </label>
-            <input
-              type="number"
-              min="1"
-              max="12"
-              value={profile.servingSize}
-              onChange={(e) =>
-                setProfile((prev) => ({
-                  ...prev,
-                  servingSize: parseInt(e.target.value),
-                }))
-              }
-              className="w-32 p-3 border rounded-lg"
-            />
-          </div>
+            <div>
+              <label className="block text-base sm:text-lg font-medium mb-3">
+                Preferred Cuisines
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {CUISINE_OPTIONS.map((cuisine) => (
+                  <button
+                    key={cuisine}
+                    type="button"
+                    onClick={() =>
+                      handleMultiSelect("preferredCuisines", cuisine)
+                    }
+                    className={`px-3 py-1.5 rounded-full text-sm ${
+                      profile.preferredCuisines?.includes(cuisine)
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {cuisine}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-          <button
-            type="submit"
-            disabled={saving}
-            className="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-blue-300"
-          >
-            {saving ? "Saving..." : "Save Preferences"}
-          </button>
-        </form>
+            <div>
+              <label className="block text-base sm:text-lg font-medium mb-3">
+                Cooking Experience
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {EXPERIENCE_LEVELS.map((level) => (
+                  <button
+                    key={level.value}
+                    type="button"
+                    onClick={() =>
+                      setProfile((prev) => ({
+                        ...prev,
+                        cookingExperience:
+                          level.value as UserProfile["cookingExperience"],
+                      }))
+                    }
+                    className={`px-3 py-1.5 rounded-lg text-sm ${
+                      profile.cookingExperience === level.value
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {level.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-base sm:text-lg font-medium mb-3">
+                Default Serving Size
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="12"
+                value={profile.servingSize}
+                onChange={(e) =>
+                  setProfile((prev) => ({
+                    ...prev,
+                    servingSize: parseInt(e.target.value),
+                  }))
+                }
+                className="w-32 p-2 border rounded-lg"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-blue-300 text-sm font-medium"
+            >
+              {saving ? "Saving..." : "Save Preferences"}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

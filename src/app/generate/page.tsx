@@ -8,7 +8,6 @@ import ReactMarkdown from "react-markdown";
 import { saveRecipe, getUserProfile } from "@/lib/db";
 import { auth } from "@/lib/firebase";
 import { UserProfile } from "@/lib/types";
-import PageLayout from "@/components/PageLayout";
 import { Button } from "@/components/Button";
 
 type Mode = "specific" | "ingredients" | null;
@@ -112,100 +111,103 @@ export default function Generate() {
   }, [mode]);
 
   return (
-    <PageLayout
-      title="Generate Recipe"
-      subtitle="Create personalized recipes tailored to your preferences"
-    >
-      <div className="space-y-8 animate-slide-up">
-        {!mode ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <button
-              onClick={() => setMode("specific")}
-              className="group p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-all border border-surface-200 hover:border-primary-300"
-            >
-              <h2 className="text-xl font-semibold mb-2 text-gray-900 group-hover:text-primary-600">
-                I want to make something specific
-              </h2>
-              <p className="text-gray-600">
-                Get a recipe for a particular dish you have in mind
-              </p>
-            </button>
+    <div className="min-h-screen p-4 sm:p-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold">Generate Recipe</h1>
+        </div>
 
-            <button
-              onClick={() => setMode("ingredients")}
-              className="p-6 border rounded-lg hover:border-blue-500 transition-colors"
-            >
-              <h2 className="text-xl font-semibold mb-2">
-                Suggest something based on ingredients
-              </h2>
-              <p className="text-gray-600">
-                List what you have and get recipe suggestions
-              </p>
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <Button
-              variant="ghost"
-              onClick={() => setMode(null)}
-              className="text-primary-600 hover:text-primary-700"
-            >
-              ← Choose different option
-            </Button>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="bg-white rounded-xl shadow-sm p-6 border border-surface-200">
-                {mode === "specific" ? (
-                  <div>
-                    <label className="block text-lg font-medium mb-2">
-                      What would you like to make?
-                    </label>
-                    <input
-                      type="text"
-                      value={input}
-                      onChange={handleInputChange}
-                      placeholder="e.g., Chocolate chip cookies, Beef stir fry..."
-                      className="w-full p-3 border rounded-lg"
-                      required
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <label className="block text-lg font-medium mb-2">
-                      What ingredients do you have?
-                    </label>
-                    <textarea
-                      value={ingredients}
-                      onChange={(e) => setIngredients(e.target.value)}
-                      placeholder="e.g., chicken breast, rice, onions, garlic..."
-                      className="w-full p-3 border rounded-lg h-32"
-                      required
-                    />
-                  </div>
-                )}
+        <div className="space-y-6">
+          {!mode ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div
+                className="bg-white rounded-lg shadow-sm p-3 border border-surface-200 hover:border-blue-300 cursor-pointer transition-colors"
+                onClick={() => setMode("specific")}
+              >
+                <h2 className="text-base font-medium mb-2">
+                  I want to make something specific
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Get a recipe for a particular dish you have in mind
+                </p>
               </div>
 
-              <Button
-                type="submit"
-                isLoading={isLoading}
-                size="lg"
-                className="w-full"
+              <div
+                className="bg-white rounded-lg shadow-sm p-3 border border-surface-200 hover:border-blue-300 cursor-pointer transition-colors"
+                onClick={() => setMode("ingredients")}
               >
-                {isLoading ? "Generating..." : "Generate Recipe"}
+                <h2 className="text-base font-medium mb-2">
+                  Suggest something based on ingredients
+                </h2>
+                <p className="text-sm text-gray-600">
+                  List what you have and get recipe suggestions
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <Button
+                variant="ghost"
+                onClick={() => setMode(null)}
+                className="text-primary-600 hover:text-primary-700"
+              >
+                ← Choose different option
               </Button>
-            </form>
 
-            {recipe && (
-              <div className="bg-white rounded-xl shadow-md p-8 animate-fade-in">
-                <div className="flex justify-between items-start mb-6">
-                  {parsedRecipe.title && (
-                    <h2 className="text-3xl font-bold">{parsedRecipe.title}</h2>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="bg-white rounded-lg shadow-sm p-3 border border-surface-200">
+                  {mode === "specific" ? (
+                    <div>
+                      <label className="block text-base font-medium mb-2">
+                        What would you like to make?
+                      </label>
+                      <input
+                        type="text"
+                        value={input}
+                        onChange={handleInputChange}
+                        placeholder="e.g., Chocolate chip cookies, Beef stir fry..."
+                        className="w-full p-2 border rounded-lg"
+                        required
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-base font-medium mb-2">
+                        What ingredients do you have?
+                      </label>
+                      <textarea
+                        value={ingredients}
+                        onChange={(e) => setIngredients(e.target.value)}
+                        placeholder="e.g., chicken breast, rice, onions, garlic..."
+                        className="w-full p-2 border rounded-lg h-32"
+                        required
+                      />
+                    </div>
                   )}
-                  <div className="ml-4 flex flex-col items-end">
+                </div>
+
+                <Button
+                  type="submit"
+                  isLoading={isLoading}
+                  size="lg"
+                  className="w-full"
+                >
+                  {isLoading ? "Generating..." : "Generate Recipe"}
+                </Button>
+              </form>
+
+              {recipe && (
+                <div className="bg-white rounded-lg shadow-sm p-3 border border-surface-200">
+                  <div className="flex justify-between items-start gap-2">
+                    {parsedRecipe.title && (
+                      <h2 className="text-base font-medium break-words flex-1">
+                        {parsedRecipe.title}
+                      </h2>
+                    )}
                     <button
                       onClick={handleSave}
                       disabled={isSaving || saved || isGenerating}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                      className={`text-sm font-medium p-1 rounded-full shrink-0 ${
                         saved
                           ? "bg-green-100 text-green-800"
                           : isGenerating
@@ -221,45 +223,47 @@ export default function Generate() {
                         ? "Saving..."
                         : "Save Recipe"}
                     </button>
-                    {saveError && (
-                      <p className="text-sm text-red-600 mt-2">{saveError}</p>
-                    )}
+                  </div>
+                  {saveError && (
+                    <p className="text-sm text-red-600 mt-2">{saveError}</p>
+                  )}
+                  <div className="prose prose-sm mt-4">
+                    <ReactMarkdown
+                      components={{
+                        h1: ({ children }) => (
+                          <h1 className="text-lg font-semibold mt-4 mb-3">
+                            {children}
+                          </h1>
+                        ),
+                        h2: ({ children }) => (
+                          <h2 className="text-base font-semibold mt-4 mb-2">
+                            {children}
+                          </h2>
+                        ),
+                        ul: ({ children }) => (
+                          <ul className="list-disc pl-6 space-y-2">
+                            {children}
+                          </ul>
+                        ),
+                        ol: ({ children }) => (
+                          <ol className="list-decimal pl-6 space-y-2">
+                            {children}
+                          </ol>
+                        ),
+                        li: ({ children }) => (
+                          <li className="ml-2">{children}</li>
+                        ),
+                      }}
+                    >
+                      {parsedRecipe.content}
+                    </ReactMarkdown>
                   </div>
                 </div>
-                <div className="prose prose-lg max-w-none">
-                  <ReactMarkdown
-                    components={{
-                      h1: ({ children }) => (
-                        <h1 className="text-2xl font-semibold mt-6 mb-4">
-                          {children}
-                        </h1>
-                      ),
-                      h2: ({ children }) => (
-                        <h2 className="text-xl font-semibold mt-6 mb-3">
-                          {children}
-                        </h2>
-                      ),
-                      ul: ({ children }) => (
-                        <ul className="list-disc pl-6 space-y-2">{children}</ul>
-                      ),
-                      ol: ({ children }) => (
-                        <ol className="list-decimal pl-6 space-y-2">
-                          {children}
-                        </ol>
-                      ),
-                      li: ({ children }) => (
-                        <li className="ml-2">{children}</li>
-                      ),
-                    }}
-                  >
-                    {parsedRecipe.content}
-                  </ReactMarkdown>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </PageLayout>
+    </div>
   );
 }
