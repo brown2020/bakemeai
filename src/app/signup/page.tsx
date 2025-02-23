@@ -52,19 +52,19 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
+      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-sm">
         <div>
           <h2 className="text-3xl font-bold text-center">
             Create your Bake.me account
           </h2>
         </div>
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-sm">
             {error}
           </div>
         )}
         {verificationSent && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-sm">
             Verification email sent! Please check your inbox.
           </div>
         )}

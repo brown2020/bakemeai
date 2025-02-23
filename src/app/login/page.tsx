@@ -53,12 +53,12 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
+      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-sm">
         <div>
           <h2 className="text-3xl font-bold text-center">Sign in to Bake.me</h2>
         </div>
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-sm">
             {error}
           </div>
         )}
@@ -94,7 +94,7 @@ export default function Login() {
               <input
                 id="remember-me"
                 type="checkbox"
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 border-gray-300 rounded-sm"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
               />

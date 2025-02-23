@@ -122,7 +122,7 @@ export default function SavedRecipes() {
 
             <div className="lg:col-span-2 min-h-[50vh] lg:min-h-[calc(100vh-12rem)]">
               {selectedRecipe ? (
-                <div className="p-3 sm:p-6 bg-white rounded-lg shadow">
+                <div className="p-3 sm:p-6 bg-white rounded-lg shadow-sm">
                   <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 break-words">
                     {selectedRecipe.title}
                   </h2>

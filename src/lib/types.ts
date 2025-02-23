@@ -9,6 +9,7 @@ export interface UserProfile {
   servingSize: number;
   preferredCuisines: string[];
   updatedAt?: Timestamp;
+  updatedAtString?: string;
 }
 
 export interface Recipe {

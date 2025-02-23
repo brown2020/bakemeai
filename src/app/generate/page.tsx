@@ -50,7 +50,17 @@ export default function Generate() {
       if (!auth.currentUser) return;
       try {
         const profile = await getUserProfile(auth.currentUser.uid);
-        setUserProfile(profile);
+
+        if (profile && profile.updatedAt) {
+          setUserProfile({
+            ...profile,
+            updatedAtString: profile.updatedAt.seconds
+              ? new Date(profile.updatedAt.seconds * 1000).toISOString()
+              : undefined, // Store as separate string field
+          });
+        } else {
+          setUserProfile(profile);
+        }
       } catch (error) {
         console.error("Error loading user profile:", error);
       }
@@ -71,10 +81,18 @@ export default function Generate() {
           ? `Please provide a detailed recipe for: ${input}. Make it easy to follow for home cooks.`
           : `I have these ingredients: ${ingredients}. Please suggest a recipe I can make with some or all of these ingredients. Prioritize using as many of the listed ingredients as possible while suggesting common pantry items to complete the recipe if needed.`;
 
+      // Ensure `updatedAt` is removed or converted before passing userProfile
+      const sanitizedUserProfile = userProfile
+        ? {
+            ...userProfile,
+            updatedAt: undefined, // Remove Firestore timestamp
+          }
+        : null;
+
       const result = await generateRecipe(
         prompt,
         mode === "ingredients",
-        userProfile
+        sanitizedUserProfile
       );
       for await (const content of readStreamableValue(result)) {
         if (content) {
@@ -121,7 +139,7 @@ export default function Generate() {
           {!mode ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div
-                className="bg-white rounded-lg shadow-sm p-3 border border-surface-200 hover:border-blue-300 cursor-pointer transition-colors"
+                className="bg-white rounded-lg shadow-xs p-3 border border-surface-200 hover:border-blue-300 cursor-pointer transition-colors"
                 onClick={() => setMode("specific")}
               >
                 <h2 className="text-base font-medium mb-2">
@@ -133,7 +151,7 @@ export default function Generate() {
               </div>
 
               <div
-                className="bg-white rounded-lg shadow-sm p-3 border border-surface-200 hover:border-blue-300 cursor-pointer transition-colors"
+                className="bg-white rounded-lg shadow-xs p-3 border border-surface-200 hover:border-blue-300 cursor-pointer transition-colors"
                 onClick={() => setMode("ingredients")}
               >
                 <h2 className="text-base font-medium mb-2">
@@ -155,7 +173,7 @@ export default function Generate() {
               </Button>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="bg-white rounded-lg shadow-sm p-3 border border-surface-200">
+                <div className="bg-white rounded-lg shadow-xs p-3 border border-surface-200">
                   {mode === "specific" ? (
                     <div>
                       <label className="block text-base font-medium mb-2">
@@ -197,67 +215,22 @@ export default function Generate() {
               </form>
 
               {recipe && (
-                <div className="bg-white rounded-lg shadow-sm p-3 border border-surface-200">
-                  <div className="flex justify-between items-start gap-2">
-                    {parsedRecipe.title && (
-                      <h2 className="text-base font-medium break-words flex-1">
-                        {parsedRecipe.title}
-                      </h2>
-                    )}
-                    <button
-                      onClick={handleSave}
-                      disabled={isSaving || saved || isGenerating}
-                      className={`text-sm font-medium p-1 rounded-full shrink-0 ${
-                        saved
-                          ? "bg-green-100 text-green-800"
-                          : isGenerating
-                          ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-                          : "bg-blue-500 text-white hover:bg-blue-600"
-                      }`}
-                    >
-                      {saved
-                        ? "Saved!"
-                        : isGenerating
-                        ? "Generating..."
-                        : isSaving
-                        ? "Saving..."
-                        : "Save Recipe"}
-                    </button>
+                <div className="bg-white rounded-lg shadow-xs p-3 border border-surface-200">
+                  <h2 className="text-base font-medium">
+                    {parsedRecipe.title}
+                  </h2>
+                  <div className="prose prose-sm mt-4">
+                    <ReactMarkdown>{parsedRecipe.content}</ReactMarkdown>
                   </div>
+                  <Button
+                    onClick={handleSave}
+                    disabled={isSaving || saved || isGenerating}
+                  >
+                    {saved ? "Saved!" : isSaving ? "Saving..." : "Save Recipe"}
+                  </Button>
                   {saveError && (
                     <p className="text-sm text-red-600 mt-2">{saveError}</p>
                   )}
-                  <div className="prose prose-sm mt-4">
-                    <ReactMarkdown
-                      components={{
-                        h1: ({ children }) => (
-                          <h1 className="text-lg font-semibold mt-4 mb-3">
-                            {children}
-                          </h1>
-                        ),
-                        h2: ({ children }) => (
-                          <h2 className="text-base font-semibold mt-4 mb-2">
-                            {children}
-                          </h2>
-                        ),
-                        ul: ({ children }) => (
-                          <ul className="list-disc pl-6 space-y-2">
-                            {children}
-                          </ul>
-                        ),
-                        ol: ({ children }) => (
-                          <ol className="list-decimal pl-6 space-y-2">
-                            {children}
-                          </ol>
-                        ),
-                        li: ({ children }) => (
-                          <li className="ml-2">{children}</li>
-                        ),
-                      }}
-                    >
-                      {parsedRecipe.content}
-                    </ReactMarkdown>
-                  </div>
                 </div>
               )}
             </div>
