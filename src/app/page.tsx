@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/Button";
 import Image from "next/image";
+import { useAuth } from "@/lib/auth-context";
 
 const features = [
   {
@@ -67,6 +68,8 @@ const features = [
 ];
 
 export default function Home() {
+  const { user } = useAuth();
+
   return (
     <div className="bg-surface-50">
       {/* Hero Section */}
@@ -86,20 +89,30 @@ export default function Home() {
                 what you have in your kitchen.
               </p>
               <div className="mt-5 sm:mt-8 sm:flex sm:gap-4">
-                <Link href="/generate">
-                  <Button size="lg" className="w-full">
-                    Start Cooking
-                  </Button>
-                </Link>
-                <Link href="/signup">
-                  <Button
-                    variant="secondary"
-                    size="lg"
-                    className="w-full mt-3 sm:mt-0"
-                  >
-                    Create Account
-                  </Button>
-                </Link>
+                {user ? (
+                  <Link href="/generate">
+                    <Button size="lg" className="w-full">
+                      Start Cooking
+                    </Button>
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/login">
+                      <Button size="lg" className="w-full">
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Link href="/signup">
+                      <Button
+                        variant="secondary"
+                        size="lg"
+                        className="w-full mt-3 sm:mt-0"
+                      >
+                        Create Account
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
             <div className="mt-12 lg:mt-0">

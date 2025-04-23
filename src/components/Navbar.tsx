@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { auth } from "@/lib/firebase";
+import { removeAuthCookie } from "@/lib/auth-cookie";
 import Image from "next/image";
 import { Wand2, BookMarked, Settings } from "lucide-react";
 
@@ -86,7 +87,10 @@ export default function Navbar() {
                         {user.email}
                       </div>
                       <button
-                        onClick={() => auth.signOut()}
+                        onClick={() => {
+                          auth.signOut();
+                          removeAuthCookie();
+                        }}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         Sign out

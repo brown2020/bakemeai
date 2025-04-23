@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
+import { setAuthCookie } from "./auth-cookie";
 
 const AuthContext = createContext<{ user: User | null }>({ user: null });
 
@@ -11,8 +12,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
+      // Set or remove the auth cookie based on user state
+      await setAuthCookie(user);
       setLoading(false);
     });
 
