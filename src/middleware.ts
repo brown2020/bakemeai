@@ -1,23 +1,25 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Define private routes that require authentication
+// List of routes that require authentication
 const PRIVATE_ROUTES = ["/generate", "/profile", "/saved"];
 
+/**
+ * Checks if a given path is a private route.
+ */
+function isPrivateRoute(path: string): boolean {
+  return PRIVATE_ROUTES.some((route) => path.startsWith(route));
+}
+
+/**
+ * Middleware to enforce authentication on private routes.
+ */
 export function middleware(request: NextRequest) {
-  // Get the path from the request
   const path = request.nextUrl.pathname;
+  const authToken = request.cookies.get("firebaseAuth")?.value;
 
-  // Check if this is a private route
-  const isPrivateRoute = PRIVATE_ROUTES.some((route) => path.startsWith(route));
-
-  // Get the auth cookie (assuming Firebase auth token is stored in a cookie)
-  const authCookie = request.cookies.get("firebaseAuth")?.value;
-
-  // If it's a private route and there's no auth cookie, redirect to login
-  if (isPrivateRoute && !authCookie) {
+  if (isPrivateRoute(path) && !authToken) {
     const loginUrl = new URL("/login", request.url);
-    // Add the current URL as the redirect parameter
     loginUrl.searchParams.set("redirect", path);
     return NextResponse.redirect(loginUrl);
   }
@@ -26,6 +28,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Matcher defining which paths the middleware applies to
+  // Only apply middleware to these routes
   matcher: ["/generate/:path*", "/profile/:path*", "/saved/:path*"],
 };
