@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useChat } from "ai/react";
+import { useCompletion } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
 import { Suspense } from "react";
 import PageLayout from "@/components/PageLayout";
@@ -39,7 +39,7 @@ export default function GeneratePage() {
 function GenerateContent() {
   const [mode, setMode] = useState<Mode>(null);
   const [ingredients, setIngredients] = useState<string>("");
-  const { input, handleInputChange } = useChat();
+  const { input, handleInputChange } = useCompletion();
   const router = useRouter();
 
   const {

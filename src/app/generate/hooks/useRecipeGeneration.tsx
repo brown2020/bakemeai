@@ -6,7 +6,7 @@ import {
   useContext,
 } from "react";
 import { generateRecipe } from "@/lib/actions";
-import { readStreamableValue } from "ai/rsc";
+import { readStreamableValue } from '@ai-sdk/rsc';
 import { UserProfile } from "@/lib/types";
 import {
   ParsedRecipe,

@@ -1,7 +1,7 @@
 "use server";
 
-import { createStreamableValue } from "ai/rsc";
-import { CoreMessage, streamText } from "ai";
+import { createStreamableValue } from '@ai-sdk/rsc';
+import { ModelMessage, streamText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { UserProfile } from "./types";
 
@@ -89,7 +89,7 @@ export async function generateRecipe(
   isIngredientBased: boolean,
   userProfile?: UserProfile | null
 ) {
-  const messages: CoreMessage[] = [
+  const messages: ModelMessage[] = [
     {
       role: "system",
       content: getSystemPrompt(isIngredientBased, userProfile),
