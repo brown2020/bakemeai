@@ -1,6 +1,6 @@
 "use server";
 
-import { createStreamableValue } from '@ai-sdk/rsc';
+import { createStreamableValue } from "@ai-sdk/rsc";
 import { ModelMessage, streamText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { UserProfile } from "./types";
@@ -101,9 +101,10 @@ export async function generateRecipe(
   ];
 
   const result = streamText({
-    model: openai("gpt-4"),
+    model: openai("gpt-4.1"),
     messages,
-    temperature: 0.7,
+    temperature: 0,
+    topP: 1,
   });
 
   const stream = createStreamableValue(result.textStream);
