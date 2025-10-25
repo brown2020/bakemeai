@@ -12,9 +12,9 @@ function isPrivateRoute(path: string): boolean {
 }
 
 /**
- * Middleware to enforce authentication on private routes.
+ * Proxy to enforce authentication on private routes.
  */
-export function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const authToken = request.cookies.get("firebaseAuth")?.value;
 
