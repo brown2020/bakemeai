@@ -14,11 +14,12 @@ Bake.me is an AI-powered recipe generator that helps you create personalized rec
 
 ## Tech Stack 🛠️
 
-- **Frontend**: Next.js 15, React 19, TypeScript
-- **Styling**: Tailwind CSS
-- **Authentication**: Firebase Auth
-- **Database**: Firestore
-- **AI**: OpenAI GPT-4o
+- **Frontend**: Next.js 16.0, React 19.2, TypeScript 5.9
+- **Styling**: Tailwind CSS 4.1
+- **Authentication**: Firebase Auth 12.4
+- **Database**: Firestore 4.9
+- **AI**: OpenAI GPT-4o (openai 6.7, @ai-sdk/openai 2.0)
+- **State Management**: Vercel AI SDK 5.0
 - **Deployment**: Vercel
 
 ## Getting Started 🚀
