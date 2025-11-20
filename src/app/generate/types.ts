@@ -1,12 +1,6 @@
-import { UserProfile } from "@/lib/types";
-import { ReactNode } from "react";
+import { ParsedRecipe } from "@/lib/types";
 
 export type Mode = "specific" | "ingredients" | null;
-
-export interface ParsedRecipe {
-  title: string;
-  content: string;
-}
 
 export interface FormInputProps {
   label: string;
@@ -48,32 +42,4 @@ export interface RecipeDisplayProps {
 
 export interface ErrorMessageProps {
   message: string;
-}
-
-export interface ProviderProps {
-  children: ReactNode;
-}
-
-export interface RecipeGenerationContextType {
-  recipe: string;
-  setRecipe: (recipe: string) => void;
-  isLoading: boolean;
-  isGenerating: boolean;
-  error: string | null;
-  parsedRecipe: ParsedRecipe;
-  generateRecipeContent: (
-    prompt: string,
-    isIngredientsMode: boolean,
-    userProfile: UserProfile | null
-  ) => Promise<void>;
-  resetRecipe: () => void;
-  userProfile: UserProfile | null;
-}
-
-export interface RecipeSavingContextType {
-  isSaving: boolean;
-  saveError: string;
-  saved: boolean;
-  saveRecipeToDb: (recipe: string) => Promise<void>;
-  resetSaveState: () => void;
 }

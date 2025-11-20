@@ -15,45 +15,28 @@ import {
 import { Recipe, UserProfile } from "./types";
 
 export async function saveRecipe(userId: string, recipeContent: string) {
-  // First try to find the JSON title
-  let title: string | undefined;
-  const jsonMatch = recipeContent.match(/^{.*}/);
-  if (jsonMatch) {
-    try {
-      const titleObj = JSON.parse(jsonMatch[0]);
-      title = titleObj.title;
-      // Remove the JSON line from content
-      recipeContent = recipeContent.replace(/^{.*}\n\n/, "");
-    } catch (e) {
-      console.error("Failed to parse title JSON:", e);
-    }
-  }
+  // Extract title from the markdown content (it should be the first line starting with #)
+  const titleMatch = recipeContent.match(/^# (.*)$/m);
+  const title = titleMatch ? titleMatch[1].trim() : "New Recipe";
 
-  // Fallback title extraction if JSON parsing fails
-  if (!title) {
-    title =
-      recipeContent.match(
-        /# Suggested Recipes\n\nBased on your ingredients, I recommend:\n\n([^\n]+)/
-      )?.[1] ||
-      recipeContent.match(/# Recipe Details\n([^-\n][^\n]+)/)?.[1]?.trim() ||
-      "New Recipe";
-  }
+  // Removing the title from the content to avoid duplication if needed, 
+  // or we can keep it. Current implementation in saveRecipe seems to store full content.
+  // Let's ensure we extract fields correctly from the standardized markdown format.
 
   const preparationTime =
     recipeContent.match(/- Preparation Time: (.*)/)?.[1] || "";
   const cookingTime = recipeContent.match(/- Cooking Time: (.*)/)?.[1] || "";
-  const servings = parseInt(
-    recipeContent.match(/- Servings: (\d+)/)?.[1] || "0"
-  );
+  const servingsMatch = recipeContent.match(/- Servings: (\d+)/);
+  const servings = servingsMatch ? parseInt(servingsMatch[1]) : 0;
 
   // Extract ingredients
   const ingredientsMatch = recipeContent.match(
-    /## Ingredients\n([\s\S]*?)(?=##)/
+    /## Ingredients\n([\s\S]*?)(?=##|$)/
   );
   const ingredients = ingredientsMatch
     ? ingredientsMatch[1]
         .split("\n")
-        .filter(Boolean)
+        .filter((line) => line.trim().startsWith("-"))
         .map((line) => line.trim().replace(/^- /, ""))
     : [];
 

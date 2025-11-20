@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@/lib/auth-context";
+import { useAuthStore } from "@/lib/store/auth-store";
 import { getUserRecipes, deleteRecipe } from "@/lib/db";
 import { Recipe } from "@/lib/types";
 import ReactMarkdown from "react-markdown";
 import { Trash2 } from "lucide-react";
 
 export default function SavedRecipes() {
-  const { user } = useAuth();
+  const { user } = useAuthStore();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);

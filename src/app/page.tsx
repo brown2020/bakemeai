@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/Button";
 import Image from "next/image";
-import { useAuth } from "@/lib/auth-context";
+import { useAuthStore } from "@/lib/store/auth-store";
 
 const features = [
   {
@@ -68,7 +68,7 @@ const features = [
 ];
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user } = useAuthStore();
 
   return (
     <div className="bg-surface-50">

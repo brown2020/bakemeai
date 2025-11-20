@@ -25,3 +25,26 @@ export interface Recipe {
   cuisine?: string;
   difficulty?: string;
 }
+
+export interface RecipeStructure {
+  title?: string;
+  preparationTime?: string;
+  cookingTime?: string;
+  servings?: number;
+  difficulty?: "Easy" | "Moderate" | "Advanced";
+  ingredients?: string[];
+  instructions?: string[];
+  tips?: string[];
+  calories?: number;
+  macros?: {
+    protein?: string;
+    carbs?: string;
+    fat?: string;
+  };
+}
+
+export interface ParsedRecipe {
+  title: string;
+  content: string;
+  structuredData?: RecipeStructure;
+}

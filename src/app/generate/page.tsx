@@ -1,17 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useCompletion } from "@ai-sdk/react";
+import { useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Suspense } from "react";
 import PageLayout from "@/components/PageLayout";
-import {
-  RecipeGenerationProvider,
-  useRecipeGeneration,
-  UserProfileProvider,
-  RecipeSavingProvider,
-  useRecipeSaving,
-} from "./hooks";
 import {
   ModeSelector,
   RecipeForm,
@@ -20,41 +12,50 @@ import {
 } from "./components";
 import { RECIPE_PROMPTS } from "./constants";
 import { Mode } from "./types";
+import { useRecipeStore } from "@/lib/store/recipe-store";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { useUserProfileStore } from "@/lib/store/user-profile-store";
 
 // Main component
 export default function GeneratePage() {
   return (
     <PageLayout title="Generate Recipe">
-      <UserProfileProvider>
-        <RecipeGenerationProvider>
-          <RecipeSavingProvider>
-            <GenerateContent />
-          </RecipeSavingProvider>
-        </RecipeGenerationProvider>
-      </UserProfileProvider>
+      <GenerateContent />
     </PageLayout>
   );
 }
 
 function GenerateContent() {
-  const [mode, setMode] = useState<Mode>(null);
-  const [ingredients, setIngredients] = useState<string>("");
-  const { input, handleInputChange } = useCompletion();
   const router = useRouter();
-
+  const { user } = useAuthStore();
+  const { userProfile, fetchUserProfile } = useUserProfileStore();
+  
   const {
     recipe,
-    isLoading,
-    isGenerating,
-    error: generationError,
     parsedRecipe,
+    isGenerating,
+    generationError,
+    input,
+    ingredients,
+    mode,
+    isSaving,
+    saveError,
+    saved,
+    setInput,
+    setIngredients,
+    setMode,
     generateRecipeContent,
+    saveRecipeToDb,
     resetRecipe,
-    userProfile,
-  } = useRecipeGeneration();
+    resetSaveState
+  } = useRecipeStore();
 
-  const { isSaving, saveError, saved, saveRecipeToDb, resetSaveState } =
-    useRecipeSaving();
+  // Fetch user profile when user is available
+  useEffect(() => {
+    if (user?.uid) {
+      fetchUserProfile(user.uid);
+    }
+  }, [user?.uid, fetchUserProfile]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -89,24 +90,29 @@ function GenerateContent() {
     ]
   );
 
-  const handleSave = useCallback(() => {
-    saveRecipeToDb(recipe);
-    // Refresh the router cache to ensure saved recipes are updated
-    router.refresh();
-  }, [saveRecipeToDb, recipe, router]);
+  const handleSave = useCallback(async () => {
+    if (user?.uid) {
+      await saveRecipeToDb(user.uid);
+      // Refresh the router cache to ensure saved recipes are updated
+      router.refresh();
+    }
+  }, [saveRecipeToDb, user?.uid, router]);
 
   const handleModeSelect = useCallback(
     (newMode: Mode) => {
       setMode(newMode);
-      resetRecipe();
     },
-    [resetRecipe]
+    [setMode]
   );
 
   const handleBack = useCallback(() => {
     setMode(null);
     resetRecipe();
-  }, [resetRecipe]);
+  }, [setMode, resetRecipe]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+  };
 
   return (
     <Suspense
@@ -123,9 +129,9 @@ function GenerateContent() {
               mode={mode}
               onBack={handleBack}
               onSubmit={handleSubmit}
-              isLoading={isLoading}
+              isLoading={isGenerating}
               input={input}
-              handleInputChange={handleInputChange}
+              handleInputChange={handleInputChange as any} 
               ingredients={ingredients}
               setIngredients={setIngredients}
             />
@@ -139,7 +145,7 @@ function GenerateContent() {
                 isSaving={isSaving}
                 saved={saved}
                 isGenerating={isGenerating}
-                saveError={saveError}
+                saveError={saveError || ""}
               />
             )}
           </>

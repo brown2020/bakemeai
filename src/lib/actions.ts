@@ -1,9 +1,28 @@
 "use server";
 
 import { createStreamableValue } from "@ai-sdk/rsc";
-import { ModelMessage, streamText } from "ai";
+import { streamObject } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { z } from "zod";
 import { UserProfile } from "./types";
+
+// Define the schema for the recipe structure
+const recipeSchema = z.object({
+  title: z.string().describe("The title of the recipe"),
+  preparationTime: z.string().describe("Time needed for preparation (e.g. '15 mins')"),
+  cookingTime: z.string().describe("Time needed for cooking (e.g. '45 mins')"),
+  servings: z.number().describe("Number of people served"),
+  difficulty: z.enum(["Easy", "Moderate", "Advanced"]).describe("Difficulty level"),
+  ingredients: z.array(z.string()).describe("List of ingredients with measurements"),
+  instructions: z.array(z.string()).describe("Step-by-step cooking instructions"),
+  tips: z.array(z.string()).describe("Helpful cooking tips"),
+  calories: z.number().optional().describe("Approximate calories per serving"),
+  macros: z.object({
+    protein: z.string().optional(),
+    carbs: z.string().optional(),
+    fat: z.string().optional(),
+  }).optional().describe("Macronutrients per serving"),
+});
 
 const getSystemPrompt = (
   isIngredientBased: boolean,
@@ -38,75 +57,29 @@ const getSystemPrompt = (
 
   const userPreferences = `${dietaryInfo}${allergiesInfo}${dislikedInfo}${cuisinePrefs}${servingSize}${experienceLevel}`;
 
-  return `You are a professional chef and recipe expert. Consider the following user preferences when creating recipes:${userPreferences}
+  return `You are a professional chef and recipe expert. Create a delicious recipe based on the user's request.
+  
+Consider the following user preferences:${userPreferences}
 
 Adjust recipe complexity based on cooking experience, and strictly avoid any allergens.
-First provide a JSON object with the recipe title, then format the rest of your response in markdown.
+${isIngredientBased ? "The user will provide a list of ingredients they have. Suggest a recipe that uses these ingredients, adding only common pantry staples if necessary." : "The user will describe what they want to eat."}
 
-The JSON should be on a single line like this: {"title": "Recipe Name"}
-
-Then skip a line and continue with the markdown format:
-
-${
-  isIngredientBased
-    ? `# Suggested Recipes
-Based on your ingredients, I recommend:
-
-`
-    : ""
-}
-# Recipe Details
-- Preparation Time: 
-- Cooking Time: 
-- Servings: ${userProfile?.servingSize || "4"}
-- Difficulty: ${getDifficultyForExperience(userProfile?.cookingExperience)}
-
-## Ingredients
-List all ingredients with measurements
-
-## Instructions
-Step-by-step cooking instructions
-
-## Tips
-Provide 2-3 helpful cooking tips`;
+Generate the response as a structured JSON object matching the schema.`;
 };
-
-function getDifficultyForExperience(experience?: string) {
-  switch (experience) {
-    case "beginner":
-      return "Easy";
-    case "intermediate":
-      return "Moderate";
-    case "advanced":
-      return "Advanced";
-    default:
-      return "Moderate";
-  }
-}
 
 export async function generateRecipe(
   prompt: string,
   isIngredientBased: boolean,
   userProfile?: UserProfile | null
 ) {
-  const messages: ModelMessage[] = [
-    {
-      role: "system",
-      content: getSystemPrompt(isIngredientBased, userProfile),
-    },
-    {
-      role: "user",
-      content: prompt,
-    },
-  ];
-
-  const result = streamText({
-    model: openai("gpt-4.1"),
-    messages,
+  const result = streamObject({
+    model: openai("gpt-5.1-chat-latest"),
+    schema: recipeSchema,
+    system: getSystemPrompt(isIngredientBased, userProfile),
+    prompt: prompt,
     temperature: 0,
-    topP: 1,
   });
 
-  const stream = createStreamableValue(result.textStream);
+  const stream = createStreamableValue(result.partialObjectStream);
   return stream.value;
 }

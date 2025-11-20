@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/lib/auth-context";
+import { useAuthStore } from "@/lib/store/auth-store";
 import { getUserProfile, saveUserProfile } from "@/lib/db";
 import { UserProfile } from "@/lib/types";
 import DietaryOptions from "./components/DietaryOptions";
@@ -40,7 +40,7 @@ const EXPERIENCE_LEVELS: { value: "beginner" | "intermediate" | "advanced"; labe
 ];
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<Partial<UserProfile>>({
