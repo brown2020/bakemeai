@@ -72,44 +72,55 @@ src/
 
 ### Installation
 
-1. Clone the repository
+1. **Clone the repository**
 
-```bash
-git clone https://github.com/brown2020/bakemeai.git
-cd bakemeai
-```
+   ```bash
+   git clone https://github.com/brown2020/bakemeai.git
+   cd bakemeai
+   ```
 
-2. Install dependencies
+2. **Install dependencies**
 
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
-3. Set up environment variables
+3. **Set up environment variables**
 
-```bash
-cp .env.example .env.local
-```
+   ```bash
+   cp .env.example .env.local
+   ```
 
-Fill in your environment variables:
+4. **Run the development server**
 
-```env
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
-NEXT_PUBLIC_FIREBASE_APP_ID=
-OPENAI_API_KEY=
-```
+   ```bash
+   npm run dev
+   ```
 
-4. Run the development server
+   Visit [http://localhost:3000](http://localhost:3000) to see the app.
 
-```bash
-npm run dev
-```
+## Configuration ⚙️
 
-Visit [http://localhost:3000](http://localhost:3000) to see the app.
+| Variable | Description |
+| --- | --- |
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase web API key |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase auth domain |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firestore project ID |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Storage bucket used for uploads |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID |
+| `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase app ID |
+| `OPENAI_API_KEY` | API key for the OpenAI provider powering `gpt-5.1-chat-latest` via Vercel AI SDK |
+
+> ℹ️ The AI model is configured with `temperature: 0` for deterministic outputs. You can change this in `src/lib/actions.ts`.
+
+## Available Scripts 🧪
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the Next.js dev server with hot reloading |
+| `npm run build` | Create an optimized production build |
+| `npm run start` | Serve the production build locally |
+| `npm run lint` | Run ESLint across the project |
 
 ## Architecture 🏗️
 
@@ -119,13 +130,14 @@ The project follows a clean, modular architecture:
 - **AI Integration**: Leverages `streamObject` from the Vercel AI SDK for type-safe, structured JSON responses from the LLM.
 - **Persistence**: Recipe inputs and state are persisted to local storage using Zustand middleware to prevent data loss on refresh.
 - **Components**: Reusable UI components are in `src/components/`, with feature-specific components co-located in their respective directories.
+- **Deterministic Dependencies**: All npm dependencies are locked via `package-lock.json` to guarantee reproducible installs in CI and local development.
 
 ## Contributing 🤝
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -bWB feature/AmazingFeature`)
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
