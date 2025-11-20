@@ -1,12 +1,31 @@
 # Bake.me 🧑‍🍳
 
-Bake.me is an AI-powered recipe generator that helps you create personalized recipes based on your ingredients, dietary preferences, and cooking experience.
+[![CI](https://img.shields.io/badge/next.js-16.0-black?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/react-19.1-61dafb?logo=react)](https://react.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+Bake.me is an AI-powered recipe generator that helps you create personalized recipes based on your ingredients, dietary preferences, and cooking experience. The project is built with a modern Next.js 16 stack, leverages Vercel’s AI SDK for deterministic recipe generation, and integrates Firebase for auth, database, and storage.
+
+## Table of Contents
+
+1. [Features](#features-)
+2. [Tech Stack](#tech-stack-)
+3. [Project Structure](#project-structure-)
+4. [Getting Started](#getting-started-)
+5. [Configuration](#configuration-)
+6. [Available Scripts](#available-scripts-)
+7. [Architecture](#architecture-)
+8. [Contributing](#contributing-)
+9. [License](#license-)
+10. [Roadmap](#roadmap-)
+11. [Contact](#contact-)
 
 ![Bake.me Screenshot](/public/screenshot.png)
 
 ## Features ✨
 
 - **AI Recipe Generation**: Get personalized recipes based on ingredients you have or dishes you want to make
+- **Structured Data**: Recipes are generated as structured data for consistent formatting
 - **Dietary Preferences**: Customize recipes based on your dietary restrictions and preferences
 - **Save Favorites**: Build your personal collection of favorite recipes
 - **User Profiles**: Set your cooking experience level and default serving sizes
@@ -14,13 +33,33 @@ Bake.me is an AI-powered recipe generator that helps you create personalized rec
 
 ## Tech Stack 🛠️
 
-- **Frontend**: Next.js 16.0, React 19.2, TypeScript 5.9
-- **Styling**: Tailwind CSS 4.1
-- **Authentication**: Firebase Auth 12.4
-- **Database**: Firestore 4.9
-- **AI**: OpenAI GPT-4o (openai 6.7, @ai-sdk/openai 2.0)
-- **State Management**: Vercel AI SDK 5.0
+- **Framework**: Next.js 16.0 (App Router, React Server Components)
+- **UI**: React 19.1, Tailwind CSS 4.1, Lucide Icons
+- **State Management**: Zustand 5.0 with persisted stores
+- **AI Platform**: Vercel AI SDK 5 (Core, React, RSC, OpenAI provider) using `gpt-5.1-chat-latest`
+- **Validation**: Zod 4.1 for schema-driven AI responses
+- **Backend Services**: Firebase Auth, Firestore, Cloud Storage
+- **Tooling**: TypeScript 5.9, ESLint 9, PostCSS 8
 - **Deployment**: Vercel
+
+## Project Structure 🗂️
+
+```
+src/
+├─ app/
+│  ├─ layout.tsx            # Root layout + Auth listener
+│  ├─ page.tsx              # Landing page
+│  ├─ generate/             # Recipe generation experience
+│  ├─ profile/              # User preferences
+│  └─ saved/                # Saved recipe library
+├─ components/              # Shared UI components
+├─ lib/
+│  ├─ actions.ts            # Server actions (AI calls)
+│  ├─ db.ts                 # Firestore helpers
+│  ├─ firebase.ts           # Firebase client bootstrap
+│  └─ store/                # Zustand stores (auth, recipe, profile)
+└─ public/
+```
 
 ## Getting Started 🚀
 
@@ -72,12 +111,21 @@ npm run dev
 
 Visit [http://localhost:3000](http://localhost:3000) to see the app.
 
+## Architecture 🏗️
+
+The project follows a clean, modular architecture:
+
+- **State Management**: Uses `zustand` for global state, replacing Context API to avoid provider nesting. Stores are located in `src/lib/store/`.
+- **AI Integration**: Leverages `streamObject` from the Vercel AI SDK for type-safe, structured JSON responses from the LLM.
+- **Persistence**: Recipe inputs and state are persisted to local storage using Zustand middleware to prevent data loss on refresh.
+- **Components**: Reusable UI components are in `src/components/`, with feature-specific components co-located in their respective directories.
+
 ## Contributing 🤝
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+2. Create your feature branch (`git checkout -bWB feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
