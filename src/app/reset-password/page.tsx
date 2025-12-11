@@ -5,6 +5,7 @@ import { auth } from "@/lib/firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
 import PageLayout from "@/components/PageLayout";
 import { Button } from "@/components/Button";
+import { Input, ErrorMessage } from "@/components/ui";
 import { FirebaseError } from "firebase/app";
 
 export default function ResetPassword() {
@@ -37,27 +38,20 @@ export default function ResetPassword() {
       title="Reset Password"
       subtitle="Enter your email to receive a password reset link"
     >
-      <div className="max-w-md mx-auto">
+      <div className="max-w-md">
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email address
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-xs focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500"
-            />
-          </div>
+          <Input
+            label="Email address"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-          {status === "error" && (
-            <div className="text-sm text-red-600">{errorMessage}</div>
-          )}
+          {status === "error" && <ErrorMessage message={errorMessage} />}
 
           {status === "success" && (
-            <div className="text-sm text-green-600">
+            <div className="text-sm text-green-600 bg-green-50 border border-green-200 px-4 py-3 rounded-lg">
               Reset link sent! Check your email for further instructions.
             </div>
           )}

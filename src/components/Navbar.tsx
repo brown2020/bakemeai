@@ -1,20 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { auth } from "@/lib/firebase";
 import { removeAuthCookie } from "@/lib/auth-cookie";
 import Image from "next/image";
 import { Wand2, BookMarked, Settings } from "lucide-react";
+import { NavLink } from "@/components/ui";
 
 export default function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const pathname = usePathname();
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const { user } = useAuthStore();
 
-  const isActive = (path: string) => pathname === path;
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsProfileOpen(false);
+      }
+    }
+
+    if (isProfileOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isProfileOpen]);
+
+  const handleSignOut = () => {
+    auth.signOut();
+    removeAuthCookie();
+    setIsProfileOpen(false);
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white shadow-xs z-50">
@@ -36,43 +58,28 @@ export default function Navbar() {
           <div className="flex items-center space-x-2 sm:space-x-4">
             {user ? (
               <>
-                <Link
-                  href="/generate"
-                  className={`px-2 sm:px-3 py-2 text-sm font-medium rounded-md ${
-                    isActive("/generate")
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
-                  }`}
-                >
-                  <span className="hidden sm:inline">Generate Recipe</span>
-                  <Wand2 className="w-5 h-5 sm:hidden" />
-                </Link>
-                <Link
+                <NavLink href="/generate" icon={<Wand2 className="w-5 h-5" />}>
+                  Generate Recipe
+                </NavLink>
+                <NavLink
                   href="/saved"
-                  className={`px-2 sm:px-3 py-2 text-sm font-medium rounded-md ${
-                    isActive("/saved")
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
-                  }`}
+                  icon={<BookMarked className="w-5 h-5" />}
                 >
-                  <span className="hidden sm:inline">Saved Recipes</span>
-                  <BookMarked className="w-5 h-5 sm:hidden" />
-                </Link>
-                <Link
+                  Saved Recipes
+                </NavLink>
+                <NavLink
                   href="/profile"
-                  className={`px-2 sm:px-3 py-2 text-sm font-medium rounded-md ${
-                    isActive("/profile")
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
-                  }`}
+                  icon={<Settings className="w-5 h-5" />}
                 >
-                  <span className="hidden sm:inline">Preferences</span>
-                  <Settings className="w-5 h-5 sm:hidden" />
-                </Link>
-                <div className="relative">
+                  Preferences
+                </NavLink>
+
+                <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
-                    className="flex items-center p-1 sm:p-2 rounded-full hover:bg-gray-100"
+                    className="flex items-center p-1 sm:p-2 rounded-full hover:bg-gray-100 transition-colors"
+                    aria-expanded={isProfileOpen}
+                    aria-haspopup="true"
                   >
                     <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
                       <span className="text-blue-600 font-medium">
@@ -83,15 +90,12 @@ export default function Navbar() {
 
                   {isProfileOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5">
-                      <div className="px-4 py-2 text-sm text-gray-700 border-b">
+                      <div className="px-4 py-2 text-sm text-gray-700 border-b truncate">
                         {user.email}
                       </div>
                       <button
-                        onClick={() => {
-                          auth.signOut();
-                          removeAuthCookie();
-                        }}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={handleSignOut}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                       >
                         Sign out
                       </button>
@@ -103,13 +107,13 @@ export default function Navbar() {
               <>
                 <Link
                   href="/login"
-                  className="text-gray-500 hover:text-blue-600 px-2 sm:px-3 py-2 text-sm font-medium"
+                  className="text-gray-500 hover:text-blue-600 px-2 sm:px-3 py-2 text-sm font-medium transition-colors"
                 >
                   Sign in
                 </Link>
                 <Link
                   href="/signup"
-                  className="bg-blue-500 text-white hover:bg-blue-600 px-2 sm:px-3 py-2 text-sm font-medium rounded-md"
+                  className="bg-blue-500 text-white hover:bg-blue-600 px-2 sm:px-3 py-2 text-sm font-medium rounded-md transition-colors"
                 >
                   Sign up
                 </Link>

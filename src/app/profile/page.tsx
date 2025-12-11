@@ -4,13 +4,20 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { getUserProfile, saveUserProfile } from "@/lib/db";
 import { UserProfile } from "@/lib/types";
-import { ChipSelect, TagInput, NumberInput } from "@/components/ui";
+import {
+  ChipSelect,
+  TagInput,
+  NumberInput,
+  PageSkeleton,
+} from "@/components/ui";
 import {
   DIETARY_OPTIONS,
   CUISINE_OPTIONS,
   EXPERIENCE_LEVELS,
   CookingExperience,
 } from "@/lib/constants";
+import PageLayout from "@/components/PageLayout";
+import { Button } from "@/components/Button";
 
 export default function Profile() {
   const { user } = useAuthStore();
@@ -68,136 +75,97 @@ export default function Profile() {
 
   if (!user) {
     return (
-      <div className="min-h-screen p-4 sm:p-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold">
-              Please sign in to view your preferences
-            </h1>
-          </div>
-        </div>
-      </div>
+      <PageLayout title="Cooking Preferences">
+        <p className="text-gray-600">
+          Please sign in to view your preferences.
+        </p>
+      </PageLayout>
     );
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen p-4 sm:p-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold">
-              Cooking Preferences
-            </h1>
-          </div>
-          <div className="bg-white rounded-lg shadow-xs p-3 sm:p-6 border border-surface-200 max-w-2xl">
-            <div className="space-y-6">
-              <div className="animate-pulse">
-                <div className="h-6 bg-gray-200 rounded-sm w-1/4 mb-3" />
-                <div className="flex flex-wrap gap-2">
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="h-8 w-20 bg-gray-200 rounded-full"
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="animate-pulse">
-                <div className="h-6 bg-gray-200 rounded-sm w-1/4 mb-3" />
-                <div className="h-10 bg-gray-200 rounded-sm w-full" />
-              </div>
-            </div>
-          </div>
+      <PageLayout title="Cooking Preferences">
+        <div className="bg-white rounded-lg shadow-xs p-6 border border-surface-200 max-w-2xl">
+          <PageSkeleton rows={4} showTitle={false} />
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="min-h-screen p-4 sm:p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold">
-            Cooking Preferences
-          </h1>
-        </div>
+    <PageLayout title="Cooking Preferences">
+      <div className="bg-white rounded-lg shadow-xs p-4 sm:p-6 border border-surface-200 max-w-2xl">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <ChipSelect
+            label="Dietary Preferences"
+            options={[...DIETARY_OPTIONS]}
+            selected={profile.dietary || []}
+            onChange={(option) => toggleArrayItem("dietary", option)}
+          />
 
-        <div className="bg-white rounded-lg shadow-xs p-3 sm:p-6 border border-surface-200 max-w-2xl">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <ChipSelect
-              label="Dietary Preferences"
-              options={[...DIETARY_OPTIONS]}
-              selected={profile.dietary || []}
-              onChange={(option) => toggleArrayItem("dietary", option)}
-            />
+          <TagInput
+            label="Allergies"
+            value={profile.allergies || []}
+            onChange={(allergies) =>
+              setProfile((prev) => ({ ...prev, allergies }))
+            }
+            placeholder="e.g., peanuts, shellfish (comma separated)"
+          />
 
-            <TagInput
-              label="Allergies"
-              value={profile.allergies || []}
-              onChange={(allergies) =>
-                setProfile((prev) => ({ ...prev, allergies }))
+          <TagInput
+            label="Ingredients You Dislike"
+            value={profile.dislikedIngredients || []}
+            onChange={(dislikedIngredients) =>
+              setProfile((prev) => ({ ...prev, dislikedIngredients }))
+            }
+            placeholder="e.g., cilantro, olives (comma separated)"
+          />
+
+          <ChipSelect
+            label="Preferred Cuisines"
+            options={[...CUISINE_OPTIONS]}
+            selected={profile.preferredCuisines || []}
+            onChange={(cuisine) =>
+              toggleArrayItem("preferredCuisines", cuisine)
+            }
+          />
+
+          <ChipSelect
+            label="Cooking Experience"
+            options={EXPERIENCE_LEVELS.map((l) => l.label)}
+            selected={[
+              EXPERIENCE_LEVELS.find(
+                (l) => l.value === profile.cookingExperience
+              )?.label || "Beginner",
+            ]}
+            onChange={(label) => {
+              const level = EXPERIENCE_LEVELS.find((l) => l.label === label);
+              if (level) {
+                setProfile((prev) => ({
+                  ...prev,
+                  cookingExperience: level.value as CookingExperience,
+                }));
               }
-              placeholder="e.g., peanuts, shellfish (comma separated)"
-            />
+            }}
+            variant="rounded"
+          />
 
-            <TagInput
-              label="Ingredients You Dislike"
-              value={profile.dislikedIngredients || []}
-              onChange={(dislikedIngredients) =>
-                setProfile((prev) => ({ ...prev, dislikedIngredients }))
-              }
-              placeholder="e.g., cilantro, olives (comma separated)"
-            />
+          <NumberInput
+            label="Default Serving Size"
+            value={profile.servingSize || 2}
+            onChange={(servingSize) =>
+              setProfile((prev) => ({ ...prev, servingSize }))
+            }
+            min={1}
+            max={12}
+          />
 
-            <ChipSelect
-              label="Preferred Cuisines"
-              options={[...CUISINE_OPTIONS]}
-              selected={profile.preferredCuisines || []}
-              onChange={(cuisine) =>
-                toggleArrayItem("preferredCuisines", cuisine)
-              }
-            />
-
-            <ChipSelect
-              label="Cooking Experience"
-              options={EXPERIENCE_LEVELS.map((l) => l.label)}
-              selected={[
-                EXPERIENCE_LEVELS.find(
-                  (l) => l.value === profile.cookingExperience
-                )?.label || "Beginner",
-              ]}
-              onChange={(label) => {
-                const level = EXPERIENCE_LEVELS.find((l) => l.label === label);
-                if (level) {
-                  setProfile((prev) => ({
-                    ...prev,
-                    cookingExperience: level.value as CookingExperience,
-                  }));
-                }
-              }}
-              variant="rounded"
-            />
-
-            <NumberInput
-              label="Default Serving Size"
-              value={profile.servingSize || 2}
-              onChange={(servingSize) =>
-                setProfile((prev) => ({ ...prev, servingSize }))
-              }
-              min={1}
-              max={12}
-            />
-
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-blue-300 text-sm font-medium transition-colors"
-            >
-              {saving ? "Saving..." : "Save Preferences"}
-            </button>
-          </form>
-        </div>
+          <Button type="submit" isLoading={saving} className="w-full">
+            Save Preferences
+          </Button>
+        </form>
       </div>
-    </div>
+    </PageLayout>
   );
 }

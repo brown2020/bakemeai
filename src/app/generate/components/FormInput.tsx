@@ -1,3 +1,4 @@
+import { Input, Textarea } from "@/components/ui";
 import { FormInputProps } from "../types";
 
 export function FormInput({
@@ -7,27 +8,27 @@ export function FormInput({
   onChange,
   isTextArea = false,
 }: FormInputProps) {
+  if (isTextArea) {
+    return (
+      <Textarea
+        label={label}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="h-32"
+        required
+      />
+    );
+  }
+
   return (
-    <div>
-      <label className="block text-base font-medium mb-2">{label}</label>
-      {isTextArea ? (
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="w-full p-2 border rounded-lg h-32"
-          required
-        />
-      ) : (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="w-full p-2 border rounded-lg"
-          required
-        />
-      )}
-    </div>
+    <Input
+      label={label}
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      required
+    />
   );
 }
