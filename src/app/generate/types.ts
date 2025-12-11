@@ -26,7 +26,9 @@ export interface RecipeFormProps {
   onSubmit: (e: React.FormEvent) => void;
   isLoading: boolean;
   input: string;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleInputChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => void;
   ingredients: string;
   setIngredients: (value: string) => void;
 }

@@ -1,75 +1,82 @@
-"use client";
-
-import Link from "next/link";
-import { Button } from "@/components/Button";
 import Image from "next/image";
-import { useAuthStore } from "@/lib/store/auth-store";
+import { HeroCTA } from "@/components/HeroCTA";
+
+/**
+ * Feature icons as static SVG components for better performance
+ */
+const LightningIcon = () => (
+  <svg
+    className="w-6 h-6"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M13 10V3L4 14h7v7l9-11h-7z"
+    />
+  </svg>
+);
+
+const CakeIcon = () => (
+  <svg
+    className="w-6 h-6"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z"
+    />
+  </svg>
+);
+
+const HeartIcon = () => (
+  <svg
+    className="w-6 h-6"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+    />
+  </svg>
+);
 
 const features = [
   {
     title: "AI-Powered Recipe Generation",
     description:
       "Get personalized recipes based on your ingredients or cravings",
-    icon: (
-      <svg
-        className="w-6 h-6"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M13 10V3L4 14h7v7l9-11h-7z"
-        />
-      </svg>
-    ),
+    icon: <LightningIcon />,
   },
   {
     title: "Dietary Preferences",
     description:
       "Customize recipes based on your dietary restrictions and preferences",
-    icon: (
-      <svg
-        className="w-6 h-6"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z"
-        />
-      </svg>
-    ),
+    icon: <CakeIcon />,
   },
   {
     title: "Save Your Favorites",
     description: "Build your personal collection of favorite recipes",
-    icon: (
-      <svg
-        className="w-6 h-6"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-        />
-      </svg>
-    ),
+    icon: <HeartIcon />,
   },
 ];
 
+/**
+ * Home page - Server Component with minimal client-side hydration.
+ * Only the HeroCTA component requires client-side JavaScript.
+ */
 export default function Home() {
-  const { user } = useAuthStore();
-
   return (
     <div className="bg-surface-50">
       {/* Hero Section */}
@@ -88,32 +95,7 @@ export default function Home() {
                 personalized cooking suggestions based on your preferences and
                 what you have in your kitchen.
               </p>
-              <div className="mt-5 sm:mt-8 sm:flex sm:gap-4">
-                {user ? (
-                  <Link href="/generate">
-                    <Button size="lg" className="w-full">
-                      Start Cooking
-                    </Button>
-                  </Link>
-                ) : (
-                  <>
-                    <Link href="/login">
-                      <Button size="lg" className="w-full">
-                        Sign In
-                      </Button>
-                    </Link>
-                    <Link href="/signup">
-                      <Button
-                        variant="secondary"
-                        size="lg"
-                        className="w-full mt-3 sm:mt-0"
-                      >
-                        Create Account
-                      </Button>
-                    </Link>
-                  </>
-                )}
-              </div>
+              <HeroCTA />
             </div>
             <div className="mt-12 lg:mt-0">
               <Image

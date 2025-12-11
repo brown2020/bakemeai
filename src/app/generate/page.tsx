@@ -29,7 +29,7 @@ function GenerateContent() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { userProfile, fetchUserProfile } = useUserProfileStore();
-  
+
   const {
     recipe,
     parsedRecipe,
@@ -47,7 +47,7 @@ function GenerateContent() {
     generateRecipeContent,
     saveRecipeToDb,
     resetRecipe,
-    resetSaveState
+    resetSaveState,
   } = useRecipeStore();
 
   // Fetch user profile when user is available
@@ -110,7 +110,9 @@ function GenerateContent() {
     resetRecipe();
   }, [setMode, resetRecipe]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setInput(e.target.value);
   };
 
@@ -131,7 +133,7 @@ function GenerateContent() {
               onSubmit={handleSubmit}
               isLoading={isGenerating}
               input={input}
-              handleInputChange={handleInputChange as any} 
+              handleInputChange={handleInputChange}
               ingredients={ingredients}
               setIngredients={setIngredients}
             />

@@ -4,40 +4,13 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { getUserProfile, saveUserProfile } from "@/lib/db";
 import { UserProfile } from "@/lib/types";
-import DietaryOptions from "./components/DietaryOptions";
-import AllergiesInput from "./components/AllergiesInput";
-import DislikedIngredientsInput from "./components/DislikedIngredientsInput";
-import PreferredCuisines from "./components/PreferredCuisines";
-import CookingExperience from "./components/CookingExperience";
-import ServingSizeInput from "./components/ServingSizeInput";
-
-const DIETARY_OPTIONS = [
-  "Vegetarian",
-  "Vegan",
-  "Pescatarian",
-  "Gluten-free",
-  "Dairy-free",
-  "Keto",
-  "Paleo",
-];
-
-const CUISINE_OPTIONS = [
-  "Italian",
-  "Chinese",
-  "Japanese",
-  "Mexican",
-  "Indian",
-  "Thai",
-  "Mediterranean",
-  "American",
-  "French",
-];
-
-const EXPERIENCE_LEVELS: { value: "beginner" | "intermediate" | "advanced"; label: string }[] = [
-  { value: "beginner", label: "Beginner" },
-  { value: "intermediate", label: "Intermediate" },
-  { value: "advanced", label: "Advanced" },
-];
+import { ChipSelect, TagInput, NumberInput } from "@/components/ui";
+import {
+  DIETARY_OPTIONS,
+  CUISINE_OPTIONS,
+  EXPERIENCE_LEVELS,
+  CookingExperience,
+} from "@/lib/constants";
 
 export default function Profile() {
   const { user } = useAuthStore();
@@ -83,23 +56,13 @@ export default function Profile() {
     }
   };
 
-  const handleMultiSelect = (field: keyof UserProfile, value: string) => {
+  const toggleArrayItem = (field: keyof UserProfile, value: string) => {
     setProfile((prev) => {
-      if (field === "cookingExperience") {
-        // Only allow valid values for cookingExperience
-        if (["beginner", "intermediate", "advanced"].includes(value)) {
-          return { ...prev, cookingExperience: value as UserProfile["cookingExperience"] };
-        }
-        return prev;
-      }
-      return {
-        ...prev,
-        [field]: Array.isArray(prev[field])
-          ? prev[field]?.includes(value)
-            ? (prev[field] as string[]).filter((item: string) => item !== value)
-            : [...(prev[field] as string[]), value]
-          : [value],
-      };
+      const currentArray = (prev[field] as string[]) || [];
+      const newArray = currentArray.includes(value)
+        ? currentArray.filter((item) => item !== value)
+        : [...currentArray, value];
+      return { ...prev, [field]: newArray };
     });
   };
 
@@ -161,43 +124,74 @@ export default function Profile() {
 
         <div className="bg-white rounded-lg shadow-xs p-3 sm:p-6 border border-surface-200 max-w-2xl">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <DietaryOptions
-              options={DIETARY_OPTIONS}
+            <ChipSelect
+              label="Dietary Preferences"
+              options={[...DIETARY_OPTIONS]}
               selected={profile.dietary || []}
-              onChange={(option: string) => handleMultiSelect("dietary", option)}
+              onChange={(option) => toggleArrayItem("dietary", option)}
             />
 
-            <AllergiesInput
+            <TagInput
+              label="Allergies"
               value={profile.allergies || []}
-              onChange={(allergies: string[]) => setProfile((prev) => ({ ...prev, allergies }))}
+              onChange={(allergies) =>
+                setProfile((prev) => ({ ...prev, allergies }))
+              }
+              placeholder="e.g., peanuts, shellfish (comma separated)"
             />
 
-            <DislikedIngredientsInput
+            <TagInput
+              label="Ingredients You Dislike"
               value={profile.dislikedIngredients || []}
-              onChange={(dislikedIngredients: string[]) => setProfile((prev) => ({ ...prev, dislikedIngredients }))}
+              onChange={(dislikedIngredients) =>
+                setProfile((prev) => ({ ...prev, dislikedIngredients }))
+              }
+              placeholder="e.g., cilantro, olives (comma separated)"
             />
 
-            <PreferredCuisines
-              options={CUISINE_OPTIONS}
+            <ChipSelect
+              label="Preferred Cuisines"
+              options={[...CUISINE_OPTIONS]}
               selected={profile.preferredCuisines || []}
-              onChange={(cuisine) => handleMultiSelect("preferredCuisines", cuisine)}
+              onChange={(cuisine) =>
+                toggleArrayItem("preferredCuisines", cuisine)
+              }
             />
 
-            <CookingExperience
-              levels={EXPERIENCE_LEVELS}
-              selected={profile.cookingExperience || "beginner"}
-              onChange={(level: "beginner" | "intermediate" | "advanced") => setProfile((prev) => ({ ...prev, cookingExperience: level }))}
+            <ChipSelect
+              label="Cooking Experience"
+              options={EXPERIENCE_LEVELS.map((l) => l.label)}
+              selected={[
+                EXPERIENCE_LEVELS.find(
+                  (l) => l.value === profile.cookingExperience
+                )?.label || "Beginner",
+              ]}
+              onChange={(label) => {
+                const level = EXPERIENCE_LEVELS.find((l) => l.label === label);
+                if (level) {
+                  setProfile((prev) => ({
+                    ...prev,
+                    cookingExperience: level.value as CookingExperience,
+                  }));
+                }
+              }}
+              variant="rounded"
             />
 
-            <ServingSizeInput
+            <NumberInput
+              label="Default Serving Size"
               value={profile.servingSize || 2}
-              onChange={(servingSize) => setProfile((prev) => ({ ...prev, servingSize }))}
+              onChange={(servingSize) =>
+                setProfile((prev) => ({ ...prev, servingSize }))
+              }
+              min={1}
+              max={12}
             />
 
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-blue-300 text-sm font-medium"
+              className="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-blue-300 text-sm font-medium transition-colors"
             >
               {saving ? "Saving..." : "Save Preferences"}
             </button>

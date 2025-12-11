@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -5,7 +6,7 @@ import { AuthListener } from "@/components/AuthListener";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Bake.me",
   description: "AI-powered recipe generation platform",
 };

@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
-// List of routes that require authentication
-const PRIVATE_ROUTES = ["/generate", "/profile", "/saved"];
+import { PRIVATE_ROUTES } from "@/lib/constants";
 
 /**
  * Checks if a given path is a private route.
@@ -12,9 +10,9 @@ function isPrivateRoute(path: string): boolean {
 }
 
 /**
- * Proxy to enforce authentication on private routes.
+ * Middleware to enforce authentication on private routes.
  */
-export default function proxy(request: NextRequest) {
+export default function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const authToken = request.cookies.get("firebaseAuth")?.value;
 

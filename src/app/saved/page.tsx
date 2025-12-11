@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { getUserRecipes, deleteRecipe } from "@/lib/db";
 import { Recipe } from "@/lib/types";
-import ReactMarkdown from "react-markdown";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { Trash2 } from "lucide-react";
 
 export default function SavedRecipes() {
@@ -30,13 +30,17 @@ export default function SavedRecipes() {
     loadRecipes();
   }, [user]);
 
-  const filteredRecipes = recipes.filter(
-    (recipe) =>
-      recipe.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      recipe.ingredients.some((ingredient) =>
-        ingredient.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-  );
+  // Memoize filtered recipes for performance
+  const filteredRecipes = useMemo(() => {
+    const searchLower = searchTerm.toLowerCase();
+    return recipes.filter(
+      (recipe) =>
+        recipe.title.toLowerCase().includes(searchLower) ||
+        recipe.ingredients.some((ingredient) =>
+          ingredient.toLowerCase().includes(searchLower)
+        )
+    );
+  }, [recipes, searchTerm]);
 
   const handleDelete = async (recipeId: string) => {
     if (!confirm("Are you sure you want to delete this recipe?")) return;
@@ -74,7 +78,7 @@ export default function SavedRecipes() {
             placeholder="Search recipes..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-4 py-2 border rounded-lg w-full sm:w-64"
+            className="px-4 py-2 border rounded-lg w-full sm:w-64 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
           />
         </div>
 
@@ -106,7 +110,7 @@ export default function SavedRecipes() {
                         e.stopPropagation();
                         handleDelete(recipe.id);
                       }}
-                      className="text-red-500 hover:text-red-600 shrink-0 p-1 rounded-full hover:bg-red-50"
+                      className="text-red-500 hover:text-red-600 shrink-0 p-1 rounded-full hover:bg-red-50 transition-colors"
                       aria-label="Delete recipe"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -126,37 +130,7 @@ export default function SavedRecipes() {
                   <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 break-words">
                     {selectedRecipe.title}
                   </h2>
-                  <div className="prose prose-sm sm:prose-base max-w-none">
-                    <ReactMarkdown
-                      components={{
-                        h1: ({ children }) => (
-                          <h1 className="text-lg sm:text-xl font-semibold mt-4 sm:mt-6 mb-3 sm:mb-4">
-                            {children}
-                          </h1>
-                        ),
-                        h2: ({ children }) => (
-                          <h2 className="text-base sm:text-lg font-semibold mt-4 sm:mt-6 mb-2 sm:mb-3">
-                            {children}
-                          </h2>
-                        ),
-                        ul: ({ children }) => (
-                          <ul className="list-disc pl-6 space-y-2">
-                            {children}
-                          </ul>
-                        ),
-                        ol: ({ children }) => (
-                          <ol className="list-decimal pl-6 space-y-2">
-                            {children}
-                          </ol>
-                        ),
-                        li: ({ children }) => (
-                          <li className="ml-2">{children}</li>
-                        ),
-                      }}
-                    >
-                      {selectedRecipe.content}
-                    </ReactMarkdown>
-                  </div>
+                  <MarkdownRenderer content={selectedRecipe.content} />
                 </div>
               ) : (
                 <div className="h-full flex items-center justify-center text-gray-500">

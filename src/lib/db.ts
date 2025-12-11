@@ -19,7 +19,7 @@ export async function saveRecipe(userId: string, recipeContent: string) {
   const titleMatch = recipeContent.match(/^# (.*)$/m);
   const title = titleMatch ? titleMatch[1].trim() : "New Recipe";
 
-  // Removing the title from the content to avoid duplication if needed, 
+  // Removing the title from the content to avoid duplication if needed,
   // or we can keep it. Current implementation in saveRecipe seems to store full content.
   // Let's ensure we extract fields correctly from the standardized markdown format.
 
@@ -93,9 +93,7 @@ export async function getUserProfile(
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
-    const data = docSnap.data();
-    // Remove updatedAt from the data
-    const { ...profileData } = data;
+    const { updatedAt, ...profileData } = docSnap.data();
     return {
       id: docSnap.id,
       ...profileData,
