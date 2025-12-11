@@ -3,6 +3,12 @@
  * Keeps all configuration in one place for easier maintenance.
  */
 
+// Firestore collection names
+export const COLLECTIONS = {
+  RECIPES: "recipes",
+  USER_PROFILES: "userProfiles",
+} as const;
+
 export const DIETARY_OPTIONS = [
   "Vegetarian",
   "Vegan",

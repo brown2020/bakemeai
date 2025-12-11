@@ -26,11 +26,9 @@ export interface RecipeFormProps {
   onSubmit: (e: React.FormEvent) => void;
   isLoading: boolean;
   input: string;
-  handleInputChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => void;
+  onInputChange: (value: string) => void;
   ingredients: string;
-  setIngredients: (value: string) => void;
+  onIngredientsChange: (value: string) => void;
 }
 
 export interface RecipeDisplayProps {

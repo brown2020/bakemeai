@@ -110,12 +110,6 @@ function GenerateContent() {
     resetRecipe();
   }, [setMode, resetRecipe]);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setInput(e.target.value);
-  };
-
   return (
     <Suspense
       fallback={
@@ -133,9 +127,9 @@ function GenerateContent() {
               onSubmit={handleSubmit}
               isLoading={isGenerating}
               input={input}
-              handleInputChange={handleInputChange}
+              onInputChange={setInput}
               ingredients={ingredients}
-              setIngredients={setIngredients}
+              onIngredientsChange={setIngredients}
             />
 
             {generationError && <ErrorMessage message={generationError} />}

@@ -9,9 +9,9 @@ export function RecipeForm({
   onSubmit,
   isLoading,
   input,
-  handleInputChange,
+  onInputChange,
   ingredients,
-  setIngredients,
+  onIngredientsChange,
 }: RecipeFormProps) {
   return (
     <div className="space-y-4">
@@ -30,18 +30,14 @@ export function RecipeForm({
               label="What would you like to make?"
               placeholder="e.g., Chocolate chip cookies, Beef stir fry..."
               value={input}
-              onChange={(value) =>
-                handleInputChange({
-                  target: { value },
-                } as React.ChangeEvent<HTMLInputElement>)
-              }
+              onChange={onInputChange}
             />
           ) : (
             <FormInput
               label="What ingredients do you have?"
               placeholder="e.g., chicken breast, rice, onions, garlic..."
               value={ingredients}
-              onChange={setIngredients}
+              onChange={onIngredientsChange}
               isTextArea
             />
           )}

@@ -12,52 +12,55 @@ import {
   getDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import { Recipe, UserProfile } from "./types";
+import { Recipe, UserProfile, RecipeStructure } from "./types";
+import { COLLECTIONS } from "./constants";
 
-export async function saveRecipe(userId: string, recipeContent: string) {
-  // Extract title from the markdown content (it should be the first line starting with #)
-  const titleMatch = recipeContent.match(/^# (.*)$/m);
-  const title = titleMatch ? titleMatch[1].trim() : "New Recipe";
+interface SaveRecipeParams {
+  userId: string;
+  content: string;
+  structuredData?: RecipeStructure;
+}
 
-  // Removing the title from the content to avoid duplication if needed,
-  // or we can keep it. Current implementation in saveRecipe seems to store full content.
-  // Let's ensure we extract fields correctly from the standardized markdown format.
-
+/**
+ * Saves a recipe to Firestore.
+ * Uses structured data if available, otherwise falls back to parsing markdown.
+ */
+export async function saveRecipe({
+  userId,
+  content,
+  structuredData,
+}: SaveRecipeParams) {
+  // Use structured data if available, otherwise parse from markdown
+  const title = structuredData?.title || extractTitle(content);
+  const ingredients =
+    structuredData?.ingredients || extractIngredients(content);
   const preparationTime =
-    recipeContent.match(/- Preparation Time: (.*)/)?.[1] || "";
-  const cookingTime = recipeContent.match(/- Cooking Time: (.*)/)?.[1] || "";
-  const servingsMatch = recipeContent.match(/- Servings: (\d+)/);
-  const servings = servingsMatch ? parseInt(servingsMatch[1]) : 0;
-
-  // Extract ingredients
-  const ingredientsMatch = recipeContent.match(
-    /## Ingredients\n([\s\S]*?)(?=##|$)/
-  );
-  const ingredients = ingredientsMatch
-    ? ingredientsMatch[1]
-        .split("\n")
-        .filter((line) => line.trim().startsWith("-"))
-        .map((line) => line.trim().replace(/^- /, ""))
-    : [];
+    structuredData?.preparationTime ||
+    extractField(content, "Preparation Time");
+  const cookingTime =
+    structuredData?.cookingTime || extractField(content, "Cooking Time");
+  const servings = structuredData?.servings || extractServings(content);
+  const difficulty = structuredData?.difficulty;
 
   const recipe: Omit<Recipe, "id"> = {
     userId,
     title,
-    content: recipeContent,
+    content,
     createdAt: Date.now(),
     ingredients,
     preparationTime,
     cookingTime,
     servings,
+    difficulty,
   };
 
-  const docRef = await addDoc(collection(db, "recipes"), recipe);
+  const docRef = await addDoc(collection(db, COLLECTIONS.RECIPES), recipe);
   return { id: docRef.id, ...recipe };
 }
 
 export async function getUserRecipes(userId: string) {
   const q = query(
-    collection(db, "recipes"),
+    collection(db, COLLECTIONS.RECIPES),
     where("userId", "==", userId),
     orderBy("createdAt", "desc")
   );
@@ -70,7 +73,7 @@ export async function getUserRecipes(userId: string) {
 }
 
 export async function deleteRecipe(recipeId: string) {
-  await deleteDoc(doc(db, "recipes", recipeId));
+  await deleteDoc(doc(db, COLLECTIONS.RECIPES, recipeId));
 }
 
 export async function saveUserProfile(
@@ -82,14 +85,14 @@ export async function saveUserProfile(
     updatedAt: serverTimestamp(),
   };
 
-  await setDoc(doc(db, "userProfiles", userId), profileData);
+  await setDoc(doc(db, COLLECTIONS.USER_PROFILES, userId), profileData);
   return { id: userId, ...profile };
 }
 
 export async function getUserProfile(
   userId: string
 ): Promise<UserProfile | null> {
-  const docRef = doc(db, "userProfiles", userId);
+  const docRef = doc(db, COLLECTIONS.USER_PROFILES, userId);
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
@@ -100,4 +103,29 @@ export async function getUserProfile(
     } as UserProfile;
   }
   return null;
+}
+
+// Helper functions for parsing markdown (fallback when structured data unavailable)
+function extractTitle(content: string): string {
+  const match = content.match(/^# (.*)$/m);
+  return match ? match[1].trim() : "New Recipe";
+}
+
+function extractIngredients(content: string): string[] {
+  const match = content.match(/## Ingredients\n([\s\S]*?)(?=##|$)/);
+  if (!match) return [];
+  return match[1]
+    .split("\n")
+    .filter((line) => line.trim().startsWith("-"))
+    .map((line) => line.trim().replace(/^- /, ""));
+}
+
+function extractField(content: string, fieldName: string): string {
+  const match = content.match(new RegExp(`- ${fieldName}: (.*)`));
+  return match?.[1] || "";
+}
+
+function extractServings(content: string): number {
+  const match = content.match(/- Servings: (\d+)/);
+  return match ? parseInt(match[1]) : 0;
 }
