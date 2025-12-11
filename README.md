@@ -1,74 +1,131 @@
 # Bake.me 🧑‍🍳
 
-[![CI](https://img.shields.io/badge/next.js-16.0-black?logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/react-19.1-61dafb?logo=react)](https://react.dev/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.0-black?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.1-61dafb?logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Bake.me is an AI-powered recipe generator that helps you create personalized recipes based on your ingredients, dietary preferences, and cooking experience. The project is built with a modern Next.js 16 stack, leverages Vercel’s AI SDK for deterministic recipe generation, and integrates Firebase for auth, database, and storage.
-
-## Table of Contents
-
-1. [Features](#features-)
-2. [Tech Stack](#tech-stack-)
-3. [Project Structure](#project-structure-)
-4. [Getting Started](#getting-started-)
-5. [Configuration](#configuration-)
-6. [Available Scripts](#available-scripts-)
-7. [Architecture](#architecture-)
-8. [Contributing](#contributing-)
-9. [License](#license-)
-10. [Roadmap](#roadmap-)
-11. [Contact](#contact-)
+**Bake.me** is an AI-powered recipe generator that creates personalized recipes based on your ingredients, dietary preferences, and cooking experience. Built with Next.js 16, React 19, and the Vercel AI SDK for streaming structured responses.
 
 ![Bake.me Screenshot](/public/screenshot.png)
 
-## Features ✨
+## ✨ Features
 
-- **AI Recipe Generation**: Get personalized recipes based on ingredients you have or dishes you want to make
-- **Structured Data**: Recipes are generated as structured data for consistent formatting
-- **Dietary Preferences**: Customize recipes based on your dietary restrictions and preferences
-- **Save Favorites**: Build your personal collection of favorite recipes
-- **User Profiles**: Set your cooking experience level and default serving sizes
-- **Smart Suggestions**: Receive ingredient substitution suggestions and cooking tips
+- **🤖 AI Recipe Generation** — Get personalized recipes based on ingredients you have or dishes you want to make
+- **📊 Structured Output** — Recipes are generated as typed JSON with Zod schema validation
+- **🥗 Dietary Preferences** — Support for vegetarian, vegan, keto, gluten-free, and more
+- **⚡ Real-time Streaming** — Watch recipes generate in real-time with partial updates
+- **💾 Save Favorites** — Build your personal collection of favorite recipes
+- **👤 User Profiles** — Set cooking experience, allergies, preferred cuisines, and serving sizes
+- **🔐 Authentication** — Email/password and Google sign-in via Firebase Auth
 
-## Tech Stack 🛠️
+## 🛠️ Tech Stack
 
-- **Framework**: Next.js 16.0 (App Router, React Server Components)
-- **UI**: React 19.1, Tailwind CSS 4.1, Lucide Icons
-- **State Management**: Zustand 5.0 with persisted stores
-- **AI Platform**: Vercel AI SDK 5 (Core, React, RSC, OpenAI provider) using `gpt-5.1-chat-latest`
-- **Validation**: Zod 4.1 for schema-driven AI responses
-- **Backend Services**: Firebase Auth, Firestore, Cloud Storage
-- **Tooling**: TypeScript 5.9, ESLint 9, PostCSS 8
-- **Deployment**: Vercel
+### Core Framework
 
-## Project Structure 🗂️
+| Package                                       | Version | Purpose                               |
+| --------------------------------------------- | ------- | ------------------------------------- |
+| [Next.js](https://nextjs.org/)                | 16.0    | React framework with App Router & RSC |
+| [React](https://react.dev/)                   | 19.1    | UI library with Server Components     |
+| [TypeScript](https://www.typescriptlang.org/) | 5.9     | Type safety                           |
+
+### AI & Data
+
+| Package                                                                   | Version | Purpose                              |
+| ------------------------------------------------------------------------- | ------- | ------------------------------------ |
+| [Vercel AI SDK](https://sdk.vercel.ai/)                                   | 5.0     | AI streaming & structured generation |
+| [@ai-sdk/openai](https://sdk.vercel.ai/providers/ai-sdk-providers/openai) | 2.0     | OpenAI provider for GPT models       |
+| [@ai-sdk/rsc](https://sdk.vercel.ai/docs/ai-sdk-rsc)                      | 1.0     | React Server Components integration  |
+| [Zod](https://zod.dev/)                                                   | 4.1     | Schema validation for AI responses   |
+
+### Backend Services
+
+| Package                                             | Version | Purpose                      |
+| --------------------------------------------------- | ------- | ---------------------------- |
+| [Firebase](https://firebase.google.com/)            | 12.1    | Auth, Firestore database     |
+| [js-cookie](https://github.com/js-cookie/js-cookie) | 3.0     | Auth token cookie management |
+
+### UI & Styling
+
+| Package                                                                   | Version | Purpose                      |
+| ------------------------------------------------------------------------- | ------- | ---------------------------- |
+| [Tailwind CSS](https://tailwindcss.com/)                                  | 4.1     | Utility-first CSS            |
+| [@tailwindcss/typography](https://tailwindcss.com/docs/typography-plugin) | 0.5     | Prose styling for recipes    |
+| [Lucide React](https://lucide.dev/)                                       | 0.559   | Icon library                 |
+| [class-variance-authority](https://cva.style/)                            | 0.7     | Component variant management |
+| [react-markdown](https://github.com/remarkjs/react-markdown)              | 10.1    | Markdown rendering           |
+
+### State Management
+
+| Package                                  | Version | Purpose                       |
+| ---------------------------------------- | ------- | ----------------------------- |
+| [Zustand](https://zustand-demo.pmnd.rs/) | 5.0     | Global state with persistence |
+
+## 📁 Project Structure
 
 ```
 src/
-├─ app/
-│  ├─ layout.tsx            # Root layout + Auth listener
-│  ├─ page.tsx              # Landing page
-│  ├─ generate/             # Recipe generation experience
-│  ├─ profile/              # User preferences
-│  └─ saved/                # Saved recipe library
-├─ components/              # Shared UI components
-├─ lib/
-│  ├─ actions.ts            # Server actions (AI calls)
-│  ├─ db.ts                 # Firestore helpers
-│  ├─ firebase.ts           # Firebase client bootstrap
-│  └─ store/                # Zustand stores (auth, recipe, profile)
-└─ public/
+├── app/                          # Next.js App Router
+│   ├── layout.tsx                # Root layout with AuthListener
+│   ├── page.tsx                  # Landing page (RSC)
+│   ├── generate/                 # Recipe generation
+│   │   ├── page.tsx              # Main generate page
+│   │   ├── components/           # Feature components
+│   │   │   ├── RecipeForm.tsx    # Input form
+│   │   │   ├── RecipeDisplay.tsx # Recipe output
+│   │   │   └── ModeSelector.tsx  # Generation mode picker
+│   │   ├── types.ts              # Feature types
+│   │   └── constants.ts          # Prompt templates
+│   ├── profile/                  # User preferences
+│   ├── saved/                    # Saved recipes library
+│   ├── login/                    # Auth (uses shared AuthForm)
+│   ├── signup/                   # Auth (uses shared AuthForm)
+│   └── reset-password/           # Password recovery
+│
+├── components/                   # Shared components
+│   ├── ui/                       # UI primitives
+│   │   ├── Button.tsx            # Button with variants
+│   │   ├── Input.tsx             # Input & Textarea
+│   │   ├── ChipSelect.tsx        # Multi-select chips
+│   │   ├── TagInput.tsx          # Comma-separated tags
+│   │   ├── NavLink.tsx           # Active nav link
+│   │   ├── ErrorMessage.tsx      # Error alerts
+│   │   └── PageSkeleton.tsx      # Loading skeletons
+│   ├── auth/                     # Auth components
+│   │   ├── AuthForm.tsx          # Unified login/signup
+│   │   └── GoogleSignInButton.tsx
+│   ├── Navbar.tsx                # Navigation bar
+│   ├── PageLayout.tsx            # Page wrapper
+│   ├── MarkdownRenderer.tsx      # Recipe markdown display
+│   └── HeroCTA.tsx               # Landing page CTA
+│
+├── hooks/                        # Custom hooks
+│   └── useGoogleAuth.ts          # Google auth logic
+│
+├── lib/                          # Utilities & config
+│   ├── actions.ts                # Server actions (AI calls)
+│   ├── db.ts                     # Firestore operations
+│   ├── firebase.ts               # Firebase initialization
+│   ├── auth-cookie.ts            # Auth cookie helpers
+│   ├── constants.ts              # App constants
+│   ├── types.ts                  # Shared types
+│   └── store/                    # Zustand stores
+│       ├── auth-store.ts         # Auth state
+│       ├── recipe-store.ts       # Recipe generation state
+│       └── user-profile-store.ts # User preferences
+│
+└── proxy.ts                      # Route protection middleware
 ```
 
-## Getting Started 🚀
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
-- npm or yarn
-- Firebase account
-- OpenAI API key
+- **Node.js** 18.17 or later
+- **npm** or **yarn** or **pnpm**
+- **Firebase project** with Auth and Firestore enabled
+- **OpenAI API key**
 
 ### Installation
 
@@ -87,137 +144,155 @@ src/
 
 3. **Set up environment variables**
 
-   ```bash
-   cp .env.example .env.local
+   Create a `.env.local` file in the root directory:
+
+   ```env
+   # Firebase Configuration
+   NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+
+   # OpenAI (for Vercel AI SDK)
+   OPENAI_API_KEY=sk-your_openai_api_key
    ```
 
-4. **Run the development server**
+4. **Set up Firebase**
+
+   - Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
+   - Enable **Authentication** (Email/Password and Google providers)
+   - Enable **Cloud Firestore** database
+   - Create a Firestore index for the `recipes` collection:
+     - Collection: `recipes`
+     - Fields: `userId` (Ascending), `createdAt` (Descending)
+
+5. **Run the development server**
 
    ```bash
    npm run dev
    ```
 
-   Visit [http://localhost:3000](http://localhost:3000) to see the app.
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Configuration ⚙️
+## 📜 Available Scripts
 
-| Variable | Description |
-| --- | --- |
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase web API key |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase auth domain |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firestore project ID |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Storage bucket used for uploads |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID |
-| `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase app ID |
-| `OPENAI_API_KEY` | API key for the OpenAI provider powering `gpt-5.1-chat-latest` via Vercel AI SDK |
+| Command         | Description                              |
+| --------------- | ---------------------------------------- |
+| `npm run dev`   | Start development server with hot reload |
+| `npm run build` | Create optimized production build        |
+| `npm run start` | Serve production build locally           |
+| `npm run lint`  | Run ESLint                               |
 
-> ℹ️ The AI model is configured with `temperature: 0` for deterministic outputs. You can change this in `src/lib/actions.ts`.
+## 🏗️ Architecture
 
-## Available Scripts 🧪
+### State Management
 
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Start the Next.js dev server with hot reloading |
-| `npm run build` | Create an optimized production build |
-| `npm run start` | Serve the production build locally |
-| `npm run lint` | Run ESLint across the project |
+Uses **Zustand** for global state with three focused stores:
 
-## Architecture 🏗️
+- **`auth-store`** — User authentication state
+- **`recipe-store`** — Recipe generation, input persistence, saving
+- **`user-profile-store`** — User preferences and dietary settings
 
-The project follows a clean, modular architecture:
+Recipe inputs are persisted to localStorage to prevent data loss on refresh.
 
-- **State Management**: Uses `zustand` for global state, replacing Context API to avoid provider nesting. Stores are located in `src/lib/store/`.
-- **AI Integration**: Leverages `streamObject` from the Vercel AI SDK for type-safe, structured JSON responses from the LLM.
-- **Persistence**: Recipe inputs and state are persisted to local storage using Zustand middleware to prevent data loss on refresh.
-- **Components**: Reusable UI components are in `src/components/`, with feature-specific components co-located in their respective directories.
-- **Deterministic Dependencies**: All npm dependencies are locked via `package-lock.json` to guarantee reproducible installs in CI and local development.
+### AI Integration
 
-## Contributing 🤝
+Leverages the **Vercel AI SDK** with `streamObject` for type-safe structured generation:
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+```typescript
+const result = streamObject({
+  model: openai("gpt-4o"),
+  schema: recipeSchema, // Zod schema
+  system: systemPrompt,
+  prompt: userPrompt,
+  temperature: 0, // Deterministic output
+});
+```
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Recipes stream in real-time as structured JSON, validated against a Zod schema.
 
-## License 📝
+### Route Protection
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+The `proxy.ts` middleware protects authenticated routes (`/generate`, `/profile`, `/saved`) by checking for a valid Firebase auth cookie.
 
-## Contact 📧
+### Component Architecture
 
-- Project Link: [https://github.com/brown2020/bakemeai](https://github.com/brown2020/bakemeai)
-- Email: info@ignitechannel.com
+- **UI Primitives** (`components/ui/`) — Reusable, unstyled building blocks
+- **Feature Components** — Co-located with their routes
+- **Shared Components** — Cross-cutting concerns (Navbar, PageLayout)
 
-## Acknowledgments 🙏
+## 🤝 Contributing
 
-- [OpenAI](https://openai.com) for providing the AI capabilities
-- [Firebase](https://firebase.google.com) for authentication and database services
-- [Vercel](https://vercel.com) for hosting and deployment
-- All contributors who have helped shape Bake.me
+We welcome contributions! Here's how to get started:
 
-## Roadmap 🗺️
+1. **Fork** the repository
+2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
+3. **Commit** your changes: `git commit -m 'Add amazing feature'`
+4. **Push** to the branch: `git push origin feature/amazing-feature`
+5. **Open** a Pull Request
 
-We're excited about the future of Bake.me! Here are some features we're planning:
+### Development Guidelines
 
-### Near-term
+- Follow the existing code style (Prettier + ESLint)
+- Use TypeScript strictly (no `any` types)
+- Write meaningful commit messages
+- Keep PRs focused and atomic
+- Add tests for new features when applicable
 
-- [ ] Recipe difficulty ratings and time estimates
+### Good First Issues
+
+- Adding more dietary preference options
+- Improving mobile responsiveness
+- Adding recipe print view
+- Writing unit tests
+- Improving accessibility (a11y)
+
+## 🗺️ Roadmap
+
+### In Progress
+
+- [ ] Recipe difficulty ratings
 - [ ] Ingredient substitution suggestions
 - [ ] Unit conversion (metric/imperial)
-- [ ] Print-friendly recipe format
-- [ ] Share recipes with friends
 
-### Mid-term
+### Planned
 
 - [ ] Meal planning calendar
 - [ ] Shopping list generation
 - [ ] Recipe scaling
 - [ ] Nutritional information
-- [ ] Recipe collections and categories
-- [ ] Mobile app version
+- [ ] Recipe sharing
+- [ ] Mobile app (React Native)
 
-### Long-term
+### Future
 
-- [ ] Integration with smart kitchen devices
-- [ ] Voice-guided cooking instructions
+- [ ] Voice-guided cooking
+- [ ] Smart kitchen device integration
 - [ ] Community recipe sharing
-- [ ] AI-powered meal plan optimization
-- [ ] Cooking technique videos
-- [ ] Ingredient inventory management
+- [ ] AI meal plan optimization
 
-### Developer Experience
+## 📝 License
 
-- [ ] Improved test coverage
-- [ ] API documentation
-- [ ] Developer guides
-- [ ] Performance optimizations
-- [ ] Accessibility improvements
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
-## Calling All Cooking Coders! 👩‍🍳👨‍💻
+## 📧 Contact
 
-Are you passionate about both cooking and coding? We'd love your help in making Bake.me the ultimate cooking companion! Whether you're a:
+- **Project**: [github.com/brown2020/bakemeai](https://github.com/brown2020/bakemeai)
+- **Email**: info@ignitechannel.com
+- **Website**: [ignitechannel.com](https://ignitechannel.com)
 
-- Frontend developer who loves crafting delicious UIs
-- Backend engineer with a taste for robust architectures
-- ML enthusiast interested in recipe generation
-- UX designer who wants to make cooking more enjoyable
-- Food enthusiast with technical skills
+## 🙏 Acknowledgments
 
-Your contributions are welcome! Check out our [Contributing Guide](CONTRIBUTING.md) to get started.
-
-Some great first issues to tackle:
-
-- Improving recipe parsing accuracy
-- Adding more dietary preference options
-- Enhancing the mobile experience
-- Implementing new recipe features
-- Writing tests and documentation
-
-Join our community of cooking coders and help make home cooking smarter and more accessible for everyone!
+- [OpenAI](https://openai.com) — AI capabilities
+- [Vercel](https://vercel.com) — AI SDK & hosting
+- [Firebase](https://firebase.google.com) — Backend services
+- [Tailwind CSS](https://tailwindcss.com) — Styling
+- All our amazing contributors!
 
 ---
 
-Made with ❤️ by Ignite Channel
+<p align="center">
+  Made with ❤️ by <a href="https://ignitechannel.com">Ignite Channel</a>
+</p>
