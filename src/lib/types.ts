@@ -12,6 +12,15 @@ export interface UserProfile {
   updatedAtString?: string;
 }
 
+/**
+ * Input shape used for creating/updating a profile in Firestore.
+ * Excludes server-derived fields like `id` and timestamp/string variants.
+ */
+export type UserProfileInput = Omit<
+  UserProfile,
+  "id" | "updatedAt" | "updatedAtString"
+>;
+
 export interface Recipe {
   id: string;
   userId: string;

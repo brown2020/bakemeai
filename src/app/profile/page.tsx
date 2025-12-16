@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { getUserProfile, saveUserProfile } from "@/lib/db";
-import { UserProfile } from "@/lib/types";
+import { UserProfileInput } from "@/lib/types";
 import {
   ChipSelect,
   TagInput,
@@ -23,7 +23,7 @@ export default function Profile() {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [profile, setProfile] = useState<Partial<UserProfile>>({
+  const [profile, setProfile] = useState<UserProfileInput>({
     dietary: [],
     allergies: [],
     dislikedIngredients: [],
@@ -38,7 +38,14 @@ export default function Profile() {
       try {
         const userProfile = await getUserProfile(user.uid);
         if (userProfile) {
-          setProfile(userProfile);
+          setProfile({
+            dietary: userProfile.dietary,
+            allergies: userProfile.allergies,
+            dislikedIngredients: userProfile.dislikedIngredients,
+            cookingExperience: userProfile.cookingExperience,
+            servingSize: userProfile.servingSize,
+            preferredCuisines: userProfile.preferredCuisines,
+          });
         }
       } catch (error) {
         console.error("Error loading profile:", error);
@@ -55,7 +62,7 @@ export default function Profile() {
 
     setSaving(true);
     try {
-      await saveUserProfile(user.uid, profile as Omit<UserProfile, "id">);
+      await saveUserProfile(user.uid, profile);
     } catch (error) {
       console.error("Error saving profile:", error);
     } finally {
@@ -63,25 +70,21 @@ export default function Profile() {
     }
   };
 
-  const toggleArrayItem = (field: keyof UserProfile, value: string) => {
+  type ProfileArrayField =
+    | "dietary"
+    | "allergies"
+    | "dislikedIngredients"
+    | "preferredCuisines";
+
+  const toggleArrayItem = (field: ProfileArrayField, value: string) => {
     setProfile((prev) => {
-      const currentArray = (prev[field] as string[]) || [];
-      const newArray = currentArray.includes(value)
-        ? currentArray.filter((item) => item !== value)
-        : [...currentArray, value];
-      return { ...prev, [field]: newArray };
+      const current = prev[field];
+      const next = current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value];
+      return { ...prev, [field]: next };
     });
   };
-
-  if (!user) {
-    return (
-      <PageLayout title="Cooking Preferences">
-        <p className="text-gray-600">
-          Please sign in to view your preferences.
-        </p>
-      </PageLayout>
-    );
-  }
 
   if (loading) {
     return (

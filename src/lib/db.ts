@@ -12,7 +12,7 @@ import {
   getDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import { Recipe, UserProfile, RecipeStructure } from "./types";
+import { Recipe, UserProfile, RecipeStructure, UserProfileInput } from "./types";
 import { COLLECTIONS } from "./constants";
 
 interface SaveRecipeParams {
@@ -78,7 +78,7 @@ export async function deleteRecipe(recipeId: string) {
 
 export async function saveUserProfile(
   userId: string,
-  profile: Omit<UserProfile, "id">
+  profile: UserProfileInput
 ) {
   const profileData = {
     ...profile,
@@ -96,7 +96,7 @@ export async function getUserProfile(
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
-    const { updatedAt, ...profileData } = docSnap.data();
+    const profileData = docSnap.data();
     return {
       id: docSnap.id,
       ...profileData,

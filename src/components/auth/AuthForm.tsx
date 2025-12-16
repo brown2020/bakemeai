@@ -9,7 +9,7 @@ import {
   browserLocalPersistence,
   browserSessionPersistence,
 } from "firebase/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { GoogleSignInButton } from "./GoogleSignInButton";
@@ -35,8 +35,17 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [verificationSent, setVerificationSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const { signInWithGoogle, error: googleError } = useGoogleAuth("/");
+  const rawRedirect = searchParams.get("redirect");
+  const redirectTo =
+    typeof rawRedirect === "string" &&
+    rawRedirect.startsWith("/") &&
+    !rawRedirect.startsWith("//")
+      ? rawRedirect
+      : "/";
+
+  const { signInWithGoogle, error: googleError } = useGoogleAuth(redirectTo);
 
   const isLogin = mode === "login";
   const title = isLogin ? "Sign in to Bake.me" : "Create your Bake.me account";
@@ -68,7 +77,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         await sendEmailVerification(userCredential.user);
         setVerificationSent(true);
       }
-      router.push("/");
+      router.push(redirectTo);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -171,4 +180,5 @@ export function AuthForm({ mode }: AuthFormProps) {
     </div>
   );
 }
+
 

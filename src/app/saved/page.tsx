@@ -49,10 +49,8 @@ export default function SavedRecipes() {
 
     try {
       await deleteRecipe(recipeId);
-      setRecipes(recipes.filter((r) => r.id !== recipeId));
-      if (selectedRecipe?.id === recipeId) {
-        setSelectedRecipe(null);
-      }
+      setRecipes((prev) => prev.filter((r) => r.id !== recipeId));
+      setSelectedRecipe((prev) => (prev?.id === recipeId ? null : prev));
     } catch (error) {
       console.error("Error deleting recipe:", error);
     }

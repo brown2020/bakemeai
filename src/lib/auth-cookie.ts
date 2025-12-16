@@ -20,11 +20,11 @@ export const setAuthCookie = async (user: User | null) => {
     });
   } else {
     // Remove the cookie if user is null (logged out)
-    Cookies.remove(FIREBASE_AUTH_COOKIE);
+    Cookies.remove(FIREBASE_AUTH_COOKIE, { path: "/" });
   }
 };
 
 // Remove the auth cookie (for logout)
 export const removeAuthCookie = () => {
-  Cookies.remove(FIREBASE_AUTH_COOKIE);
+  Cookies.remove(FIREBASE_AUTH_COOKIE, { path: "/" });
 };

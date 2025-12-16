@@ -29,6 +29,7 @@ function GenerateContent() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { userProfile, fetchUserProfile } = useUserProfileStore();
+  const userId = user?.uid;
 
   const {
     recipe,
@@ -91,12 +92,12 @@ function GenerateContent() {
   );
 
   const handleSave = useCallback(async () => {
-    if (user?.uid) {
-      await saveRecipeToDb(user.uid);
+    if (userId) {
+      await saveRecipeToDb(userId);
       // Refresh the router cache to ensure saved recipes are updated
       router.refresh();
     }
-  }, [saveRecipeToDb, user?.uid, router]);
+  }, [saveRecipeToDb, userId, router]);
 
   const handleModeSelect = useCallback(
     (newMode: Mode) => {
