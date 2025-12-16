@@ -44,3 +44,4 @@ export type CookingExperience = (typeof EXPERIENCE_LEVELS)[number]["value"];
  * Used by middleware for route protection.
  */
 export const PRIVATE_ROUTES = ["/generate", "/profile", "/saved"] as const;
+

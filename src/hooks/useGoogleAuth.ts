@@ -39,3 +39,4 @@ export function useGoogleAuth(redirectTo: string = "/") {
     setError,
   };
 }
+
