@@ -2,29 +2,49 @@
 
 import { User } from "firebase/auth";
 import Cookies from "js-cookie";
+import {
+  FIREBASE_AUTH_COOKIE,
+  LEGACY_FIREBASE_AUTH_COOKIE,
+} from "@/lib/auth-constants";
 
 // Cookie name for Firebase auth
-export const FIREBASE_AUTH_COOKIE = "firebaseAuth";
+const cookieOptions = {
+  expires: 7, // 7 days
+  path: "/",
+  sameSite: "strict" as const,
+  secure: process.env.NODE_ENV === "production",
+};
 
-// Set the auth cookie with the user's ID token
-export const setAuthCookie = async (user: User | null) => {
-  if (user) {
-    // Get the user's ID token
-    const token = await user.getIdToken();
-    // Set the cookie with the token
-    Cookies.set(FIREBASE_AUTH_COOKIE, token, {
-      expires: 7, // 7 days
-      path: "/",
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-    });
-  } else {
-    // Remove the cookie if user is null (logged out)
-    Cookies.remove(FIREBASE_AUTH_COOKIE, { path: "/" });
+export function setAuthCookieToken(token: string) {
+  Cookies.set(FIREBASE_AUTH_COOKIE, token, cookieOptions);
+}
+
+export function clearAuthCookie() {
+  // Try several variants to ensure the cookie is cleared across common host/path setups.
+  for (const name of [FIREBASE_AUTH_COOKIE, LEGACY_FIREBASE_AUTH_COOKIE]) {
+    Cookies.remove(name);
+    Cookies.remove(name, { path: "/" });
+
+    if (typeof window !== "undefined") {
+      const hostname = window.location.hostname;
+      Cookies.remove(name, { path: "/", domain: hostname });
+      Cookies.remove(name, { path: "/", domain: `.${hostname}` });
+    }
   }
+}
+
+// Set the auth cookie with the user's ID token (kept for backwards compatibility)
+export const setAuthCookie = async (user: User | null) => {
+  if (!user) {
+    clearAuthCookie();
+    return;
+  }
+
+  const token = await user.getIdToken();
+  setAuthCookieToken(token);
 };
 
 // Remove the auth cookie (for logout)
 export const removeAuthCookie = () => {
-  Cookies.remove(FIREBASE_AUTH_COOKIE, { path: "/" });
+  clearAuthCookie();
 };

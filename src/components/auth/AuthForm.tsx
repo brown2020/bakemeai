@@ -9,25 +9,31 @@ import {
   browserLocalPersistence,
   browserSessionPersistence,
 } from "firebase/auth";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { GoogleSignInButton } from "./GoogleSignInButton";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { Input, ErrorMessage } from "@/components/ui";
 import { Button } from "@/components/Button";
+import { setAuthCookieToken } from "@/lib/auth-cookie";
 
 type AuthMode = "login" | "signup";
 
 interface AuthFormProps {
   mode: AuthMode;
+  redirectTo?: string;
+}
+
+function isSafeRedirectPath(path: string): boolean {
+  return path.startsWith("/") && !path.startsWith("//");
 }
 
 /**
  * Shared authentication form for login and signup pages.
  * Reduces code duplication while maintaining flexibility.
  */
-export function AuthForm({ mode }: AuthFormProps) {
+export function AuthForm({ mode, redirectTo }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -35,17 +41,11 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [verificationSent, setVerificationSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  const rawRedirect = searchParams.get("redirect");
-  const redirectTo =
-    typeof rawRedirect === "string" &&
-    rawRedirect.startsWith("/") &&
-    !rawRedirect.startsWith("//")
-      ? rawRedirect
-      : "/";
+  const safeRedirectTo =
+    redirectTo && isSafeRedirectPath(redirectTo) ? redirectTo : "/";
 
-  const { signInWithGoogle, error: googleError } = useGoogleAuth(redirectTo);
+  const { signInWithGoogle, error: googleError } = useGoogleAuth(safeRedirectTo);
 
   const isLogin = mode === "login";
   const title = isLogin ? "Sign in to Bake.me" : "Create your Bake.me account";
@@ -67,17 +67,25 @@ export function AuthForm({ mode }: AuthFormProps) {
           auth,
           rememberMe ? browserLocalPersistence : browserSessionPersistence
         );
-        await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+        const token = await userCredential.user.getIdToken();
+        setAuthCookieToken(token);
       } else {
         const userCredential = await createUserWithEmailAndPassword(
           auth,
           email,
           password
         );
+        const token = await userCredential.user.getIdToken();
+        setAuthCookieToken(token);
         await sendEmailVerification(userCredential.user);
         setVerificationSent(true);
       }
-      router.push(redirectTo);
+      router.push(safeRedirectTo);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);

@@ -8,6 +8,11 @@ interface NavLinkProps {
   children: React.ReactNode;
   icon?: React.ReactNode;
   className?: string;
+  /**
+   * Disable prefetch for protected routes so navigation always hits the server
+   * (and therefore `proxy.ts`) instead of using a cached/prefetched payload.
+   */
+  prefetch?: boolean;
 }
 
 /**
@@ -19,6 +24,7 @@ export function NavLink({
   children,
   icon,
   className = "",
+  prefetch = false,
 }: NavLinkProps) {
   const pathname = usePathname();
   const isActive = pathname === href;
@@ -26,6 +32,7 @@ export function NavLink({
   return (
     <Link
       href={href}
+      prefetch={prefetch}
       className={`px-2 sm:px-3 py-2 text-sm font-medium rounded-md transition-colors ${
         isActive
           ? "bg-blue-50 text-blue-600"
@@ -37,4 +44,5 @@ export function NavLink({
     </Link>
   );
 }
+
 

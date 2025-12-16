@@ -23,7 +23,7 @@ export function HeroCTA() {
   if (user) {
     return (
       <div className="mt-5 sm:mt-8 sm:flex sm:gap-4">
-        <Link href="/generate">
+        <Link href="/generate" prefetch={false}>
           <Button size="lg" className="w-full">
             Start Cooking
           </Button>
@@ -47,4 +47,5 @@ export function HeroCTA() {
     </div>
   );
 }
+
 

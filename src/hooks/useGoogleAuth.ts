@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { auth, googleProvider } from "@/lib/firebase";
+import { setAuthCookieToken } from "@/lib/auth-cookie";
 
 /**
  * Hook for handling Google authentication.
@@ -19,7 +20,9 @@ export function useGoogleAuth(redirectTo: string = "/") {
     setError(null);
 
     try {
-      await signInWithPopup(auth, googleProvider);
+      const userCredential = await signInWithPopup(auth, googleProvider);
+      const token = await userCredential.user.getIdToken();
+      setAuthCookieToken(token);
       router.push(redirectTo);
     } catch (err) {
       if (err instanceof Error) {
@@ -39,4 +42,5 @@ export function useGoogleAuth(redirectTo: string = "/") {
     setError,
   };
 }
+
 

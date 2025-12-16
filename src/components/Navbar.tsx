@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { auth } from "@/lib/firebase";
-import { removeAuthCookie } from "@/lib/auth-cookie";
+import { clearAuthCookie } from "@/lib/auth-cookie";
 import Image from "next/image";
 import { Wand2, BookMarked, Settings } from "lucide-react";
 import { NavLink } from "@/components/ui";
@@ -32,10 +32,17 @@ export default function Navbar() {
     }
   }, [isProfileOpen]);
 
-  const handleSignOut = () => {
-    auth.signOut();
-    removeAuthCookie();
+  const handleSignOut = async () => {
+    // Clear client state/cookies immediately to ensure proxy.ts sees a signed-out request.
+    clearAuthCookie();
     setIsProfileOpen(false);
+
+    try {
+      await auth.signOut();
+    } finally {
+      // Force a full navigation to drop any prefetched/cached protected route payloads.
+      window.location.assign("/login");
+    }
   };
 
   return (
