@@ -1,10 +1,10 @@
 # Bake.me 🧑‍🍳
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.0-black?logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19.1-61dafb?logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![React](https://img.shields.io/badge/React-19.1.1-61dafb?logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-3178c6?logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1.18-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
+[![License: AGPL--3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE.md)
 
 **Bake.me** is an AI-powered recipe generator that creates personalized recipes based on your ingredients, dietary preferences, and cooking experience. Built with Next.js 16, React 19, and the Vercel AI SDK for streaming structured responses.
 
@@ -26,41 +26,41 @@
 
 | Package                                       | Version | Purpose                               |
 | --------------------------------------------- | ------- | ------------------------------------- |
-| [Next.js](https://nextjs.org/)                | 16.0    | React framework with App Router & RSC |
-| [React](https://react.dev/)                   | 19.1    | UI library with Server Components     |
-| [TypeScript](https://www.typescriptlang.org/) | 5.9     | Type safety                           |
+| [Next.js](https://nextjs.org/)                | 16.0.0  | React framework with App Router & RSC |
+| [React](https://react.dev/)                   | 19.1.1  | UI library with Server Components     |
+| [TypeScript](https://www.typescriptlang.org/) | 5.9.2   | Type safety                           |
 
 ### AI & Data
 
 | Package                                                                   | Version | Purpose                              |
 | ------------------------------------------------------------------------- | ------- | ------------------------------------ |
-| [Vercel AI SDK](https://sdk.vercel.ai/)                                   | 5.0     | AI streaming & structured generation |
-| [@ai-sdk/openai](https://sdk.vercel.ai/providers/ai-sdk-providers/openai) | 2.0     | OpenAI provider for GPT models       |
-| [@ai-sdk/rsc](https://sdk.vercel.ai/docs/ai-sdk-rsc)                      | 1.0     | React Server Components integration  |
-| [Zod](https://zod.dev/)                                                   | 4.1     | Schema validation for AI responses   |
+| [Vercel AI SDK](https://sdk.vercel.ai/)                                   | 6.0.3   | AI streaming & structured generation |
+| [@ai-sdk/openai](https://sdk.vercel.ai/providers/ai-sdk-providers/openai) | 3.0.1   | OpenAI provider for GPT models       |
+| [@ai-sdk/rsc](https://sdk.vercel.ai/docs/ai-sdk-rsc)                      | 2.0.3   | React Server Components integration  |
+| [Zod](https://zod.dev/)                                                   | 4.1.12  | Schema validation for AI responses   |
 
 ### Backend Services
 
 | Package                                             | Version | Purpose                      |
 | --------------------------------------------------- | ------- | ---------------------------- |
 | [Firebase](https://firebase.google.com/)            | 12.1    | Auth, Firestore database     |
-| [js-cookie](https://github.com/js-cookie/js-cookie) | 3.0     | Auth token cookie management |
+| [js-cookie](https://github.com/js-cookie/js-cookie) | 3.0.5   | Auth token cookie management |
 
 ### UI & Styling
 
 | Package                                                                   | Version | Purpose                      |
 | ------------------------------------------------------------------------- | ------- | ---------------------------- |
-| [Tailwind CSS](https://tailwindcss.com/)                                  | 4.1     | Utility-first CSS            |
-| [@tailwindcss/typography](https://tailwindcss.com/docs/typography-plugin) | 0.5     | Prose styling for recipes    |
-| [Lucide React](https://lucide.dev/)                                       | 0.559   | Icon library                 |
-| [class-variance-authority](https://cva.style/)                            | 0.7     | Component variant management |
-| [react-markdown](https://github.com/remarkjs/react-markdown)              | 10.1    | Markdown rendering           |
+| [Tailwind CSS](https://tailwindcss.com/)                                  | 4.1.18  | Utility-first CSS            |
+| [@tailwindcss/typography](https://tailwindcss.com/docs/typography-plugin) | 0.5.19  | Prose styling for recipes    |
+| [Lucide React](https://lucide.dev/)                                       | 0.562.0 | Icon library                 |
+| [class-variance-authority](https://cva.style/)                            | 0.7.1   | Component variant management |
+| [react-markdown](https://github.com/remarkjs/react-markdown)              | 10.1.0  | Markdown rendering           |
 
 ### State Management
 
 | Package                                  | Version | Purpose                       |
 | ---------------------------------------- | ------- | ----------------------------- |
-| [Zustand](https://zustand-demo.pmnd.rs/) | 5.0     | Global state with persistence |
+| [Zustand](https://zustand-demo.pmnd.rs/) | 5.0.8   | Global state with persistence |
 
 ## 📁 Project Structure
 
@@ -217,6 +217,20 @@ Recipes stream in real-time as structured JSON, validated against a Zod schema.
 
 The `proxy.ts` middleware protects authenticated routes (`/generate`, `/profile`, `/saved`) by checking for a valid Firebase auth cookie.
 
+### Firebase Security Rules
+
+This repo includes **default-deny** Firebase rules with per-user ownership checks:
+
+- **Firestore** (`firestore.rules`):
+  - **Default**: deny all reads/writes.
+  - **`recipes/{recipeId}`**: users can read/update/delete only if `resource.data.userId === request.auth.uid`.
+  - **Create recipe**: allowed only when signed in and `request.resource.data.userId === request.auth.uid`.
+  - **`userProfiles/{userId}`**: document id is the UID; signed-in users can read/create/update/delete only their own doc.
+
+- **Storage** (`storage.rules`):
+  - **Default**: deny all reads/writes.
+  - **`users/{userId}/**`**: signed-in users can read/write only within their own folder.
+
 ### Component Architecture
 
 - **UI Primitives** (`components/ui/`) — Reusable, unstyled building blocks
@@ -275,7 +289,7 @@ We welcome contributions! Here's how to get started:
 
 ## 📝 License
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)** — see [`LICENSE.md`](LICENSE.md) for details.
 
 ## 📧 Contact
 

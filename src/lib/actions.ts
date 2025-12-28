@@ -7,7 +7,8 @@ import { z } from "zod";
 import { UserProfile } from "./types";
 
 // Define the schema for the recipe structure
-const recipeSchema = z.object({
+const recipeSchema = z
+  .object({
   title: z.string().describe("The title of the recipe"),
   preparationTime: z.string().describe("Time needed for preparation (e.g. '15 mins')"),
   cookingTime: z.string().describe("Time needed for cooking (e.g. '45 mins')"),
@@ -16,13 +17,24 @@ const recipeSchema = z.object({
   ingredients: z.array(z.string()).describe("List of ingredients with measurements"),
   instructions: z.array(z.string()).describe("Step-by-step cooking instructions"),
   tips: z.array(z.string()).describe("Helpful cooking tips"),
-  calories: z.number().optional().describe("Approximate calories per serving"),
-  macros: z.object({
-    protein: z.string().optional(),
-    carbs: z.string().optional(),
-    fat: z.string().optional(),
-  }).optional().describe("Macronutrients per serving"),
-});
+  // NOTE: OpenAI Responses API JSON schema requires `required` to include *every* key in `properties`.
+  // To keep fields "optional" while satisfying that constraint, we make them required-but-nullable.
+  calories: z
+    .number()
+    .nullable()
+    .describe("Approximate calories per serving (use null if unknown)"),
+  macros: z
+    .object({
+      protein: z.string().nullable().describe("Protein per serving (use null if unknown)"),
+      carbs: z.string().nullable().describe("Carbs per serving (use null if unknown)"),
+      fat: z.string().nullable().describe("Fat per serving (use null if unknown)"),
+    })
+    .strict()
+    .nullable()
+    .describe("Macronutrients per serving (use null if unknown)"),
+  })
+  // OpenAI strict schema requires `additionalProperties: false` for objects.
+  .strict();
 
 const getSystemPrompt = (
   isIngredientBased: boolean,
@@ -61,10 +73,16 @@ const getSystemPrompt = (
   
 Consider the following user preferences:${userPreferences}
 
-Adjust recipe complexity based on cooking experience, and strictly avoid any allergens.
+Adjust recipe complexity based on cooking experience.
+
+Allergen handling rules:
+- Only avoid allergens that are explicitly listed under "Allergies (MUST AVOID)" above.
+- Do not proactively remove/replace common allergens (e.g. peanuts, dairy, gluten) unless they appear in the user's listed allergies.
+- If the user explicitly asks for an ingredient that is a common allergen (e.g. "peanut butter"), include it as requested unless it conflicts with the user's listed allergies.
 ${isIngredientBased ? "The user will provide a list of ingredients they have. Suggest a recipe that uses these ingredients, adding only common pantry staples if necessary." : "The user will describe what they want to eat."}
 
-Generate the response as a structured JSON object matching the schema.`;
+Generate the response as a structured JSON object matching the schema.
+If a numeric or nutrition field is unknown, set it to null (do not omit keys).`;
 };
 
 export async function generateRecipe(

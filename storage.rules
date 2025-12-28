@@ -1,0 +1,20 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Deny everything by default.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // Minimal private user folder convention (safe even if unused today).
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+  }
+}
+
+

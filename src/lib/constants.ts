@@ -45,3 +45,5 @@ export type CookingExperience = (typeof EXPERIENCE_LEVELS)[number]["value"];
  */
 export const PRIVATE_ROUTES = ["/generate", "/profile", "/saved"] as const;
 
+
+

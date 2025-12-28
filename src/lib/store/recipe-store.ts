@@ -49,7 +49,7 @@ function convertToMarkdown(recipe: RecipeStructure): string {
   if (recipe.cookingTime) md += `- Cooking Time: ${recipe.cookingTime}\n`;
   if (recipe.servings) md += `- Servings: ${recipe.servings}\n`;
   if (recipe.difficulty) md += `- Difficulty: ${recipe.difficulty}\n`;
-  if (recipe.calories) md += `- Calories: ${recipe.calories} kcal\n`;
+  if (recipe.calories != null) md += `- Calories: ${recipe.calories} kcal\n`;
 
   if (recipe.ingredients && recipe.ingredients.length > 0) {
     md += `\n## Ingredients\n`;

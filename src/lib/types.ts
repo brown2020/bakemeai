@@ -44,12 +44,12 @@ export interface RecipeStructure {
   ingredients?: string[];
   instructions?: string[];
   tips?: string[];
-  calories?: number;
+  calories?: number | null;
   macros?: {
-    protein?: string;
-    carbs?: string;
-    fat?: string;
-  };
+    protein: string | null;
+    carbs: string | null;
+    fat: string | null;
+  } | null;
 }
 
 export interface ParsedRecipe {
