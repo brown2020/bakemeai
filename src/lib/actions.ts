@@ -4,7 +4,7 @@ import { createStreamableValue } from "@ai-sdk/rsc";
 import { streamObject } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
-import { UserProfile } from "./types";
+import { UserProfile } from "./schemas";
 
 // Define the schema for the recipe structure
 const recipeSchema = z

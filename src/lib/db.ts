@@ -12,8 +12,16 @@ import {
   getDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import { Recipe, UserProfile, RecipeStructure, UserProfileInput } from "./types";
+import {
+  Recipe,
+  UserProfile,
+  RecipeStructure,
+  UserProfileInput,
+  recipeSchema,
+  userProfileSchema,
+} from "./schemas";
 import { COLLECTIONS } from "./constants";
+import { z } from "zod";
 
 interface SaveRecipeParams {
   userId: string;
@@ -58,7 +66,7 @@ export async function saveRecipe({
   return { id: docRef.id, ...recipe };
 }
 
-export async function getUserRecipes(userId: string) {
+export async function getUserRecipes(userId: string): Promise<Recipe[]> {
   const q = query(
     collection(db, COLLECTIONS.RECIPES),
     where("userId", "==", userId),
@@ -66,10 +74,13 @@ export async function getUserRecipes(userId: string) {
   );
 
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
+  const rawRecipes = snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
-  })) as Recipe[];
+  }));
+
+  // Validate data with Zod schema
+  return z.array(recipeSchema).parse(rawRecipes);
 }
 
 export async function deleteRecipe(recipeId: string) {
@@ -96,11 +107,13 @@ export async function getUserProfile(
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
-    const profileData = docSnap.data();
-    return {
+    const rawProfile = {
       id: docSnap.id,
-      ...profileData,
-    } as UserProfile;
+      ...docSnap.data(),
+    };
+
+    // Validate data with Zod schema
+    return userProfileSchema.parse(rawProfile);
   }
   return null;
 }

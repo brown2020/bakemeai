@@ -43,11 +43,13 @@ export function Button({
     <button
       className={buttonVariants({ variant, size, className })}
       disabled={isLoading || props.disabled}
+      aria-busy={isLoading}
       {...props}
     >
       {isLoading ? (
-        <div className="mr-2">
+        <div className="mr-2" role="status" aria-label="Loading">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          <span className="sr-only">Loading...</span>
         </div>
       ) : null}
       {children}

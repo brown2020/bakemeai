@@ -79,8 +79,16 @@ const features = [
 export default function Home() {
   return (
     <div className="bg-surface-50">
+      {/* Skip to main content link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-blue-600"
+      >
+        Skip to main content
+      </a>
+
       {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" id="main-content">
         <div className="relative py-16">
           <div className="lg:grid lg:grid-cols-2 lg:gap-8 items-center">
             <div className="relative z-10">

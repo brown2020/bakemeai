@@ -3,7 +3,8 @@ import { persist } from "zustand/middleware";
 import { generateRecipe } from "@/lib/actions";
 import { readStreamableValue } from "@ai-sdk/rsc";
 import { saveRecipe } from "@/lib/db";
-import { UserProfile, ParsedRecipe, RecipeStructure } from "@/lib/types";
+import { UserProfile, RecipeStructure } from "@/lib/schemas";
+import { ParsedRecipe } from "@/lib/types";
 
 interface RecipeState {
   // Generation State

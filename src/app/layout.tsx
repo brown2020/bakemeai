@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { AuthListener } from "@/components/AuthListener";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,9 +20,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthListener />
-        <Navbar />
-        <main className="pt-16">{children}</main>
+        <ErrorBoundary>
+          <AuthListener />
+          <Navbar />
+          <main className="pt-16">{children}</main>
+        </ErrorBoundary>
       </body>
     </html>
   );

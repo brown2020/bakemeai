@@ -4,6 +4,7 @@ import { useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Suspense } from "react";
 import PageLayout from "@/components/PageLayout";
+import { LoadingSpinner } from "@/components/ui";
 import {
   ModeSelector,
   RecipeForm,
@@ -114,7 +115,9 @@ function GenerateContent() {
   return (
     <Suspense
       fallback={
-        <div className="animate-pulse h-96 bg-gray-100 rounded-lg"></div>
+        <div className="flex items-center justify-center h-96">
+          <LoadingSpinner size="lg" />
+        </div>
       }
     >
       <div className="space-y-6">

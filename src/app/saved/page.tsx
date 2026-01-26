@@ -7,23 +7,27 @@ import { Recipe } from "@/lib/types";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { Trash2 } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
-import { Input, CardSkeleton } from "@/components/ui";
+import { Input, CardSkeleton, ErrorMessage } from "@/components/ui";
 
 export default function SavedRecipes() {
   const { user } = useAuthStore();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
   useEffect(() => {
     async function loadRecipes() {
       if (!user) return;
+      setLoadError(null);
       try {
         const userRecipes = await getUserRecipes(user.uid);
         setRecipes(userRecipes);
       } catch (error) {
         console.error("Error loading recipes:", error);
+        setLoadError("Failed to load recipes. Please refresh the page.");
       } finally {
         setLoading(false);
       }
@@ -47,12 +51,14 @@ export default function SavedRecipes() {
   const handleDelete = async (recipeId: string) => {
     if (!confirm("Are you sure you want to delete this recipe?")) return;
 
+    setDeleteError(null);
     try {
       await deleteRecipe(recipeId);
       setRecipes((prev) => prev.filter((r) => r.id !== recipeId));
       setSelectedRecipe((prev) => (prev?.id === recipeId ? null : prev));
     } catch (error) {
       console.error("Error deleting recipe:", error);
+      setDeleteError("Failed to delete recipe. Please try again.");
     }
   };
 
@@ -75,6 +81,10 @@ export default function SavedRecipes() {
           : undefined
       }
     >
+      {/* Error Messages */}
+      {loadError && <ErrorMessage message={loadError} />}
+      {deleteError && <ErrorMessage message={deleteError} />}
+
       {/* Search */}
       <div className="mb-6 max-w-xs">
         <Input

@@ -9,6 +9,7 @@ import {
   TagInput,
   NumberInput,
   PageSkeleton,
+  ErrorMessage,
 } from "@/components/ui";
 import {
   DIETARY_OPTIONS,
@@ -22,7 +23,10 @@ import { Button } from "@/components/Button";
 export default function Profile() {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [profile, setProfile] = useState<UserProfileInput>({
     dietary: [],
     allergies: [],
@@ -35,6 +39,7 @@ export default function Profile() {
   useEffect(() => {
     async function loadProfile() {
       if (!user) return;
+      setLoadError(null);
       try {
         const userProfile = await getUserProfile(user.uid);
         if (userProfile) {
@@ -49,6 +54,7 @@ export default function Profile() {
         }
       } catch (error) {
         console.error("Error loading profile:", error);
+        setLoadError("Failed to load profile. Please refresh the page.");
       } finally {
         setLoading(false);
       }
@@ -61,10 +67,15 @@ export default function Profile() {
     if (!user) return;
 
     setSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
     try {
       await saveUserProfile(user.uid, profile);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000); // Clear success message after 3s
     } catch (error) {
       console.error("Error saving profile:", error);
+      setSaveError("Failed to save preferences. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -98,7 +109,16 @@ export default function Profile() {
 
   return (
     <PageLayout title="Cooking Preferences">
+      {loadError && <ErrorMessage message={loadError} />}
+
       <div className="bg-white rounded-lg shadow-xs p-4 sm:p-6 border border-surface-200 max-w-2xl">
+        {saveError && <ErrorMessage message={saveError} />}
+        {saveSuccess && (
+          <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
+            Preferences saved successfully!
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <ChipSelect
             label="Dietary Preferences"
