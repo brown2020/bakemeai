@@ -39,11 +39,17 @@ export const PRIVATE_ROUTES = ["/generate", "/profile", "/saved"] as const;
 export const AUTH_PAGES = ["/login", "/signup", "/reset-password"] as const;
 
 /**
- * Authentication cookie configuration.
+ * Cookie configuration for client-side auth token storage.
  */
-export const AUTH_COOKIE_CONFIG = {
+export const COOKIE_CONFIG = {
   /** Cookie expiry in days */
   EXPIRY_DAYS: 7,
+} as const;
+
+/**
+ * JWT validation configuration for server-side token verification.
+ */
+export const JWT_VALIDATION_CONFIG = {
   /** Leeway in seconds to account for clock skew when validating JWT expiry */
-  JWT_EXPIRY_LEEWAY_SECONDS: 5,
+  EXPIRY_LEEWAY_SECONDS: 5,
 } as const;

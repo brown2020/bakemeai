@@ -9,6 +9,7 @@ interface LogContext {
 
 /**
  * Environment flags computed once at module load.
+ * These are immutable for the application lifetime - environment variable changes require restart.
  */
 const IS_DEVELOPMENT = process.env.NODE_ENV === "development";
 const IS_LOGGING_ENABLED = IS_DEVELOPMENT || process.env.NEXT_PUBLIC_ENABLE_CONSOLE_LOGS === "true";

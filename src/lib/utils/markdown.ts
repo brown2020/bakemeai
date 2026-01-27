@@ -79,8 +79,7 @@ export function convertToMarkdown(recipe: RecipeStructure): string {
 
 /**
  * Extracts the title from markdown content.
- * Fallback function used when structured data is unavailable.
- * In practice, structured data is always available from AI generation.
+ * Legacy fallback for edge cases where structured data is incomplete.
  */
 export function extractTitle(content: string): string {
   if (!content) return RECIPE.DEFAULT_TITLE;
@@ -92,8 +91,7 @@ export function extractTitle(content: string): string {
 
 /**
  * Extracts ingredients list from markdown content.
- * Fallback function used when structured data is unavailable.
- * Parses the "Ingredients" section and returns list items.
+ * Legacy fallback for edge cases where structured data is incomplete.
  */
 export function extractIngredients(content: string): string[] {
   if (!content) return [];
@@ -112,7 +110,6 @@ export function extractIngredients(content: string): string[] {
       .map((line) => line.replace(/^[-*]\s*/, "").trim())
       .filter(item => item.length > 0);
   } catch (error) {
-    // Log parsing failures in development to help debug markdown extraction issues
     logWarning("Failed to parse ingredients section", {
       error: error instanceof Error ? error.message : String(error),
       contentPreview: match[1].substring(0, 100),
@@ -123,13 +120,11 @@ export function extractIngredients(content: string): string[] {
 
 /**
  * Extracts a specific field value from markdown content.
- * Fallback function used when structured data is unavailable.
- * Uses case-insensitive matching and handles variations in spacing.
+ * Legacy fallback for edge cases where structured data is incomplete.
  */
 export function extractField(content: string, fieldName: string): string {
   if (!content || !fieldName) return "";
   
-  // Escape special regex characters in fieldName and use case-insensitive matching
   const escapedFieldName = fieldName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const match = content.match(new RegExp(`[-*]\\s*${escapedFieldName}\\s*:\\s*(.+?)$`, "im"));
   return match?.[1]?.trim() || "";
@@ -137,17 +132,14 @@ export function extractField(content: string, fieldName: string): string {
 
 /**
  * Extracts the servings number from markdown content.
- * Fallback function used when structured data is unavailable.
- * In practice, structured data is always available from AI generation.
+ * Legacy fallback for edge cases where structured data is incomplete.
  */
 export function extractServings(content: string): number {
   const DEFAULT_SERVINGS = 4;
   if (!content) return DEFAULT_SERVINGS;
   
-  // Extract servings from markdown metadata line
   const match = content.match(/[-*]\s*Servings?\s*:\s*(\d+)/i);
   const servings = match?.[1] ? parseInt(match[1], 10) : DEFAULT_SERVINGS;
   
-  // Validate reasonable range
   return servings > 0 && servings <= RECIPE.MAX_SERVINGS ? servings : DEFAULT_SERVINGS;
 }

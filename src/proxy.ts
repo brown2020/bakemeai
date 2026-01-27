@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import {
   PRIVATE_ROUTES,
   AUTH_PAGES,
-  AUTH_COOKIE_CONFIG,
+  JWT_VALIDATION_CONFIG,
   FIREBASE_AUTH_COOKIE,
 } from "@/lib/constants/auth";
 import { deleteAuthCookies } from "@/lib/utils/auth-cookies";
@@ -52,15 +52,17 @@ function base64UrlToUtf8(input: string): string {
 }
 
 /**
- * Validates that a JWT token has not expired.
- * Includes a small leeway for clock skew.
- * @param token - The JWT token to validate
- * @returns True if the token is valid and not expired
+ * Checks if a JWT token's expiry claim is still valid.
+ * 
+ * SECURITY NOTE: This only validates the expiry claim, NOT the signature.
+ * Signature verification requires Firebase Admin SDK server-side.
+ * This is sufficient for client-side route protection, as malicious tokens
+ * will fail when used against Firebase services.
+ * 
+ * @param token - The JWT token to check
+ * @returns True if the token has a valid, unexpired exp claim
  */
-function isUnexpiredJwt(token: string): boolean {
-  // Firebase ID token is a JWT. We do a lightweight expiry check here.
-  // (Signature verification would require Admin SDK and is out of scope for this app's current model.)
-  
+function hasUnexpiredJwtClaim(token: string): boolean {
   // JWT structure: header.payload.signature (3 parts separated by dots)
   const jwtParts = token.split(".");
   if (jwtParts.length !== 3) return false;
@@ -70,9 +72,8 @@ function isUnexpiredJwt(token: string): boolean {
     if (!payload?.exp) return false;
     
     const nowSeconds = Math.floor(Date.now() / 1000);
-    // Add leeway (5s) to account for small time differences between servers
-    // Token is valid if: exp > (now - leeway), or equivalently: exp > now + (-leeway)
-    return payload.exp > nowSeconds - AUTH_COOKIE_CONFIG.JWT_EXPIRY_LEEWAY_SECONDS;
+    // Add leeway to account for small time differences between servers
+    return payload.exp > nowSeconds - JWT_VALIDATION_CONFIG.EXPIRY_LEEWAY_SECONDS;
   } catch {
     return false;
   }
@@ -162,9 +163,9 @@ export async function proxy(request: NextRequest) {
 
     // Extract and validate auth token
     const authToken = request.cookies.get(FIREBASE_AUTH_COOKIE)?.value;
-    const cookiePresent = !!authToken;
-    const payload = authToken ? tryGetJwtPayload(authToken) : null;
-    const jwtValid = !!authToken && !!payload && isUnexpiredJwt(authToken);
+    const cookiePresent = authToken != null;
+    const payload = authToken != null ? tryGetJwtPayload(authToken) : null;
+    const jwtValid = authToken != null && payload != null && hasUnexpiredJwtClaim(authToken);
     const userId = payload?.user_id ?? payload?.sub ?? null;
     const isAuthenticated = cookiePresent && jwtValid;
 
@@ -217,22 +218,33 @@ export async function proxy(request: NextRequest) {
     }
     return withDebugHeaders(response, debugContext);
   } catch (error) {
-    // Fail closed: redirect to login for protected routes
     const { pathname } = request.nextUrl;
     
-    // Log proxy errors for debugging production issues
-    logError("Proxy error - failing closed", error, { pathname });
+    // Log all proxy errors for debugging
+    logError("Proxy error encountered", error, { pathname });
     
     const isAuthPage = AUTH_PAGES.some((page) => pathname.startsWith(page));
+    const isPrivate = isPrivateRoute(pathname);
 
-    if (isAuthPage) return NextResponse.next();
+    // For auth pages, allow through even on error to avoid redirect loops
+    if (isAuthPage) {
+      return NextResponse.next();
+    }
 
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("redirect", pathname);
-    const response = NextResponse.redirect(url);
-    deleteAuthCookies(response);
-    return response;
+    // For protected routes, fail closed (redirect to login) as a security measure
+    // This prevents accessing protected content if auth validation fails
+    if (isPrivate) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("redirect", pathname);
+      const response = NextResponse.redirect(url);
+      deleteAuthCookies(response);
+      return response;
+    }
+
+    // For public routes, allow through despite error
+    // Public content should remain accessible even if auth check fails
+    return NextResponse.next();
   }
 }
 

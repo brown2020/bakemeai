@@ -1,3 +1,21 @@
+/**
+ * Firestore database operations for recipes and user profiles.
+ * 
+ * ERROR HANDLING CONTRACT:
+ * - All functions throw errors on failure (never return error objects)
+ * - Callers MUST use try-catch blocks
+ * - Errors are logged internally before being thrown
+ * - User-friendly messages are included in thrown Error objects
+ * 
+ * @example
+ * try {
+ *   const recipe = await saveRecipe({ userId, content });
+ * } catch (error) {
+ *   // Error already logged, message is user-friendly
+ *   displayErrorToUser(error.message);
+ * }
+ */
+
 import {
   collection,
   addDoc,
@@ -22,6 +40,7 @@ import {
   UserProfileInput,
   recipeSchema,
   userProfileSchema,
+  completeRecipeStructureSchema,
 } from "./schemas";
 import { COLLECTIONS } from "./constants/domain";
 import {
@@ -61,17 +80,27 @@ export async function saveRecipe({
   structuredData,
 }: SaveRecipeParams): Promise<Recipe> {
   try {
-    // Extract metadata: prefer structured data from AI, fall back to markdown parsing
-    // Use nullish coalescing (??) to properly handle falsy values like 0 or empty string
-    const title = structuredData?.title ?? extractTitle(content);
-    const ingredients =
-      structuredData?.ingredients ?? extractIngredients(content);
-    const preparationTime =
-      structuredData?.preparationTime ??
-      extractField(content, "Preparation Time");
-    const cookingTime =
-      structuredData?.cookingTime ?? extractField(content, "Cooking Time");
-    const servings = structuredData?.servings ?? extractServings(content);
+    // Validate structured data completeness before using it
+    const isCompleteStructuredData = structuredData 
+      ? completeRecipeStructureSchema.safeParse(structuredData).success
+      : false;
+
+    // Extract metadata: prefer complete structured data, otherwise fall back to markdown parsing
+    const title = isCompleteStructuredData && structuredData?.title !== undefined 
+      ? structuredData.title 
+      : extractTitle(content);
+    const ingredients = isCompleteStructuredData && structuredData?.ingredients !== undefined
+      ? structuredData.ingredients
+      : extractIngredients(content);
+    const preparationTime = isCompleteStructuredData && structuredData?.preparationTime !== undefined
+      ? structuredData.preparationTime
+      : extractField(content, "Preparation Time");
+    const cookingTime = isCompleteStructuredData && structuredData?.cookingTime !== undefined
+      ? structuredData.cookingTime
+      : extractField(content, "Cooking Time");
+    const servings = isCompleteStructuredData && structuredData?.servings !== undefined 
+      ? structuredData.servings 
+      : extractServings(content);
     const difficulty = structuredData?.difficulty;
 
     const recipe: Omit<Recipe, "id"> = {

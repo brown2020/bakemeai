@@ -6,6 +6,22 @@ import { z } from "zod";
  */
 
 /**
+ * User-friendly error messages for common Firestore error codes.
+ * Centralized for consistency and easier testing.
+ */
+const FIRESTORE_ERROR_MESSAGES: Record<string, string> = {
+  "permission-denied": "You don't have permission for this action. Please sign in again.",
+  "unavailable": "Unable to connect to the database. Please check your internet connection.",
+  "not-found": "The requested data was not found.",
+  "already-exists": "This data already exists.",
+  "resource-exhausted": "Storage limit reached. Please contact support.",
+  "cancelled": "The operation was cancelled.",
+  "deadline-exceeded": "The operation took too long. Please try again.",
+  "invalid-argument": "Invalid data provided. Please check your input.",
+  "unauthenticated": "Please sign in to continue.",
+};
+
+/**
  * Gets a user-friendly error message from a Firestore error code.
  * Provides specific, actionable messages for common Firestore errors.
  * 
@@ -22,21 +38,7 @@ export function getFirestoreErrorMessage(
   }
 
   const code = (error as { code: string }).code;
-  
-  // Map Firestore error codes to user-friendly messages
-  const errorMessages: Record<string, string> = {
-    "permission-denied": "You don't have permission for this action. Please sign in again.",
-    "unavailable": "Unable to connect to the database. Please check your internet connection.",
-    "not-found": "The requested data was not found.",
-    "already-exists": "This data already exists.",
-    "resource-exhausted": "Storage limit reached. Please contact support.",
-    "cancelled": "The operation was cancelled.",
-    "deadline-exceeded": "The operation took too long. Please try again.",
-    "invalid-argument": "Invalid data provided. Please check your input.",
-    "unauthenticated": "Please sign in to continue.",
-  };
-
-  return errorMessages[code] ?? defaultMessage;
+  return FIRESTORE_ERROR_MESSAGES[code] ?? defaultMessage;
 }
 
 /**

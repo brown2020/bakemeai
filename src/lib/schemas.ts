@@ -4,6 +4,16 @@ import { firestoreTimestampSchema } from "./utils/firestore";
 /**
  * Zod schemas for runtime validation of Firestore data.
  * Ensures type safety and data integrity across the application.
+ * 
+ * SCHEMA ORGANIZATION:
+ * - Single-use schemas: Defined inline (recipeSchema, userProfileSchema)
+ * - Multi-use schemas: Extract base fields, compose variations (recipe structure schemas)
+ * - This balances DRY principles with code clarity
+ * 
+ * TYPE EXPORTS:
+ * - All TypeScript types are co-located with their schemas using z.infer<typeof schema>
+ * - This ensures schema and type definitions stay synchronized
+ * - Import types from this module rather than creating inline z.infer usages elsewhere
  */
 
 export const recipeSchema = z.object({
@@ -82,6 +92,23 @@ export const recipeStructureSchema = z.object({
 });
 
 /**
+ * Complete recipe schema for final validation before saving.
+ * Ensures all essential fields are present for a valid recipe.
+ */
+export const completeRecipeStructureSchema = z.object({
+  title: baseRecipeFields.title,
+  preparationTime: baseRecipeFields.preparationTime,
+  cookingTime: baseRecipeFields.cookingTime,
+  servings: baseRecipeFields.servings,
+  difficulty: baseRecipeFields.difficulty,
+  ingredients: baseRecipeFields.ingredients.min(1, "Recipe must have at least one ingredient"),
+  instructions: baseRecipeFields.instructions.min(1, "Recipe must have at least one instruction"),
+  tips: baseRecipeFields.tips.optional(),
+  calories: baseRecipeFields.calories.optional(),
+  macros: baseRecipeFields.macros.optional(),
+});
+
+/**
  * Base recipe fields for AI generation (exported for use in server actions).
  * Includes .describe() annotations for AI context.
  */
@@ -134,6 +161,7 @@ export type UserProfile = z.infer<typeof userProfileSchema>;
 export type SerializableUserProfile = z.infer<typeof serializableUserProfileSchema>;
 export type UserProfileInput = z.infer<typeof userProfileInputSchema>;
 export type RecipeStructure = z.infer<typeof recipeStructureSchema>;
+export type CompleteRecipeStructure = z.infer<typeof completeRecipeStructureSchema>;
 
 /**
  * Parsed recipe data structure for UI display.

@@ -24,24 +24,39 @@ export function sanitizeMarkdown(content: string): string {
   let sanitized = content;
 
   // Remove script tags and their content
+  // Prevents XSS attacks via <script>alert('xss')</script>
+  // Pattern: Matches opening tag, any content, and closing tag
   sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
 
-  // Remove style tags and their content (could contain CSS-based attacks)
+  // Remove style tags and their content
+  // Prevents CSS-based attacks (e.g., expression() in IE, @import with malicious CSS)
+  // Pattern: Matches opening tag, any content, and closing tag
   sanitized = sanitized.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "");
 
   // Remove iframe tags
+  // Prevents embedding external malicious content or clickjacking
+  // Pattern: Matches opening tag, any content, and closing tag
   sanitized = sanitized.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "");
 
   // Remove object and embed tags
+  // Prevents loading Flash objects or other embedded plugins that could execute code
+  // Pattern: Uses backreference \1 to match the same tag name for opening and closing
   sanitized = sanitized.replace(/<(object|embed)\b[^<]*(?:(?!<\/\1>)<[^<]*)*<\/\1>/gi, "");
 
-  // Remove event handlers in HTML attributes (onclick, onerror, etc.)
+  // Remove event handlers in HTML attributes
+  // Prevents XSS via onclick="malicious()", onerror="xss()", etc.
+  // Pattern: Matches "on" + any word chars + "=" + quoted value
   sanitized = sanitized.replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, "");
 
   // Remove javascript: and data: URIs
+  // Prevents XSS via <a href="javascript:alert('xss')"> and data URIs
+  // Pattern: Matches href/src attributes starting with javascript: or data:
+  // Replacement: Keeps the attribute name but removes the dangerous protocol
   sanitized = sanitized.replace(/(href|src)\s*=\s*["']?\s*(javascript|data):/gi, "$1=");
 
-  // Remove any remaining HTML comments (could hide malicious content)
+  // Remove HTML comments
+  // Prevents hiding malicious content in comments that might be processed by IE
+  // Pattern: Matches <!-- any content --> including multiline
   sanitized = sanitized.replace(/<!--[\s\S]*?-->/g, "");
 
   return sanitized;

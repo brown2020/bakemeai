@@ -72,15 +72,6 @@ export function isAppError(error: unknown): error is AppError {
 }
 
 /**
- * Union type representing errors from catch blocks.
- * Covers standard Error objects, custom AppError instances, and error-like objects.
- */
-export type CatchBlockError = Error | AppError | { message: string }
-
-/**
- * Standard error messages for common operations.
- */
-/**
  * Standard error messages for common operations.
  * Centralized to ensure consistent user experience.
  * These are user-facing messages - keep them friendly and actionable.
@@ -108,19 +99,6 @@ export const ERROR_MESSAGES = {
 } as const;
 
 /**
- * Type guard to convert unknown errors from catch blocks to typed errors.
- */
-function asCatchBlockError(error: unknown): CatchBlockError {
-  if (error instanceof Error) {
-    return error;
-  }
-  if (error && typeof error === "object" && "message" in error) {
-    return error as { message: string };
-  }
-  return new Error(String(error));
-}
-
-/**
  * Handles errors with consistent logging and user-friendly messages.
  * 
  * Purpose:
@@ -140,8 +118,15 @@ export function handleError(
   context: ErrorContext,
   userMessage: string
 ): string {
-  // Convert unknown error to typed error for type safety
-  const typedError = asCatchBlockError(error);
+  // Convert unknown error to typed error for logging
+  let typedError: Error | AppError;
+  if (error instanceof Error) {
+    typedError = error;
+  } else if (error && typeof error === "object" && "message" in error) {
+    typedError = new Error(String((error as { message: unknown }).message));
+  } else {
+    typedError = new Error(String(error));
+  }
   
   // Log with full technical details for developers
   logError(logMessage, typedError, context);

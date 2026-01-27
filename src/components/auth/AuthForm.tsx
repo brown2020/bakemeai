@@ -58,6 +58,30 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
     : "Already have an account? Sign in";
   const altLinkHref = isLogin ? "/signup" : "/login";
 
+  const handleLogin = async () => {
+    await setPersistence(
+      auth,
+      rememberMe ? browserLocalPersistence : browserSessionPersistence
+    );
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    await setUserAuthToken(userCredential.user);
+  };
+
+  const handleSignup = async () => {
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    await setUserAuthToken(userCredential.user);
+    await sendEmailVerification(userCredential.user);
+    setVerificationSent(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -65,25 +89,9 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
 
     try {
       if (isLogin) {
-        await setPersistence(
-          auth,
-          rememberMe ? browserLocalPersistence : browserSessionPersistence
-        );
-        const userCredential = await signInWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-        await setUserAuthToken(userCredential.user);
+        await handleLogin();
       } else {
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-        await setUserAuthToken(userCredential.user);
-        await sendEmailVerification(userCredential.user);
-        setVerificationSent(true);
+        await handleSignup();
       }
       router.push(safeRedirectTo);
     } catch (err) {

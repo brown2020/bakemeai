@@ -2,6 +2,7 @@
 
 import { Component, ReactNode } from "react";
 import { logError } from "@/lib/utils/logger";
+import { ReloadButton } from "./ReloadButton";
 
 interface Props {
   children: ReactNode;
@@ -81,13 +82,7 @@ export class FeatureErrorBoundary extends Component<Props, State> {
                 </p>
               </div>
               <div className="mt-4">
-                <button
-                  type="button"
-                  onClick={() => window.location.reload()}
-                  className="rounded-md bg-red-100 px-3 py-2 text-sm font-medium text-red-800 hover:bg-red-200 transition-colors"
-                >
-                  Refresh Page
-                </button>
+                <ReloadButton variant="feature" label="Refresh Page" />
               </div>
             </div>
           </div>

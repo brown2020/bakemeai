@@ -10,13 +10,7 @@ import { RECIPE_PROMPTS } from "@/app/generate/constants";
 
 /**
  * Custom hook for recipe generation logic.
- * Encapsulates all generation-related state and validation logic.
- * 
- * Benefits:
- * - Centralizes generation logic for reusability
- * - Handles validation and rate limiting
- * - Provides clean API for components
- * - Makes testing easier
+ * Encapsulates generation flow: validation -> rate limiting -> debounced generation.
  * 
  * @param userProfile - User profile for personalized recipes
  * @returns Generation state and handler functions
@@ -37,29 +31,30 @@ export function useRecipeGeneration(userProfile: SerializableUserProfile | null)
     resetSaveState,
   } = useRecipeStore();
 
-  // Core generation logic without debouncing
-  const performGeneration = useCallback(
-    async (prompt: string, isIngredientsMode: boolean) => {
-      await generateRecipeContent(prompt, isIngredientsMode, userProfile);
-    },
-    [generateRecipeContent, userProfile]
-  );
-
-  // Debounced version for rate limiting
   const debouncedGeneration = useDebounce(
-    performGeneration,
+    useCallback(
+      async (prompt: string, isIngredientsMode: boolean) => {
+        await generateRecipeContent(prompt, isIngredientsMode, userProfile);
+      },
+      [generateRecipeContent, userProfile]
+    ),
     AI_GENERATION_DEBOUNCE_MS
   );
 
-  /**
-   * Handles recipe generation form submission.
-   * Validates input, enforces rate limiting, and triggers generation.
-   */
+  const validateInput = useCallback((promptInput: string): string | null => {
+    const schema = mode === "specific" 
+      ? specificRecipeInputSchema 
+      : ingredientsRecipeInputSchema;
+    
+    const validation = schema.safeParse(promptInput);
+    return validation.success ? null : validation.error.issues[0].message;
+  }, [mode]);
+
   const handleGenerate = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
       
-      // Rate limiting: prevent rapid consecutive submissions
+      // Rate limiting check
       const now = Date.now();
       if (now - lastSubmitTimeRef.current < AI_GENERATION_DEBOUNCE_MS) {
         setValidationError("Please wait a moment before generating another recipe.");
@@ -70,38 +65,23 @@ export function useRecipeGeneration(userProfile: SerializableUserProfile | null)
       resetSaveState();
       setValidationError(null);
 
-      // Validate input based on mode using Zod schemas
+      // Validate input
       const promptInput = mode === "specific" ? input : ingredients;
-      const schema =
-        mode === "specific"
-          ? specificRecipeInputSchema
-          : ingredientsRecipeInputSchema;
-
-      const validation = schema.safeParse(promptInput);
-      if (!validation.success) {
-        setValidationError(validation.error.issues[0].message);
+      const error = validateInput(promptInput);
+      if (error) {
+        setValidationError(error);
         return;
       }
 
-      // Generate appropriate prompt based on mode
-      const promptFn =
-        mode === "specific"
-          ? RECIPE_PROMPTS.specific
-          : RECIPE_PROMPTS.ingredients;
+      // Generate prompt and trigger generation
+      const promptFn = mode === "specific" 
+        ? RECIPE_PROMPTS.specific 
+        : RECIPE_PROMPTS.ingredients;
+      const prompt = promptFn(promptInput);
 
-      const prompt = promptFn(validation.data);
-
-      // Generate recipe with debouncing
-      // Note: Cleanup is handled by useDebounce hook's internal timeout clearing
       debouncedGeneration(prompt, mode === "ingredients");
     },
-    [
-      mode,
-      input,
-      ingredients,
-      resetSaveState,
-      debouncedGeneration,
-    ]
+    [mode, input, ingredients, resetSaveState, debouncedGeneration, validateInput]
   );
 
   return {

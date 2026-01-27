@@ -83,12 +83,11 @@ export default function Profile() {
     }
   };
 
-  // Type-safe helper for array field names in UserProfileInput
-  type ProfileArrayField = {
-    [K in keyof UserProfileInput]: UserProfileInput[K] extends string[] ? K : never;
-  }[keyof UserProfileInput];
-
-  const toggleArrayItem = (field: ProfileArrayField, value: string): void => {
+  const toggleArrayItem = (
+    field: "dietary" | "allergies" | "dislikedIngredients" | "preferredCuisines",
+    value: string
+  ): void => {
+    // Functional update to ensure we're working with latest profile state
     setProfile((prev) => {
       const current = prev[field] as string[];
       const next = current.includes(value)

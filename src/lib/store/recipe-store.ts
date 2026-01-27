@@ -1,3 +1,13 @@
+/**
+ * Recipe generation and management store.
+ * 
+ * ARCHITECTURE:
+ * - Single source of truth: structuredRecipe (all display formats derived via getters)
+ * - Streaming logic lives in store (tightly coupled to UI state - each partial update triggers re-render)
+ * - Computed selectors use manual memoization to avoid recalculating markdown on every render
+ * - Only persists user input (mode, input, ingredients), not generated recipes
+ */
+
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { generateRecipe } from "@/lib/recipe-generation.server";
@@ -6,6 +16,7 @@ import { saveRecipe } from "@/lib/db";
 import { SerializableUserProfile, RecipeStructure, ParsedRecipe, recipeStructureSchema } from "@/lib/schemas";
 import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 import { convertToMarkdown } from "@/lib/utils/markdown";
+import { logWarning } from "@/lib/utils/logger";
 
 interface RecipeState {
   // Single source of truth for recipe data
@@ -43,6 +54,11 @@ interface RecipeState {
   resetSaveState: () => void;
 }
 
+// Memoization cache for computed selectors
+let cachedStructuredRecipe: RecipeStructure | null = null;
+let cachedParsedRecipe: ParsedRecipe | null = null;
+let cachedMarkdown: string | null = null;
+
 export const useRecipeStore = create<RecipeState>()(
   persist(
     (set, get) => ({
@@ -58,22 +74,44 @@ export const useRecipeStore = create<RecipeState>()(
       saved: false,
 
       // Computed selector: transforms structuredRecipe to ParsedRecipe format
-      // Called on each render - not memoized (structuredRecipe changes infrequently)
+      // Memoized to avoid recalculating on every render
       convertToDisplayFormat: (): ParsedRecipe => {
         const { structuredRecipe } = get();
-        if (!structuredRecipe) {
-          return { title: "", content: "" };
+        
+        // Return cached result if structuredRecipe hasn't changed
+        if (structuredRecipe === cachedStructuredRecipe && cachedParsedRecipe) {
+          return cachedParsedRecipe;
         }
-        const markdown = convertToMarkdown(structuredRecipe);
-        const title = structuredRecipe.title ?? "";
-        const content = markdown.replace(/^# .*\n\n/, "");
-        return { title, content, structuredData: structuredRecipe };
+        
+        // Recalculate and cache
+        cachedStructuredRecipe = structuredRecipe;
+        if (!structuredRecipe) {
+          cachedParsedRecipe = { title: "", content: "" };
+        } else {
+          const markdown = convertToMarkdown(structuredRecipe);
+          const title = structuredRecipe.title ?? "";
+          const content = markdown.replace(/^# .*\n\n/, "");
+          cachedParsedRecipe = { title, content, structuredData: structuredRecipe };
+        }
+        
+        return cachedParsedRecipe;
       },
 
       // Computed selector: transforms structuredRecipe to markdown string
+      // Memoized to avoid recalculating on every render
       getMarkdown: (): string => {
         const { structuredRecipe } = get();
-        return structuredRecipe ? convertToMarkdown(structuredRecipe) : "";
+        
+        // Return cached result if structuredRecipe hasn't changed
+        if (structuredRecipe === cachedStructuredRecipe && cachedMarkdown !== null) {
+          return cachedMarkdown;
+        }
+        
+        // Recalculate and cache
+        cachedStructuredRecipe = structuredRecipe;
+        cachedMarkdown = structuredRecipe ? convertToMarkdown(structuredRecipe) : "";
+        
+        return cachedMarkdown;
       },
 
       setInput: (input: string) => {
@@ -93,11 +131,7 @@ export const useRecipeStore = create<RecipeState>()(
 
       /**
        * Generates recipe content with streaming AI updates.
-       * 
-       * Architecture note: Streaming logic lives here rather than in a service layer
-       * because it's tightly coupled to UI state management - each partial update
-       * triggers a re-render. The store's responsibility is managing async state
-       * during streaming, not just storing the final result.
+       * Validates and stores each partial update as the AI progressively builds the recipe.
        */
       generateRecipeContent: async (prompt, isIngredientsMode, userProfile) => {
         set({
@@ -115,19 +149,16 @@ export const useRecipeStore = create<RecipeState>()(
           );
 
           for await (const partialObject of readStreamableValue(result)) {
-            if (partialObject) {
+            if (partialObject != null) {
               // The AI SDK streams partial objects that progressively build toward the schema.
               // We validate with Zod to ensure type safety during streaming.
               const validationResult = recipeStructureSchema.safeParse(partialObject);
               if (!validationResult.success) {
                 // Skip invalid partial updates during streaming
                 // Log validation errors in development to help catch schema issues
-                if (process.env.NODE_ENV === "development") {
-                  console.warn(
-                    "Invalid partial recipe data during streaming:",
-                    validationResult.error.flatten()
-                  );
-                }
+                logWarning("Invalid partial recipe data during streaming", {
+                  errors: validationResult.error.flatten(),
+                });
                 continue;
               }
               

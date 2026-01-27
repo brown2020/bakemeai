@@ -6,6 +6,7 @@ import { auth } from "@/lib/firebase";
 import { clearAuthCookie } from "@/lib/utils/auth-cookies";
 import { setUserAuthToken } from "@/lib/utils/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { logError } from "@/lib/utils/logger";
 
 /**
  * Authentication listener component.
@@ -48,7 +49,7 @@ export function AuthListener(): null {
         if (currentEventId !== authEventId || !isMounted) return;
       } catch (error) {
         // Log token refresh errors but don't crash the auth listener
-        console.error("Failed to set auth token:", error);
+        logError("Failed to set auth token", error, { uid });
         // Continue anyway - user is still authenticated in Firebase
       } finally {
         if (isMounted && currentEventId === authEventId) {

@@ -40,7 +40,7 @@ function validateFirebaseConfig(): void {
         })
       );
     } else {
-      // Friendly warning for development
+      // Friendly warning for development (don't throw due to Turbopack timing)
       console.warn(
         `⚠️  ${message}\n` +
           "Please check your .env.local file and ensure all Firebase configuration is set."

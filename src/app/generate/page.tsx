@@ -16,16 +16,7 @@ import { RecipeDisplay } from "./components/RecipeDisplay";
 import { ErrorMessage } from "./components/ErrorMessage";
 import { Mode } from "./types";
 
-// Main component
 export default function GeneratePage() {
-  return (
-    <PageLayout title="Generate Recipe">
-      <GenerateContent />
-    </PageLayout>
-  );
-}
-
-function GenerateContent() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { userProfile, fetchUserProfile } = useUserProfileStore();
@@ -86,43 +77,45 @@ function GenerateContent() {
   }, [setMode, resetRecipe]);
 
   return (
-    <div className="space-y-6">
-      {!mode ? (
-        <FeatureErrorBoundary featureName="Mode Selection">
-          <ModeSelector onSelectMode={handleModeSelect} />
-        </FeatureErrorBoundary>
-      ) : (
-        <>
-          <FeatureErrorBoundary featureName="Recipe Form">
-            <RecipeForm
-              mode={mode}
-              onBack={handleBack}
-              onSubmit={handleGenerate}
-              isLoading={isGenerating}
-              input={input}
-              onInputChange={setInput}
-              ingredients={ingredients}
-              onIngredientsChange={setIngredients}
-            />
+    <PageLayout title="Generate Recipe">
+      <div className="space-y-6">
+        {!mode ? (
+          <FeatureErrorBoundary featureName="Mode Selection">
+            <ModeSelector onSelectMode={handleModeSelect} />
           </FeatureErrorBoundary>
-
-          {validationError && <ErrorMessage message={validationError} />}
-          {generationError && <ErrorMessage message={generationError} />}
-
-          {structuredRecipe && (
-            <FeatureErrorBoundary featureName="Recipe Display">
-              <RecipeDisplay
-                parsedRecipe={parsedRecipe}
-                onSave={handleSave}
-                isSaving={isSaving}
-                saved={saved}
-                isGenerating={isGenerating}
-                saveError={saveError || ""}
+        ) : (
+          <>
+            <FeatureErrorBoundary featureName="Recipe Form">
+              <RecipeForm
+                mode={mode}
+                onBack={handleBack}
+                onSubmit={handleGenerate}
+                isLoading={isGenerating}
+                input={input}
+                onInputChange={setInput}
+                ingredients={ingredients}
+                onIngredientsChange={setIngredients}
               />
             </FeatureErrorBoundary>
-          )}
-        </>
-      )}
-    </div>
+
+            {validationError && <ErrorMessage message={validationError} />}
+            {generationError && <ErrorMessage message={generationError} />}
+
+            {structuredRecipe && (
+              <FeatureErrorBoundary featureName="Recipe Display">
+                <RecipeDisplay
+                  parsedRecipe={parsedRecipe}
+                  onSave={handleSave}
+                  isSaving={isSaving}
+                  saved={saved}
+                  isGenerating={isGenerating}
+                  saveError={saveError || ""}
+                />
+              </FeatureErrorBoundary>
+            )}
+          </>
+        )}
+      </div>
+    </PageLayout>
   );
 }

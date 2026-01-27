@@ -62,10 +62,11 @@ export default function SavedRecipes() {
     setRecipeToDelete(null);
 
     // Clear selected recipe if it's the one being deleted
+    // Functional update prevents stale closure over selectedRecipe
     setSelectedRecipe((prev) => (prev?.id === recipeId ? null : prev));
 
     // Optimistic update: remove recipe from local state immediately
-    // Use functional setState to avoid stale closure over recipes array
+    // Functional update prevents stale closure over recipes array - critical for callbacks
     setRecipes((currentRecipes) => {
       if (!currentRecipes) return currentRecipes;
       return currentRecipes.filter((r) => r.id !== recipeId);

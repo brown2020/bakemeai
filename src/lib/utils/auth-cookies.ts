@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 import {
   FIREBASE_AUTH_COOKIE,
   LEGACY_FIREBASE_AUTH_COOKIE,
-  AUTH_COOKIE_CONFIG,
+  COOKIE_CONFIG,
 } from "@/lib/constants/auth";
 
 /**
@@ -34,7 +34,7 @@ const AUTH_COOKIE_NAMES = [
  * - 7-day expiry: Balances security and UX
  */
 const cookieOptions = {
-  expires: AUTH_COOKIE_CONFIG.EXPIRY_DAYS,
+  expires: COOKIE_CONFIG.EXPIRY_DAYS,
   path: "/",
   sameSite: "strict" as const,
   secure: process.env.NODE_ENV === "production",
