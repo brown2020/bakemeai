@@ -45,6 +45,14 @@ export type CookingExperience = (typeof EXPERIENCE_LEVELS)[number]["value"];
  */
 export const PRIVATE_ROUTES = ["/generate", "/profile", "/saved"] as const;
 
+/**
+ * Authentication cookie configuration.
+ */
+export const AUTH_COOKIE_CONFIG = {
+  EXPIRY_DAYS: 7,
+  JWT_EXPIRY_LEEWAY_SECONDS: 5,
+} as const;
+
 
 
 

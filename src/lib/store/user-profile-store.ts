@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { UserProfile } from "@/lib/types";
 import { getUserProfile } from "@/lib/db";
+import { logError } from "@/lib/utils/logger";
 
 interface UserProfileState {
   userProfile: UserProfile | null;
@@ -32,7 +33,7 @@ export const useUserProfileStore = create<UserProfileState>((set) => ({
         set({ userProfile: null });
       }
     } catch (error) {
-      console.error("Error loading user profile:", error);
+      logError("Error loading user profile from store", error, { userId });
       set({ error: "Failed to load user profile" });
     } finally {
       set({ isLoading: false });

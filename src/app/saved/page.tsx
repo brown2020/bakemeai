@@ -8,6 +8,7 @@ import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { Trash2 } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
 import { Input, CardSkeleton, ErrorMessage } from "@/components/ui";
+import { logError } from "@/lib/utils/logger";
 
 export default function SavedRecipes() {
   const { user } = useAuthStore();
@@ -26,7 +27,7 @@ export default function SavedRecipes() {
         const userRecipes = await getUserRecipes(user.uid);
         setRecipes(userRecipes);
       } catch (error) {
-        console.error("Error loading recipes:", error);
+        logError("Error loading saved recipes", error, { userId: user?.uid });
         setLoadError("Failed to load recipes. Please refresh the page.");
       } finally {
         setLoading(false);
@@ -57,7 +58,7 @@ export default function SavedRecipes() {
       setRecipes((prev) => prev.filter((r) => r.id !== recipeId));
       setSelectedRecipe((prev) => (prev?.id === recipeId ? null : prev));
     } catch (error) {
-      console.error("Error deleting recipe:", error);
+      logError("Error deleting recipe", error, { recipeId });
       setDeleteError("Failed to delete recipe. Please try again.");
     }
   };

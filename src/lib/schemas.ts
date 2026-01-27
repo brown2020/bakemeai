@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { firestoreTimestampSchema } from "./utils/firestore";
 
 /**
  * Zod schemas for runtime validation of Firestore data.
@@ -27,7 +28,7 @@ export const userProfileSchema = z.object({
   cookingExperience: z.enum(["beginner", "intermediate", "advanced"]),
   servingSize: z.number().int().min(1).max(12),
   preferredCuisines: z.array(z.string()),
-  updatedAt: z.any().optional(), // Firestore Timestamp
+  updatedAt: firestoreTimestampSchema,
   updatedAtString: z.string().optional(),
 });
 

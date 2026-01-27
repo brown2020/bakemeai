@@ -6,10 +6,11 @@ import {
   FIREBASE_AUTH_COOKIE,
   LEGACY_FIREBASE_AUTH_COOKIE,
 } from "@/lib/auth-constants";
+import { AUTH_COOKIE_CONFIG } from "@/lib/constants";
 
-// Cookie name for Firebase auth
+// Cookie configuration for Firebase auth
 const cookieOptions = {
-  expires: 7, // 7 days
+  expires: AUTH_COOKIE_CONFIG.EXPIRY_DAYS,
   path: "/",
   sameSite: "strict" as const,
   secure: process.env.NODE_ENV === "production",

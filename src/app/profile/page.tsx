@@ -19,6 +19,7 @@ import {
 } from "@/lib/constants";
 import PageLayout from "@/components/PageLayout";
 import { Button } from "@/components/Button";
+import { logError } from "@/lib/utils/logger";
 
 export default function Profile() {
   const { user } = useAuthStore();
@@ -53,7 +54,7 @@ export default function Profile() {
           });
         }
       } catch (error) {
-        console.error("Error loading profile:", error);
+        logError("Error loading user profile", error, { userId: user?.uid });
         setLoadError("Failed to load profile. Please refresh the page.");
       } finally {
         setLoading(false);
@@ -74,7 +75,7 @@ export default function Profile() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000); // Clear success message after 3s
     } catch (error) {
-      console.error("Error saving profile:", error);
+      logError("Error saving user profile", error, { userId: user?.uid });
       setSaveError("Failed to save preferences. Please try again.");
     } finally {
       setSaving(false);

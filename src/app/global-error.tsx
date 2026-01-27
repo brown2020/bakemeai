@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { logError } from "@/lib/utils/logger";
 
 /**
  * Global error boundary for the application.
@@ -15,7 +16,9 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     // Log the error to an error reporting service
-    console.error("Global error:", error);
+    logError("Global error caught", error, {
+      digest: error.digest,
+    });
   }, [error]);
 
   return (

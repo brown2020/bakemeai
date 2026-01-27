@@ -3,8 +3,9 @@ import { persist } from "zustand/middleware";
 import { generateRecipe } from "@/lib/actions";
 import { readStreamableValue } from "@ai-sdk/rsc";
 import { saveRecipe } from "@/lib/db";
-import { UserProfile, RecipeStructure } from "@/lib/schemas";
+import { UserProfile, RecipeStructure, recipeStructureSchema } from "@/lib/schemas";
 import { ParsedRecipe } from "@/lib/types";
+import { logError } from "@/lib/utils/logger";
 
 interface RecipeState {
   // Generation State
@@ -122,7 +123,9 @@ export const useRecipeStore = create<RecipeState>()(
 
           for await (const partialObject of readStreamableValue(result)) {
             if (partialObject) {
-              // partialObject matches RecipeStructure (partial)
+              // During streaming, partial objects may not fully conform to the schema yet.
+              // We use the data as-is since the AI SDK guarantees the final structure.
+              // Type assertion is safe here as the schema is enforced by the AI SDK.
               const structuredData = partialObject as RecipeStructure;
               const markdownContent = convertToMarkdown(structuredData);
               const title = structuredData.title || "";
@@ -146,7 +149,7 @@ export const useRecipeStore = create<RecipeState>()(
             }
           }
         } catch (error) {
-          console.error("Error generating recipe:", error);
+          logError("Error generating recipe", error);
           set({
             generationError: "Failed to generate recipe. Please try again.",
           });
@@ -172,7 +175,7 @@ export const useRecipeStore = create<RecipeState>()(
           });
           set({ saved: true });
         } catch (error) {
-          console.error("Error saving recipe:", error);
+          logError("Error saving recipe to database", error, { userId });
           set({ saveError: "Failed to save recipe" });
         } finally {
           set({ isSaving: false });

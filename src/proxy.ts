@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { PRIVATE_ROUTES } from "@/lib/constants";
+import { PRIVATE_ROUTES, AUTH_COOKIE_CONFIG } from "@/lib/constants";
 import {
   FIREBASE_AUTH_COOKIE,
   LEGACY_FIREBASE_AUTH_COOKIE,
@@ -44,8 +44,8 @@ function isUnexpiredJwt(token: string): boolean {
     const payload = JSON.parse(base64UrlToUtf8(parts[1])) as { exp?: number };
     if (!payload?.exp) return false;
     const nowSeconds = Math.floor(Date.now() / 1000);
-    // small leeway for clock skew
-    return payload.exp > nowSeconds + 5;
+    // Small leeway for clock skew
+    return payload.exp > nowSeconds + AUTH_COOKIE_CONFIG.JWT_EXPIRY_LEEWAY_SECONDS;
   } catch {
     return false;
   }

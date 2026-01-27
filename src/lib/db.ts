@@ -22,6 +22,14 @@ import {
 } from "./schemas";
 import { COLLECTIONS } from "./constants";
 import { z } from "zod";
+import { logError } from "./utils/logger";
+import {
+  extractTitle,
+  extractIngredients,
+  extractField,
+  extractServings,
+} from "./utils/markdown";
+import { serializeFirestoreDoc } from "./utils/firestore";
 
 interface SaveRecipeParams {
   userId: string;
@@ -37,108 +45,108 @@ export async function saveRecipe({
   userId,
   content,
   structuredData,
-}: SaveRecipeParams) {
-  // Use structured data if available, otherwise parse from markdown
-  const title = structuredData?.title || extractTitle(content);
-  const ingredients =
-    structuredData?.ingredients || extractIngredients(content);
-  const preparationTime =
-    structuredData?.preparationTime ||
-    extractField(content, "Preparation Time");
-  const cookingTime =
-    structuredData?.cookingTime || extractField(content, "Cooking Time");
-  const servings = structuredData?.servings || extractServings(content);
-  const difficulty = structuredData?.difficulty;
+}: SaveRecipeParams): Promise<Recipe> {
+  try {
+    // Use structured data if available, otherwise parse from markdown
+    const title = structuredData?.title || extractTitle(content);
+    const ingredients =
+      structuredData?.ingredients || extractIngredients(content);
+    const preparationTime =
+      structuredData?.preparationTime ||
+      extractField(content, "Preparation Time");
+    const cookingTime =
+      structuredData?.cookingTime || extractField(content, "Cooking Time");
+    const servings = structuredData?.servings || extractServings(content);
+    const difficulty = structuredData?.difficulty;
 
-  const recipe: Omit<Recipe, "id"> = {
-    userId,
-    title,
-    content,
-    createdAt: Date.now(),
-    ingredients,
-    preparationTime,
-    cookingTime,
-    servings,
-    difficulty,
-  };
+    const recipe: Omit<Recipe, "id"> = {
+      userId,
+      title,
+      content,
+      createdAt: Date.now(),
+      ingredients,
+      preparationTime,
+      cookingTime,
+      servings,
+      difficulty,
+    };
 
-  const docRef = await addDoc(collection(db, COLLECTIONS.RECIPES), recipe);
-  return { id: docRef.id, ...recipe };
+    const docRef = await addDoc(collection(db, COLLECTIONS.RECIPES), recipe);
+    return { id: docRef.id, ...recipe };
+  } catch (error) {
+    logError("Failed to save recipe to Firestore", error, { userId });
+    throw new Error("Unable to save recipe. Please try again.");
+  }
 }
 
 export async function getUserRecipes(userId: string): Promise<Recipe[]> {
-  const q = query(
-    collection(db, COLLECTIONS.RECIPES),
-    where("userId", "==", userId),
-    orderBy("createdAt", "desc")
-  );
+  try {
+    const q = query(
+      collection(db, COLLECTIONS.RECIPES),
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc")
+    );
 
-  const snapshot = await getDocs(q);
-  const rawRecipes = snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+    const snapshot = await getDocs(q);
+    const rawRecipes = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
-  // Validate data with Zod schema
-  return z.array(recipeSchema).parse(rawRecipes);
+    // Validate data with Zod schema
+    return z.array(recipeSchema).parse(rawRecipes);
+  } catch (error) {
+    logError("Failed to fetch user recipes from Firestore", error, { userId });
+    throw new Error("Unable to load recipes. Please try again.");
+  }
 }
 
-export async function deleteRecipe(recipeId: string) {
-  await deleteDoc(doc(db, COLLECTIONS.RECIPES, recipeId));
+export async function deleteRecipe(recipeId: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, COLLECTIONS.RECIPES, recipeId));
+  } catch (error) {
+    logError("Failed to delete recipe from Firestore", error, { recipeId });
+    throw new Error("Unable to delete recipe. Please try again.");
+  }
 }
 
 export async function saveUserProfile(
   userId: string,
   profile: UserProfileInput
-) {
-  const profileData = {
-    ...profile,
-    updatedAt: serverTimestamp(),
-  };
+): Promise<UserProfile> {
+  try {
+    const profileData = {
+      ...profile,
+      updatedAt: serverTimestamp(),
+    };
 
-  await setDoc(doc(db, COLLECTIONS.USER_PROFILES, userId), profileData);
-  return { id: userId, ...profile };
+    await setDoc(doc(db, COLLECTIONS.USER_PROFILES, userId), profileData);
+    return { id: userId, ...profile };
+  } catch (error) {
+    logError("Failed to save user profile to Firestore", error, { userId });
+    throw new Error("Unable to save profile. Please try again.");
+  }
 }
 
 export async function getUserProfile(
   userId: string
 ): Promise<UserProfile | null> {
-  const docRef = doc(db, COLLECTIONS.USER_PROFILES, userId);
-  const docSnap = await getDoc(docRef);
+  try {
+    const docRef = doc(db, COLLECTIONS.USER_PROFILES, userId);
+    const docSnap = await getDoc(docRef);
 
-  if (docSnap.exists()) {
-    const rawProfile = {
-      id: docSnap.id,
-      ...docSnap.data(),
-    };
+    if (docSnap.exists()) {
+      const rawProfile = serializeFirestoreDoc({
+        id: docSnap.id,
+        ...docSnap.data(),
+      });
 
-    // Validate data with Zod schema
-    return userProfileSchema.parse(rawProfile);
+      // Validate data with Zod schema
+      return userProfileSchema.parse(rawProfile);
+    }
+    return null;
+  } catch (error) {
+    logError("Failed to fetch user profile from Firestore", error, { userId });
+    throw new Error("Unable to load profile. Please try again.");
   }
-  return null;
-}
-
-// Helper functions for parsing markdown (fallback when structured data unavailable)
-function extractTitle(content: string): string {
-  const match = content.match(/^# (.*)$/m);
-  return match ? match[1].trim() : "New Recipe";
-}
-
-function extractIngredients(content: string): string[] {
-  const match = content.match(/## Ingredients\n([\s\S]*?)(?=##|$)/);
-  if (!match) return [];
-  return match[1]
-    .split("\n")
-    .filter((line) => line.trim().startsWith("-"))
-    .map((line) => line.trim().replace(/^- /, ""));
-}
-
-function extractField(content: string, fieldName: string): string {
-  const match = content.match(new RegExp(`- ${fieldName}: (.*)`));
-  return match?.[1] || "";
-}
-
-function extractServings(content: string): number {
-  const match = content.match(/- Servings: (\d+)/);
-  return match ? parseInt(match[1]) : 0;
 }
