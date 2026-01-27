@@ -6,6 +6,7 @@ import { getUserRecipes, deleteRecipe } from "@/lib/db";
 import { Recipe } from "@/lib/schemas";
 import PageLayout from "@/components/PageLayout";
 import { ErrorMessage, ConfirmDialog } from "@/components/ui";
+import { FeatureErrorBoundary } from "@/components/FeatureErrorBoundary";
 import { useFirestoreQuery } from "@/hooks/useFirestoreQuery";
 import { logError } from "@/lib/utils/logger";
 import {
@@ -101,21 +102,27 @@ export default function SavedRecipes() {
         <EmptyState />
       ) : (
         <>
-          <RecipeSearch
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-          />
+          <FeatureErrorBoundary featureName="Recipe Search">
+            <RecipeSearch
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+            />
+          </FeatureErrorBoundary>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <RecipeList
-              recipes={filteredRecipes}
-              selectedRecipeId={selectedRecipe?.id || null}
-              onSelectRecipe={setSelectedRecipe}
-              onDeleteRecipe={handleDeleteClick}
-            />
+            <FeatureErrorBoundary featureName="Recipe List">
+              <RecipeList
+                recipes={filteredRecipes}
+                selectedRecipeId={selectedRecipe?.id || null}
+                onSelectRecipe={setSelectedRecipe}
+                onDeleteRecipe={handleDeleteClick}
+              />
+            </FeatureErrorBoundary>
 
             <div className="lg:col-span-2 min-h-[50vh] lg:min-h-[calc(100vh-16rem)]">
-              <RecipeDetail recipe={selectedRecipe} />
+              <FeatureErrorBoundary featureName="Recipe Detail">
+                <RecipeDetail recipe={selectedRecipe} />
+              </FeatureErrorBoundary>
             </div>
           </div>
         </>

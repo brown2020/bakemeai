@@ -4,7 +4,7 @@ import { useState } from "react";
 import { signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { auth, googleProvider } from "@/lib/firebase";
-import { setAuthCookieToken } from "@/lib/auth-cookie";
+import { setUserAuthToken } from "@/lib/utils/auth";
 
 interface UseGoogleAuthReturn {
   signInWithGoogle: () => Promise<void>;
@@ -28,8 +28,7 @@ export function useGoogleAuth(redirectTo: string = "/"): UseGoogleAuthReturn {
 
     try {
       const userCredential = await signInWithPopup(auth, googleProvider);
-      const token = await userCredential.user.getIdToken();
-      setAuthCookieToken(token);
+      await setUserAuthToken(userCredential.user);
       router.push(redirectTo);
     } catch (err) {
       if (err instanceof Error) {

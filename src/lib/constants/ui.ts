@@ -26,6 +26,10 @@ export const UI_TIMING = {
   SUCCESS_MESSAGE_DURATION: 3000,
   /** Debounce delay for search inputs */
   SEARCH_DEBOUNCE: 300,
+  /** Default animation/transition duration */
+  DEFAULT_TRANSITION: 200,
+  /** Long animation/transition duration */
+  LONG_TRANSITION: 500,
 } as const;
 
 /**
@@ -42,4 +46,36 @@ export const NUMBER_INPUT = {
   SERVING_SIZE_MAX: 12,
   /** Default serving size */
   SERVING_SIZE_DEFAULT: 2,
+} as const;
+
+/**
+ * Layout and spacing constants (in pixels or Tailwind units)
+ */
+export const LAYOUT = {
+  /** Maximum container width */
+  MAX_CONTAINER_WIDTH: "7xl",
+  /** Standard vertical spacing between sections */
+  SECTION_SPACING: 8,
+  /** Standard padding for cards */
+  CARD_PADDING: 6,
+  /** Navigation bar height (in px) */
+  NAVBAR_HEIGHT: 64,
+} as const;
+
+/**
+ * Z-index layers for consistent stacking context
+ */
+export const Z_INDEX = {
+  /** Base layer for normal content */
+  BASE: 0,
+  /** Dropdown menus and tooltips */
+  DROPDOWN: 10,
+  /** Sticky headers */
+  STICKY: 20,
+  /** Fixed navigation bars */
+  NAVBAR: 50,
+  /** Modal overlays */
+  MODAL: 100,
+  /** Toast notifications */
+  TOAST: 1000,
 } as const;

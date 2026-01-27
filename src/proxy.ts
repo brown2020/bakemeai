@@ -131,104 +131,136 @@ function withDebugHeaders(
 }
 
 /**
+ * Route decision result for cleaner proxy logic.
+ */
+interface RouteDecision {
+  action: "allow" | "redirect" | "clear-and-allow" | "clear-and-redirect";
+  redirectTo?: string;
+  includeRedirectParam?: boolean;
+}
+
+/**
+ * Determines the appropriate routing action based on auth state and route type.
+ * Centralized decision logic for better maintainability and testing.
+ */
+function determineRouteAction(
+  pathname: string,
+  isAuthPage: boolean,
+  isAuthenticated: boolean,
+  cookiePresent: boolean,
+  jwtValid: boolean
+): RouteDecision {
+  // Auth pages with valid authentication => redirect to app
+  if (isAuthPage && isAuthenticated) {
+    return { action: "redirect", redirectTo: "/generate" };
+  }
+
+  // Auth pages with invalid cookie => clear cookie and stay
+  if (isAuthPage && cookiePresent && !jwtValid) {
+    return { action: "clear-and-allow" };
+  }
+
+  // Protected routes without authentication => redirect to login
+  if (isPrivateRoute(pathname) && !isAuthenticated) {
+    return { action: "clear-and-redirect", redirectTo: "/login", includeRedirectParam: true };
+  }
+
+  // All other cases => allow through
+  return { action: "allow" };
+}
+
+/**
+ * Executes the routing decision by creating appropriate NextResponse.
+ */
+function executeRouteDecision(
+  decision: RouteDecision,
+  request: NextRequest,
+  debugContext: {
+    path: string;
+    cookiePresent: boolean;
+    jwtValid: boolean;
+    userId: string | null;
+    isAuthPage: boolean;
+  }
+): NextResponse {
+  const { pathname } = request.nextUrl;
+
+  switch (decision.action) {
+    case "redirect": {
+      const url = request.nextUrl.clone();
+      url.pathname = decision.redirectTo!;
+      return withDebugHeaders(NextResponse.redirect(url), debugContext);
+    }
+
+    case "clear-and-allow": {
+      const response = NextResponse.next();
+      deleteAuthCookies(response);
+      return withDebugHeaders(response, debugContext);
+    }
+
+    case "clear-and-redirect": {
+      const url = request.nextUrl.clone();
+      url.pathname = decision.redirectTo!;
+      if (decision.includeRedirectParam) {
+        url.searchParams.set("redirect", pathname);
+      }
+      const response = NextResponse.redirect(url);
+      deleteAuthCookies(response);
+      return withDebugHeaders(response, debugContext);
+    }
+
+    case "allow": {
+      const response = NextResponse.next();
+      // Attach user ID header for downstream usage if authenticated
+      if (debugContext.userId && debugContext.jwtValid) {
+        response.headers.set("x-user-id", debugContext.userId);
+      }
+      return withDebugHeaders(response, debugContext);
+    }
+  }
+}
+
+/**
  * Next.js 16 Proxy - handles route protection at the edge.
  * 
  * Execution flow:
  * 1. Runs before every page render (edge runtime)
  * 2. Validates JWT token from cookie (expiry check only, no signature verification)
- * 3. Redirects to login if accessing protected route without valid auth
- * 4. Redirects to app if accessing auth pages with valid auth
- * 5. Clears invalid/expired cookies to prevent stale auth state
+ * 3. Determines routing action based on auth state and route type
+ * 4. Executes the routing decision (redirect, clear cookies, or allow)
  * 
  * Benefits:
  * - Prevents flash of protected content
- * - Centralized auth logic
+ * - Centralized auth logic with clear decision flow
  * - Clean redirects with proper error handling
+ * - Easier to test and maintain
  */
 export async function proxy(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl;
 
-    // Auth pages should be reachable when signed out, and should redirect away when signed in
+    // Determine route type
     const isAuthPage = AUTH_PAGES.some((page) => pathname.startsWith(page));
 
-    // Only trust BakeMe's namespaced cookie to avoid collisions on localhost
+    // Extract and validate auth token
     const authToken = request.cookies.get(FIREBASE_AUTH_COOKIE)?.value;
     const cookiePresent = !!authToken;
-
-    // Parse and validate JWT token
     const payload = authToken ? tryGetJwtPayload(authToken) : null;
     const jwtValid = !!authToken && !!payload && isUnexpiredJwt(authToken);
     const userId = payload?.user_id ?? payload?.sub ?? null;
     const isAuthenticated = cookiePresent && jwtValid;
 
-    // Auth page + authenticated => redirect to app
-    if (isAuthPage && isAuthenticated) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/generate";
-      return withDebugHeaders(NextResponse.redirect(url), {
-        path: pathname,
-        cookiePresent,
-        jwtValid,
-        userId,
-        isAuthPage,
-      });
-    }
+    // Determine what to do
+    const decision = determineRouteAction(
+      pathname,
+      isAuthPage,
+      isAuthenticated,
+      cookiePresent,
+      jwtValid
+    );
 
-    // Auth page + cookie present but invalid => clear it and allow staying on auth page
-    if (isAuthPage && cookiePresent && !jwtValid) {
-      const response = NextResponse.next();
-      deleteAuthCookies(response);
-      return withDebugHeaders(response, {
-        path: pathname,
-        cookiePresent,
-        jwtValid,
-        userId,
-        isAuthPage,
-      });
-    }
-
-    // Protected route + not authenticated => redirect to login
-    if (isPrivateRoute(pathname) && !isAuthenticated) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("redirect", pathname);
-
-      const response = NextResponse.redirect(url);
-      deleteAuthCookies(response);
-
-      return withDebugHeaders(response, {
-        path: pathname,
-        cookiePresent,
-        jwtValid,
-        userId,
-        isAuthPage,
-      });
-    }
-
-    // Protected route + cookie present but invalid => redirect to login and clear cookie
-    if (isPrivateRoute(pathname) && cookiePresent && !jwtValid) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("redirect", pathname);
-
-      const response = NextResponse.redirect(url);
-      deleteAuthCookies(response);
-
-      return withDebugHeaders(response, {
-        path: pathname,
-        cookiePresent,
-        jwtValid,
-        userId,
-        isAuthPage,
-      });
-    }
-
-    // If authenticated, attach user id for potential downstream usage.
-    const response = NextResponse.next();
-    if (isAuthenticated && userId) response.headers.set("x-user-id", userId);
-
-    return withDebugHeaders(response, {
+    // Execute the decision
+    return executeRouteDecision(decision, request, {
       path: pathname,
       cookiePresent,
       jwtValid,

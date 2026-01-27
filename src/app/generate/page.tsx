@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Suspense } from "react";
 import PageLayout from "@/components/PageLayout";
 import { LoadingSpinner } from "@/components/ui";
+import { FeatureErrorBoundary } from "@/components/FeatureErrorBoundary";
 import {
   ModeSelector,
   RecipeForm,
@@ -20,6 +21,7 @@ import {
   specificRecipeInputSchema,
   ingredientsRecipeInputSchema,
 } from "@/lib/schemas";
+import { useDebounce, AI_GENERATION_DEBOUNCE_MS } from "@/hooks/useDebounce";
 
 // Main component
 export default function GeneratePage() {
@@ -36,6 +38,7 @@ function GenerateContent() {
   const { userProfile, fetchUserProfile } = useUserProfileStore();
   const userId = user?.uid;
   const [validationError, setValidationError] = useState<string | null>(null);
+  const lastSubmitTimeRef = useRef<number>(0);
 
   const {
     recipe,
@@ -64,9 +67,32 @@ function GenerateContent() {
     }
   }, [user?.uid, fetchUserProfile]);
 
+  // Core generation logic without debouncing
+  const performGeneration = useCallback(
+    async (prompt: string, isIngredientsMode: boolean) => {
+      await generateRecipeContent(prompt, isIngredientsMode, userProfile);
+    },
+    [generateRecipeContent, userProfile]
+  );
+
+  // Debounced version for rate limiting
+  const debouncedGeneration = useDebounce(
+    performGeneration,
+    AI_GENERATION_DEBOUNCE_MS
+  );
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
+      
+      // Rate limiting: prevent rapid consecutive submissions
+      const now = Date.now();
+      if (now - lastSubmitTimeRef.current < AI_GENERATION_DEBOUNCE_MS) {
+        setValidationError("Please wait a moment before generating another recipe.");
+        return;
+      }
+      lastSubmitTimeRef.current = now;
+
       resetSaveState();
       setValidationError(null);
 
@@ -91,16 +117,15 @@ function GenerateContent() {
 
       const prompt = promptFn(validation.data);
 
-      // Generate recipe with user profile preferences
-      await generateRecipeContent(prompt, mode === "ingredients", userProfile);
+      // Generate recipe with debouncing
+      debouncedGeneration(prompt, mode === "ingredients");
     },
     [
       mode,
       input,
       ingredients,
       resetSaveState,
-      generateRecipeContent,
-      userProfile,
+      debouncedGeneration,
     ]
   );
 
@@ -134,32 +159,38 @@ function GenerateContent() {
     >
       <div className="space-y-6">
         {!mode ? (
-          <ModeSelector onSelectMode={handleModeSelect} />
+          <FeatureErrorBoundary featureName="Mode Selection">
+            <ModeSelector onSelectMode={handleModeSelect} />
+          </FeatureErrorBoundary>
         ) : (
           <>
-            <RecipeForm
-              mode={mode}
-              onBack={handleBack}
-              onSubmit={handleSubmit}
-              isLoading={isGenerating}
-              input={input}
-              onInputChange={setInput}
-              ingredients={ingredients}
-              onIngredientsChange={setIngredients}
-            />
+            <FeatureErrorBoundary featureName="Recipe Form">
+              <RecipeForm
+                mode={mode}
+                onBack={handleBack}
+                onSubmit={handleSubmit}
+                isLoading={isGenerating}
+                input={input}
+                onInputChange={setInput}
+                ingredients={ingredients}
+                onIngredientsChange={setIngredients}
+              />
+            </FeatureErrorBoundary>
 
             {validationError && <ErrorMessage message={validationError} />}
             {generationError && <ErrorMessage message={generationError} />}
 
             {recipe && (
-              <RecipeDisplay
-                parsedRecipe={parsedRecipe}
-                onSave={handleSave}
-                isSaving={isSaving}
-                saved={saved}
-                isGenerating={isGenerating}
-                saveError={saveError || ""}
-              />
+              <FeatureErrorBoundary featureName="Recipe Display">
+                <RecipeDisplay
+                  parsedRecipe={parsedRecipe}
+                  onSave={handleSave}
+                  isSaving={isSaving}
+                  saved={saved}
+                  isGenerating={isGenerating}
+                  saveError={saveError || ""}
+                />
+              </FeatureErrorBoundary>
             )}
           </>
         )}

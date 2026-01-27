@@ -1,5 +1,9 @@
 import { memo } from "react";
 import ReactMarkdown from "react-markdown";
+import {
+  sanitizeMarkdown,
+  MARKDOWN_DISALLOWED_ELEMENTS,
+} from "@/lib/utils/sanitize";
 
 interface MarkdownRendererProps {
   content: string;
@@ -7,17 +11,33 @@ interface MarkdownRendererProps {
 }
 
 /**
- * Shared markdown renderer with consistent styling for recipes.
+ * Shared markdown renderer with consistent styling and security for recipes.
  * Used in RecipeDisplay and SavedRecipes pages.
- * Memoized to prevent unnecessary re-renders when parent components update.
+ * 
+ * Security features:
+ * - Pre-sanitizes content to remove dangerous HTML/scripts
+ * - Disallows dangerous elements (script, iframe, etc.)
+ * - Defense-in-depth approach with multiple layers
+ * 
+ * Performance:
+ * - Memoized to prevent unnecessary re-renders when parent components update
  */
 export const MarkdownRenderer = memo(function MarkdownRenderer({
   content,
   className = "prose prose-sm sm:prose-base max-w-none",
 }: MarkdownRendererProps) {
+  // Sanitize content before rendering for additional security
+  const sanitizedContent = sanitizeMarkdown(content);
+
   return (
     <div className={className}>
-      <ReactMarkdown components={markdownComponents}>{content}</ReactMarkdown>
+      <ReactMarkdown
+        components={markdownComponents}
+        disallowedElements={MARKDOWN_DISALLOWED_ELEMENTS}
+        unwrapDisallowed={true}
+      >
+        {sanitizedContent}
+      </ReactMarkdown>
     </div>
   );
 });

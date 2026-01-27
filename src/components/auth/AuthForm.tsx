@@ -16,7 +16,7 @@ import { GoogleSignInButton } from "./GoogleSignInButton";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { Input, ErrorMessage } from "@/components/ui";
 import { Button } from "@/components/Button";
-import { setAuthCookieToken } from "@/lib/auth-cookie";
+import { setUserAuthToken } from "@/lib/utils/auth";
 import { getSafeRedirectPath } from "@/lib/utils/navigation";
 
 type AuthMode = "login" | "signup";
@@ -70,16 +70,14 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
           email,
           password
         );
-        const token = await userCredential.user.getIdToken();
-        setAuthCookieToken(token);
+        await setUserAuthToken(userCredential.user);
       } else {
         const userCredential = await createUserWithEmailAndPassword(
           auth,
           email,
           password
         );
-        const token = await userCredential.user.getIdToken();
-        setAuthCookieToken(token);
+        await setUserAuthToken(userCredential.user);
         await sendEmailVerification(userCredential.user);
         setVerificationSent(true);
       }
