@@ -11,6 +11,7 @@ import {
   setDoc,
   getDoc,
   serverTimestamp,
+  Timestamp,
 } from "firebase/firestore";
 import {
   Recipe,
@@ -174,7 +175,13 @@ export async function saveUserProfile(
     };
 
     await setDoc(doc(db, COLLECTIONS.USER_PROFILES, userId), sanitizedProfile);
-    return { id: userId, ...profile };
+    return { 
+      id: userId, 
+      ...profile,
+      allergies: sanitizedProfile.allergies,
+      dislikedIngredients: sanitizedProfile.dislikedIngredients,
+      updatedAt: sanitizedProfile.updatedAt as unknown as Timestamp,
+    };
   } catch (error) {
     const message = handleError(
       error,
