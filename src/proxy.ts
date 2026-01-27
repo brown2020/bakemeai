@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { PRIVATE_ROUTES, AUTH_PAGES, AUTH_COOKIE_CONFIG } from "@/lib/constants";
 import { FIREBASE_AUTH_COOKIE } from "@/lib/auth-constants";
 import { deleteAuthCookies } from "@/lib/utils/cookies";
+import { logError } from "@/lib/utils/logger";
 
 /**
  * Checks if a given path is a private route.
@@ -286,9 +287,13 @@ export async function proxy(request: NextRequest) {
       userId,
       isAuthPage,
     });
-  } catch {
+  } catch (error) {
     // Fail closed: redirect to login for protected routes
     const { pathname } = request.nextUrl;
+    
+    // Log proxy errors for debugging production issues
+    logError("Proxy error - failing closed", error, { pathname });
+    
     const isAuthPage = AUTH_PAGES.some((page) => pathname.startsWith(page));
 
     if (isAuthPage) return NextResponse.next();

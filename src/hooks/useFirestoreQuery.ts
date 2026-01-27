@@ -77,9 +77,9 @@ export function useFirestoreQuery<T>({
       setLoading(false);
     }
     // Note: logContext is intentionally excluded from deps to avoid infinite loops
-    // since it's typically an inline object. queryFn is stable from import.
+    // since it's typically an inline object.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, errorMessage, enabled]);
+  }, [userId, errorMessage, enabled, queryFn]);
 
   useEffect(() => {
     fetchData();

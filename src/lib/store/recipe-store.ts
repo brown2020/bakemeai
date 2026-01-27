@@ -147,6 +147,11 @@ export const useRecipeStore = create<RecipeState>()(
           return;
         }
 
+        if (!structuredRecipe) {
+          set({ saveError: "No recipe to save. Please generate a recipe first." });
+          return;
+        }
+
         set({ isSaving: true, saveError: null });
 
         try {

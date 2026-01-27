@@ -61,15 +61,16 @@ export async function saveRecipe({
 }: SaveRecipeParams): Promise<Recipe> {
   try {
     // Extract metadata: prefer structured data from AI, fall back to markdown parsing
-    const title = structuredData?.title || extractTitle(content);
+    // Use nullish coalescing (??) to properly handle falsy values like 0 or empty string
+    const title = structuredData?.title ?? extractTitle(content);
     const ingredients =
-      structuredData?.ingredients || extractIngredients(content);
+      structuredData?.ingredients ?? extractIngredients(content);
     const preparationTime =
-      structuredData?.preparationTime ||
+      structuredData?.preparationTime ??
       extractField(content, "Preparation Time");
     const cookingTime =
-      structuredData?.cookingTime || extractField(content, "Cooking Time");
-    const servings = structuredData?.servings || extractServings(content);
+      structuredData?.cookingTime ?? extractField(content, "Cooking Time");
+    const servings = structuredData?.servings ?? extractServings(content);
     const difficulty = structuredData?.difficulty;
 
     const recipe: Omit<Recipe, "id"> = {
