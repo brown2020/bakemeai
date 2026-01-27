@@ -26,6 +26,24 @@ export function convertToMarkdown(recipe: RecipeStructure): string {
   
   sections.push(`# ${recipe.title}\n`);
 
+  const bodyContent = buildMarkdownBody(recipe);
+  if (bodyContent) {
+    sections.push(bodyContent);
+  }
+
+  return sections.join("");
+}
+
+/**
+ * Builds the markdown body (everything except title) from structured recipe data.
+ * Used for display where title is shown separately.
+ * 
+ * @param recipe - Structured recipe data from AI generation
+ * @returns Formatted markdown body without title
+ */
+export function buildMarkdownBody(recipe: RecipeStructure): string {
+  const sections: string[] = [];
+
   const details: string[] = [];
   if (recipe.preparationTime) {
     details.push(`- Preparation Time: ${recipe.preparationTime}`);

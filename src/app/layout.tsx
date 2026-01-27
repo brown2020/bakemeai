@@ -1,3 +1,15 @@
+/**
+ * Root layout - Server Component (Next.js 16 default)
+ * 
+ * This layout is intentionally a server component to:
+ * - Enable metadata export (only available in server components)
+ * - Minimize client-side JavaScript bundle size
+ * - Leverage server-side rendering for better performance
+ * 
+ * Client-only features (ErrorBoundary, AuthListener, Navbar) are
+ * correctly isolated in their own "use client" components.
+ */
+
 import type { Metadata } from "next";
 import { ReactNode } from "react";
 import { Inter } from "next/font/google";

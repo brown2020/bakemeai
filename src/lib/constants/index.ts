@@ -1,12 +1,31 @@
 /**
  * Application constants - centralized exports.
  * 
- * Organization:
- * - auth.ts: Authentication (cookies, routes, JWT config)
- * - domain.ts: Business domain (collections, dietary options, cuisines)
- * - ui.ts: UI behavior (validation, timing, layout, recipe display)
+ * Organization by domain:
  * 
- * Import from this index for convenience or from specific files for clarity.
+ * auth.ts - Authentication & Security
+ *   - Cookie names and configuration
+ *   - Route protection (private routes, auth pages)
+ *   - JWT validation settings
+ * 
+ * domain.ts - Business Domain
+ *   - Firestore collection names
+ *   - Dietary preferences and restrictions
+ *   - Cuisine types and cooking experience levels
+ * 
+ * ui.ts - User Interface Behavior
+ *   - Form validation rules (lengths, thresholds)
+ *   - Timing constants (debounce, transitions, messages)
+ *   - Number input constraints (min/max, defaults)
+ *   - Layout dimensions and spacing
+ *   - Recipe display settings
+ * 
+ * Pattern: All constants use `as const` for type safety and immutability.
+ * This ensures TypeScript treats values as literal types and prevents modification.
+ * 
+ * Import patterns:
+ *   - From index: `import { COLLECTIONS } from '@/lib/constants'`
+ *   - From specific file: `import { COLLECTIONS } from '@/lib/constants/domain'`
  */
 
 // Authentication constants

@@ -60,16 +60,19 @@ export const ERROR_MESSAGES = {
 
 /**
  * Logs error details and returns a user-friendly message.
- * Centralizes error handling: logs technical details for debugging,
- * returns safe messages for display.
+ * This function combines logging (technical details) with message conversion (user-facing).
+ * 
+ * Use in UI components to:
+ * 1. Log technical error details for debugging
+ * 2. Get a safe, user-friendly message to display
  * 
  * @param error - The error (can be any type from catch blocks)
  * @param logMessage - The message to log for debugging
  * @param context - Additional context for debugging (e.g., userId, recipeId)
- * @param userMessage - The message to show to the user
+ * @param userMessage - The fallback message to show to the user
  * @returns The user-friendly error message
  */
-export function handleError(
+export function logAndConvertError(
   error: unknown,
   logMessage: string,
   context: ErrorContext,
@@ -96,4 +99,9 @@ export function handleError(
   // Otherwise return the provided user message
   return userMessage;
 }
+
+/**
+ * @deprecated Use logAndConvertError instead - name better reflects the dual responsibility
+ */
+export const handleError = logAndConvertError;
 

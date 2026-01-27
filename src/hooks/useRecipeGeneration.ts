@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, FormEvent } from "react";
 import { useRecipeStore } from "@/lib/store/recipe-store";
 import { useDebounce, AI_GENERATION_DEBOUNCE_MS } from "@/hooks/useDebounce";
 import { SerializableUserProfile } from "@/lib/schemas";
@@ -7,6 +7,7 @@ import {
   ingredientsRecipeInputSchema,
 } from "@/lib/schemas";
 import { RECIPE_PROMPTS } from "@/app/generate/constants";
+import { generateRecipeWithStreaming } from "@/lib/services/recipe-service";
 
 export interface UseRecipeGenerationReturn {
   isGenerating: boolean;
@@ -17,12 +18,16 @@ export interface UseRecipeGenerationReturn {
   mode: "specific" | "ingredients" | null;
   setInput: (input: string) => void;
   setIngredients: (ingredients: string) => void;
-  handleGenerate: (e: React.FormEvent) => Promise<void>;
+  handleGenerate: (e: FormEvent) => Promise<void>;
 }
 
 /**
- * Custom hook for recipe generation logic.
- * Encapsulates generation flow: validation -> rate limiting -> debounced generation.
+ * Custom hook for recipe generation orchestration.
+ * 
+ * Responsibilities:
+ * - Coordinate recipe generation flow (validation -> generation -> state updates)
+ * - Manage validation and rate limiting
+ * - Provide clean interface for components
  * 
  * @param userProfile - User profile for personalized recipes
  * @returns Generation state and handler functions
@@ -39,34 +44,41 @@ export function useRecipeGeneration(userProfile: SerializableUserProfile | null)
     mode,
     setInput,
     setIngredients,
-    generateRecipeContent,
+    setStructuredRecipe,
+    setGenerating,
+    setGenerationError,
     resetSaveState,
   } = useRecipeStore();
 
+  // Debounced generation with service orchestration
   const debouncedGeneration = useDebounce(
     useCallback(
       async (prompt: string, isIngredientsMode: boolean) => {
-        await generateRecipeContent(prompt, isIngredientsMode, userProfile);
+        setGenerating(true);
+        setStructuredRecipe(null);
+        setGenerationError(null);
+        resetSaveState();
+
+        await generateRecipeWithStreaming(
+          prompt,
+          isIngredientsMode,
+          userProfile,
+          (recipe) => setStructuredRecipe(recipe),
+          (errorMessage) => setGenerationError(errorMessage)
+        );
+
+        setGenerating(false);
       },
-      [generateRecipeContent, userProfile]
+      [setGenerating, setStructuredRecipe, setGenerationError, resetSaveState, userProfile]
     ),
     AI_GENERATION_DEBOUNCE_MS
   );
 
-  const validateInput = useCallback((promptInput: string): string | null => {
-    const schema = mode === "specific" 
-      ? specificRecipeInputSchema 
-      : ingredientsRecipeInputSchema;
-    
-    const validation = schema.safeParse(promptInput);
-    return validation.success ? null : validation.error.issues[0].message;
-  }, [mode]);
-
   const handleGenerate = useCallback(
-    async (e: React.FormEvent) => {
+    async (e: FormEvent) => {
       e.preventDefault();
       
-      // Rate limiting check
+      // Rate limiting: prevent rapid successive generations
       const now = Date.now();
       if (now - lastSubmitTimeRef.current < AI_GENERATION_DEBOUNCE_MS) {
         setValidationError("Please wait a moment before generating another recipe.");
@@ -77,15 +89,19 @@ export function useRecipeGeneration(userProfile: SerializableUserProfile | null)
       resetSaveState();
       setValidationError(null);
 
-      // Validate input
+      // Input validation based on mode
       const promptInput = mode === "specific" ? input : ingredients;
-      const error = validateInput(promptInput);
-      if (error) {
-        setValidationError(error);
+      const schema = mode === "specific" 
+        ? specificRecipeInputSchema 
+        : ingredientsRecipeInputSchema;
+      
+      const validation = schema.safeParse(promptInput);
+      if (!validation.success) {
+        setValidationError(validation.error.issues[0].message);
         return;
       }
 
-      // Generate prompt and trigger generation
+      // Build prompt and trigger generation
       const promptFn = mode === "specific" 
         ? RECIPE_PROMPTS.specific 
         : RECIPE_PROMPTS.ingredients;
@@ -93,7 +109,7 @@ export function useRecipeGeneration(userProfile: SerializableUserProfile | null)
 
       debouncedGeneration(prompt, mode === "ingredients");
     },
-    [mode, input, ingredients, resetSaveState, debouncedGeneration, validateInput]
+    [mode, input, ingredients, resetSaveState, debouncedGeneration]
   );
 
   return {

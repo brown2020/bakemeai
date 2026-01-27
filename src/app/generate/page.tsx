@@ -33,9 +33,6 @@ export default function Generate() {
     saveRecipeToDb,
     resetRecipe,
   } = useRecipeStore();
-  
-  // Derive display format from structured data
-  const parsedRecipe = convertToDisplayFormat();
 
   // Custom hook for generation logic
   const {
@@ -64,13 +61,6 @@ export default function Generate() {
     }
   }, [saveRecipeToDb, userId, router]);
 
-  const handleModeSelect = useCallback(
-    (newMode: Mode) => {
-      setMode(newMode);
-    },
-    [setMode]
-  );
-
   const handleBack = useCallback(() => {
     setMode(null);
     resetRecipe();
@@ -81,7 +71,7 @@ export default function Generate() {
       <div className="space-y-6">
         {!mode ? (
           <FeatureErrorBoundary featureName="Mode Selection">
-            <ModeSelector onSelectMode={handleModeSelect} />
+            <ModeSelector onSelectMode={setMode} />
           </FeatureErrorBoundary>
         ) : (
           <>
@@ -104,7 +94,7 @@ export default function Generate() {
             {structuredRecipe && (
               <FeatureErrorBoundary featureName="Recipe Display">
                 <RecipeDisplay
-                  parsedRecipe={parsedRecipe}
+                  parsedRecipe={convertToDisplayFormat()}
                   onSave={handleSave}
                   isSaving={isSaving}
                   saved={saved}

@@ -16,6 +16,10 @@ function isPrivateRoute(path: string): boolean {
   return PRIVATE_ROUTES.some((route) => path.startsWith(route));
 }
 
+/**
+ * Base64 encoding uses groups of 4 characters.
+ * When the input length is not a multiple of 4, padding with "=" is required.
+ */
 const BASE64_PADDING_SIZE = 4;
 
 /**

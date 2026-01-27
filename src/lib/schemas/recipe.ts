@@ -2,8 +2,22 @@ import { z } from "zod";
 
 /**
  * Recipe schemas for validation and type safety.
+ * 
+ * Organization:
+ * - BASE SCHEMAS: Core recipe data structures
+ * - DERIVED SCHEMAS: Variations for specific use cases (streaming, validation)
+ * - AI SCHEMAS: Annotated schemas for AI generation
+ * - TYPE EXPORTS: TypeScript types derived from schemas
  */
 
+// ============================================================================
+// BASE SCHEMAS
+// ============================================================================
+
+/**
+ * Base recipe schema - represents a saved recipe in Firestore.
+ * Includes database fields (id, userId, createdAt) plus recipe content.
+ */
 export const recipeSchema = z.object({
   id: z.string(),
   userId: z.string(),
@@ -17,6 +31,10 @@ export const recipeSchema = z.object({
   cuisine: z.string().optional(),
   difficulty: z.string().optional(),
 });
+
+// ============================================================================
+// DERIVED SCHEMAS
+// ============================================================================
 
 /**
  * Recipe structure schema for streaming validation.
@@ -63,6 +81,10 @@ export const completeRecipeStructureSchema = z.object({
   }).nullable().optional(),
 });
 
+// ============================================================================
+// AI SCHEMAS
+// ============================================================================
+
 /**
  * Recipe fields for AI generation with describe() annotations.
  * Used by OpenAI structured output to understand field purpose.
@@ -84,6 +106,10 @@ export const aiRecipeFields = {
   }).strict().nullable().describe("Macronutrients per serving (use null if unknown)"),
 } as const;
 
+// ============================================================================
+// TYPE EXPORTS
+// ============================================================================
+
 /**
  * Parsed recipe data structure for UI display.
  * Used as an intermediate format between AI generation and rendering.
@@ -94,7 +120,6 @@ export interface ParsedRecipe {
   structuredData?: RecipeStructure;
 }
 
-// Type exports
 export type Recipe = z.infer<typeof recipeSchema>;
 export type RecipeStructure = z.infer<typeof recipeStructureSchema>;
 export type CompleteRecipeStructure = z.infer<typeof completeRecipeStructureSchema>;

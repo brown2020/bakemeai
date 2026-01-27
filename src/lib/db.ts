@@ -50,9 +50,10 @@ import {
   extractField,
   extractServings,
 } from "./utils/markdown-parser";
-import { serializeUserProfile, getFirestoreErrorMessage } from "./utils/firestore";
-import { handleError, ERROR_MESSAGES } from "./utils/error-handler";
+import { getFirestoreErrorMessage } from "./utils/firestore";
+import { AppError, ERROR_MESSAGES } from "./utils/error-handler";
 import { sanitizeUserInput } from "./utils/sanitize";
+import { logError } from "./utils/logger";
 
 interface SaveRecipeParams {
   userId: string;
@@ -123,13 +124,9 @@ export async function saveRecipe({
     const docRef = await addDoc(collection(db, COLLECTIONS.RECIPES), recipe);
     return { id: docRef.id, ...recipe };
   } catch (error) {
-    const message = handleError(
-      error,
-      "Failed to save recipe to Firestore",
-      { userId },
-      getFirestoreErrorMessage(error, ERROR_MESSAGES.RECIPE.SAVE_FAILED)
-    );
-    throw new Error(message);
+    logError("Failed to save recipe to Firestore", error, { userId });
+    const message = getFirestoreErrorMessage(error, ERROR_MESSAGES.RECIPE.SAVE_FAILED);
+    throw new AppError(message, "RECIPE_SAVE_FAILED", { userId });
   }
 }
 
@@ -156,17 +153,13 @@ export async function getUserRecipes(userId: string): Promise<Recipe[]> {
     // Validate data with Zod schema
     const result = z.array(recipeSchema).safeParse(rawRecipes);
     if (!result.success) {
-      throw new Error("Invalid recipe data from Firestore");
+      throw new AppError("Invalid recipe data from Firestore", "INVALID_RECIPE_DATA");
     }
     return result.data;
   } catch (error) {
-    const message = handleError(
-      error,
-      "Failed to fetch user recipes from Firestore",
-      { userId },
-      getFirestoreErrorMessage(error, ERROR_MESSAGES.RECIPE.LOAD_FAILED)
-    );
-    throw new Error(message);
+    logError("Failed to fetch user recipes from Firestore", error, { userId });
+    const message = getFirestoreErrorMessage(error, ERROR_MESSAGES.RECIPE.LOAD_FAILED);
+    throw new AppError(message, "RECIPE_LOAD_FAILED", { userId });
   }
 }
 
@@ -178,13 +171,9 @@ export async function deleteRecipe(recipeId: string): Promise<void> {
   try {
     await deleteDoc(doc(db, COLLECTIONS.RECIPES, recipeId));
   } catch (error) {
-    const message = handleError(
-      error,
-      "Failed to delete recipe from Firestore",
-      { recipeId },
-      getFirestoreErrorMessage(error, ERROR_MESSAGES.RECIPE.DELETE_FAILED)
-    );
-    throw new Error(message);
+    logError("Failed to delete recipe from Firestore", error, { recipeId });
+    const message = getFirestoreErrorMessage(error, ERROR_MESSAGES.RECIPE.DELETE_FAILED);
+    throw new AppError(message, "RECIPE_DELETE_FAILED", { recipeId });
   }
 }
 
@@ -208,19 +197,13 @@ export async function saveUserProfile(
 
     await setDoc(doc(db, COLLECTIONS.USER_PROFILES, userId), sanitizedProfile);
   } catch (error) {
-    const message = handleError(
-      error,
-      "Failed to save user profile to Firestore",
-      { userId },
-      ERROR_MESSAGES.PROFILE.SAVE_FAILED
-    );
-    throw new Error(message);
+    logError("Failed to save user profile to Firestore", error, { userId });
+    throw new AppError(ERROR_MESSAGES.PROFILE.SAVE_FAILED, "PROFILE_SAVE_FAILED", { userId });
   }
 }
 
 /**
  * Retrieves a user profile from Firestore.
- * Serializes Firestore Timestamps to ISO strings for client-side compatibility.
  * @param userId - The user's unique identifier
  * @returns The user profile or null if not found
  */
@@ -232,26 +215,21 @@ export async function getUserProfile(
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-      const rawProfile = serializeUserProfile({
+      const rawProfile = {
         id: docSnap.id,
         ...docSnap.data(),
-      });
+      };
 
       // Validate data with Zod schema
       const result = userProfileSchema.safeParse(rawProfile);
       if (!result.success) {
-        throw new Error("Invalid profile data from Firestore");
+        throw new AppError("Invalid profile data from Firestore", "INVALID_PROFILE_DATA");
       }
       return result.data;
     }
     return null;
   } catch (error) {
-    const message = handleError(
-      error,
-      "Failed to fetch user profile from Firestore",
-      { userId },
-      ERROR_MESSAGES.PROFILE.LOAD_FAILED
-    );
-    throw new Error(message);
+    logError("Failed to fetch user profile from Firestore", error, { userId });
+    throw new AppError(ERROR_MESSAGES.PROFILE.LOAD_FAILED, "PROFILE_LOAD_FAILED", { userId });
   }
 }

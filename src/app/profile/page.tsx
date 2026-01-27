@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, FormEvent } from "react";
 
 import { PageLayout } from "@/components/PageLayout";
 import { Button } from "@/components/Button";
@@ -60,7 +60,7 @@ export default function Profile() {
     }
   }, [loadedProfile]);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
 

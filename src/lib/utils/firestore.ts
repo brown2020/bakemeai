@@ -57,13 +57,3 @@ export const firestoreTimestampSchema = z
     }
   )
   .optional();
-
-/**
- * Serializes a user profile document from Firestore.
- * Returns the document as-is since Firestore Timestamps are handled by the schema.
- */
-export function serializeUserProfile<T extends Record<string, unknown>>(
-  doc: T
-): T {
-  return doc;
-}

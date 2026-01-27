@@ -2,25 +2,18 @@
  * Recipe store - manages recipe generation and saving state.
  * 
  * ARCHITECTURE:
- * - UI state management only (business logic delegated to services)
+ * - Pure UI state management (no business logic or orchestration)
  * - Single source of truth: structuredRecipe (all display formats derived via getters)
  * - Computed selectors transform structuredRecipe on each call (markdown conversion is cheap)
  * - Only persists user input (mode, input, ingredients), not generated recipes
+ * - Orchestration logic lives in hooks/components, not in store
  */
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { SerializableUserProfile, RecipeStructure, ParsedRecipe } from "@/lib/schemas";
-import { convertToMarkdown } from "@/lib/utils/markdown-converter";
-import { generateRecipeWithStreaming, saveRecipeToDatabase } from "@/lib/services/recipe-service";
-
-/**
- * Removes the H1 title from markdown content.
- * Used to separate title from body content for display.
- */
-function removeTitleFromMarkdown(markdown: string): string {
-  return markdown.replace(/^# .*\n\n/, "");
-}
+import { RecipeStructure, ParsedRecipe } from "@/lib/schemas";
+import { convertToMarkdown, buildMarkdownBody } from "@/lib/utils/markdown-converter";
+import { saveRecipeToDatabase } from "@/lib/services/recipe-service";
 
 interface RecipeState {
   // Single source of truth for recipe data
@@ -44,15 +37,13 @@ interface RecipeState {
   convertToDisplayFormat: () => ParsedRecipe;
   getMarkdown: () => string;
 
-  // Actions
+  // State setters (pure state management, no orchestration)
   setInput: (input: string) => void;
   setIngredients: (ingredients: string) => void;
   setMode: (mode: "specific" | "ingredients" | null) => void;
-  generateRecipeContent: (
-    prompt: string,
-    isIngredientsMode: boolean,
-    userProfile: SerializableUserProfile | null
-  ) => Promise<void>;
+  setStructuredRecipe: (recipe: RecipeStructure | null) => void;
+  setGenerating: (isGenerating: boolean) => void;
+  setGenerationError: (error: string | null) => void;
   saveRecipeToDb: (userId: string) => Promise<void>;
   resetRecipe: () => void;
   resetSaveState: () => void;
@@ -78,9 +69,8 @@ export const useRecipeStore = create<RecipeState>()(
           return { title: "", content: "" };
         }
         
-        const markdown = convertToMarkdown(structuredRecipe);
         const title = structuredRecipe.title ?? "";
-        const content = removeTitleFromMarkdown(markdown);
+        const content = buildMarkdownBody(structuredRecipe);
         return { title, content, structuredData: structuredRecipe };
       },
 
@@ -104,23 +94,16 @@ export const useRecipeStore = create<RecipeState>()(
         });
       },
 
-      generateRecipeContent: async (prompt, isIngredientsMode, userProfile) => {
-        set({
-          isGenerating: true,
-          structuredRecipe: null,
-          generationError: null,
-          saved: false,
-        });
+      setStructuredRecipe: (recipe: RecipeStructure | null) => {
+        set({ structuredRecipe: recipe });
+      },
 
-        await generateRecipeWithStreaming(
-          prompt,
-          isIngredientsMode,
-          userProfile,
-          (recipe) => set({ structuredRecipe: recipe }),
-          (errorMessage) => set({ generationError: errorMessage })
-        );
+      setGenerating: (isGenerating: boolean) => {
+        set({ isGenerating });
+      },
 
-        set({ isGenerating: false });
+      setGenerationError: (error: string | null) => {
+        set({ generationError: error });
       },
 
       saveRecipeToDb: async (userId) => {

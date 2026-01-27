@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { onIdTokenChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { clearAuthCookie } from "@/lib/utils/auth-cookies";
@@ -15,15 +15,14 @@ import { logError } from "@/lib/utils/logger";
  */
 export function AuthListener(): null {
   const { setUser, setLoading } = useAuthStore();
+  const controllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    let currentController: AbortController | null = null;
-
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
       // Cancel any pending token operations from previous auth events
-      currentController?.abort();
+      controllerRef.current?.abort();
       const controller = new AbortController();
-      currentController = controller;
+      controllerRef.current = controller;
 
       setUser(user);
 
@@ -54,7 +53,7 @@ export function AuthListener(): null {
     });
 
     return () => {
-      currentController?.abort();
+      controllerRef.current?.abort();
       unsubscribe();
     };
   }, [setUser, setLoading]);

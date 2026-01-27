@@ -2,15 +2,25 @@ import { z } from "zod";
 
 /**
  * Form and input validation schemas.
+ * 
+ * Organization:
+ * - Authentication validation
+ * - Recipe input validation
  */
 
-// Authentication validation
+// ============================================================================
+// AUTHENTICATION VALIDATION
+// ============================================================================
+
 export const emailSchema = z.string().email("Invalid email address");
 export const passwordSchema = z
   .string()
   .min(6, "Password must be at least 6 characters");
 
-// Recipe input validation
+// ============================================================================
+// RECIPE INPUT VALIDATION
+// ============================================================================
+
 export const specificRecipeInputSchema = z
   .string()
   .trim()

@@ -23,12 +23,25 @@ export function sanitizeMarkdown(content: string): string {
 
   let sanitized = content;
 
+  // Remove script tags and their contents
   sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+  
+  // Remove style tags and their contents
   sanitized = sanitized.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "");
+  
+  // Remove iframe tags and their contents
   sanitized = sanitized.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "");
+  
+  // Remove object and embed tags
   sanitized = sanitized.replace(/<(object|embed)\b[^<]*(?:(?!<\/\1>)<[^<]*)*<\/\1>/gi, "");
+  
+  // Remove event handler attributes (onclick, onload, etc.)
   sanitized = sanitized.replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, "");
+  
+  // Block javascript: and data: URIs in href and src attributes
   sanitized = sanitized.replace(/(href|src)\s*=\s*["']?\s*(javascript|data):/gi, "$1=");
+  
+  // Remove HTML comments
   sanitized = sanitized.replace(/<!--[\s\S]*?-->/g, "");
 
   return sanitized;

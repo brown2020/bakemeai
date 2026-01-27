@@ -3,8 +3,21 @@ import { firestoreTimestampSchema } from "../utils/firestore";
 
 /**
  * User profile schemas for validation and type safety.
+ * 
+ * Organization:
+ * - BASE SCHEMAS: Core user profile data structure
+ * - DERIVED SCHEMAS: Variations for specific use cases (serializable, input)
+ * - TYPE EXPORTS: TypeScript types derived from schemas
  */
 
+// ============================================================================
+// BASE SCHEMAS
+// ============================================================================
+
+/**
+ * Base user profile schema - represents a user profile in Firestore.
+ * Includes database fields (id, updatedAt) plus user preferences.
+ */
 export const userProfileSchema = z.object({
   id: z.string(),
   dietary: z.array(z.string()),
@@ -15,6 +28,10 @@ export const userProfileSchema = z.object({
   preferredCuisines: z.array(z.string()),
   updatedAt: firestoreTimestampSchema,
 });
+
+// ============================================================================
+// DERIVED SCHEMAS
+// ============================================================================
 
 /**
  * User profile schema without Firestore Timestamp.
@@ -32,7 +49,10 @@ export const userProfileInputSchema = userProfileSchema.omit({
   updatedAt: true,
 });
 
-// Type exports
+// ============================================================================
+// TYPE EXPORTS
+// ============================================================================
+
 export type UserProfile = z.infer<typeof userProfileSchema>;
 export type SerializableUserProfile = z.infer<typeof serializableUserProfileSchema>;
 export type UserProfileInput = z.infer<typeof userProfileInputSchema>;

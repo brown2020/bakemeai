@@ -41,7 +41,7 @@ If a numeric or nutrition field is unknown, set it to null (do not omit keys).`;
  * Builds the user preferences section of the prompt.
  * Only includes sections where the user has provided information.
  * @param userProfile - User profile with preferences
- * @returns Formatted preferences string for the prompt
+ * @returns Formatted preferences string for the prompt (empty or starts with newline)
  */
 function buildUserPreferencesSection(
   userProfile?: SerializableUserProfile | null
@@ -51,34 +51,35 @@ function buildUserPreferencesSection(
   const sections: string[] = [];
 
   if (userProfile.dietary?.length) {
-    sections.push(`\nDietary Requirements: ${userProfile.dietary.join(", ")}`);
+    sections.push(`Dietary Requirements: ${userProfile.dietary.join(", ")}`);
   }
 
   if (userProfile.allergies?.length) {
     sections.push(
-      `\nAllergies (MUST AVOID): ${userProfile.allergies.join(", ")}`
+      `Allergies (MUST AVOID): ${userProfile.allergies.join(", ")}`
     );
   }
 
   if (userProfile.dislikedIngredients?.length) {
     sections.push(
-      `\nDisliked Ingredients (avoid if possible): ${userProfile.dislikedIngredients.join(", ")}`
+      `Disliked Ingredients (avoid if possible): ${userProfile.dislikedIngredients.join(", ")}`
     );
   }
 
   if (userProfile.preferredCuisines?.length) {
     sections.push(
-      `\nPreferred Cuisines: ${userProfile.preferredCuisines.join(", ")}`
+      `Preferred Cuisines: ${userProfile.preferredCuisines.join(", ")}`
     );
   }
 
   if (userProfile.servingSize) {
-    sections.push(`\nDefault Serving Size: ${userProfile.servingSize} people`);
+    sections.push(`Default Serving Size: ${userProfile.servingSize} people`);
   }
 
   if (userProfile.cookingExperience) {
-    sections.push(`\nCooking Experience: ${userProfile.cookingExperience}`);
+    sections.push(`Cooking Experience: ${userProfile.cookingExperience}`);
   }
 
-  return sections.join("");
+  // Join with newlines and prepend a newline if we have content
+  return sections.length > 0 ? "\n" + sections.join("\n") : "";
 }

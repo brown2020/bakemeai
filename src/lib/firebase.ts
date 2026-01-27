@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { logError, logWarning } from "./utils/logger";
 
 /**
  * Checks for missing Firebase environment variables and logs warnings.
@@ -27,19 +28,12 @@ function checkFirebaseConfig(): void {
     
     if (process.env.NODE_ENV === "production") {
       // Structured logging for production monitoring
-      console.error(
-        JSON.stringify({
-          level: "error",
-          message,
-          missingVars,
-          timestamp: new Date().toISOString(),
-        })
-      );
+      logError(message, undefined, { missingVars });
     } else {
       // Friendly warning for development (don't throw due to Turbopack timing)
-      console.warn(
-        `⚠️  ${message}\n` +
-          "Please check your .env.local file and ensure all Firebase configuration is set."
+      logWarning(
+        `${message}\nPlease check your .env.local file and ensure all Firebase configuration is set.`,
+        { missingVars }
       );
     }
   }

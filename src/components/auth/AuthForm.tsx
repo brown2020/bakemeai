@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -31,8 +31,20 @@ interface AuthFormProps {
 }
 
 /**
- * Shared authentication form for login and signup pages.
- * Handles email/password auth, Google OAuth, and remember-me functionality.
+ * Unified authentication form for login and signup flows.
+ * 
+ * Design decision: Single component handles both modes to maximize code reuse.
+ * The forms share 80%+ of UI/logic (inputs, validation, Google auth, error handling).
+ * Mode-specific differences (remember-me checkbox, email verification) are handled
+ * via simple conditionals rather than duplicating the entire form structure.
+ * 
+ * Features:
+ * - Email/password authentication
+ * - Google OAuth integration
+ * - Remember-me persistence (login only)
+ * - Email verification (signup only)
+ * - Consistent error handling and display
+ * 
  * @param mode - Whether this is a login or signup form
  * @param redirectTo - Optional path to redirect to after successful auth
  */
@@ -82,7 +94,7 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
     setVerificationSent(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);

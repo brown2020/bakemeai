@@ -8,7 +8,7 @@ interface UseFirestoreQueryOptions<T> {
   userId?: string;
   /** User-facing error message to display on failure */
   errorMessage: string;
-  /** Optional context for error logging (should be stable/memoized to avoid refetches) */
+  /** Optional context for error logging (not reactive - changes won't trigger refetch) */
   logContext?: Record<string, unknown>;
   /** Whether to automatically refetch when userId changes (default: true) */
   enabled?: boolean;
@@ -76,7 +76,7 @@ export function useFirestoreQuery<T>({
     } finally {
       setLoading(false);
     }
-  }, [userId, errorMessage, enabled, queryFn, logContext]);
+  }, [userId, errorMessage, enabled, queryFn]);
 
   useEffect(() => {
     fetchData();

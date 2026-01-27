@@ -1,3 +1,4 @@
+import { FormEvent } from "react";
 import { ParsedRecipe } from "@/lib/schemas";
 
 /**
@@ -33,7 +34,7 @@ export interface ModeCardProps {
 export interface RecipeFormProps {
   mode: Mode;
   onBack: () => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: FormEvent) => void;
   isLoading: boolean;
   input: string;
   onInputChange: (value: string) => void;
