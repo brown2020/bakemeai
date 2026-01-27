@@ -159,7 +159,7 @@ export const useRecipeStore = create<RecipeState>()(
           await saveRecipe({
             userId,
             content: getMarkdown(),
-            structuredData: structuredRecipe || undefined,
+            structuredData: structuredRecipe ?? undefined,
           });
           set({ saved: true });
         } catch (error) {

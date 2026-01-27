@@ -63,24 +63,6 @@ export const LAYOUT = {
 } as const;
 
 /**
- * Z-index layers for consistent stacking context
- */
-export const Z_INDEX = {
-  /** Base layer for normal content */
-  BASE: 0,
-  /** Dropdown menus and tooltips */
-  DROPDOWN: 10,
-  /** Sticky headers */
-  STICKY: 20,
-  /** Fixed navigation bars */
-  NAVBAR: 50,
-  /** Modal overlays */
-  MODAL: 100,
-  /** Toast notifications */
-  TOAST: 1000,
-} as const;
-
-/**
  * Recipe display constants
  */
 export const RECIPE = {

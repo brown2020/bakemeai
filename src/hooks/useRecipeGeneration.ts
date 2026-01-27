@@ -116,6 +116,5 @@ export function useRecipeGeneration(userProfile: SerializableUserProfile | null)
     setInput,
     setIngredients,
     handleGenerate,
-    clearValidationError: () => setValidationError(null),
   };
 }

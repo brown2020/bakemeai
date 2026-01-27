@@ -8,13 +8,11 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
  * 
  * Approach:
  * - Development: Warns about missing vars to help catch config issues early
- * - Production: Silently skips validation; Firebase SDK handles errors
+ * - Production: Logs structured error for monitoring, but doesn't throw
  * - Does not throw to avoid race conditions with Next.js 16 + Turbopack env loading
+ * - Firebase SDK will fail gracefully with clear errors if config is actually missing
  */
 function validateFirebaseConfig(): void {
-  // Skip validation in production - Firebase SDK will handle missing config appropriately
-  if (process.env.NODE_ENV === "production") return;
-  
   const requiredEnvVars = [
     "NEXT_PUBLIC_FIREBASE_API_KEY",
     "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
@@ -29,10 +27,25 @@ function validateFirebaseConfig(): void {
   );
 
   if (missingVars.length > 0) {
-    console.warn(
-      `⚠️  Missing Firebase environment variables: ${missingVars.join(", ")}\n` +
-        "Please check your .env.local file and ensure all Firebase configuration is set."
-    );
+    const message = `Missing Firebase environment variables: ${missingVars.join(", ")}`;
+    
+    if (process.env.NODE_ENV === "production") {
+      // Structured logging for production monitoring
+      console.error(
+        JSON.stringify({
+          level: "error",
+          message,
+          missingVars,
+          timestamp: new Date().toISOString(),
+        })
+      );
+    } else {
+      // Friendly warning for development
+      console.warn(
+        `⚠️  ${message}\n` +
+          "Please check your .env.local file and ensure all Firebase configuration is set."
+      );
+    }
   }
 }
 

@@ -6,6 +6,15 @@ import { SerializableUserProfile } from "./schemas";
  */
 
 /**
+ * Allergen handling rules for AI recipe generation.
+ * Ensures the AI doesn't over-correct for allergens not specified by the user.
+ */
+const ALLERGEN_HANDLING_RULES = `Allergen handling rules:
+- Only avoid allergens that are explicitly listed under "Allergies (MUST AVOID)" above.
+- Do not proactively remove/replace common allergens (e.g. peanuts, dairy, gluten) unless they appear in the user's listed allergies.
+- If the user explicitly asks for an ingredient that is a common allergen (e.g. "peanut butter"), include it as requested unless it conflicts with the user's listed allergies.`;
+
+/**
  * Constructs the system prompt for recipe generation based on mode and user preferences.
  * @param isIngredientBased - Whether the recipe should be based on available ingredients
  * @param userProfile - Optional user profile with dietary restrictions and preferences
@@ -26,10 +35,7 @@ Consider the following user preferences:${userPreferencesSection}
 
 Adjust recipe complexity based on cooking experience.
 
-Allergen handling rules:
-- Only avoid allergens that are explicitly listed under "Allergies (MUST AVOID)" above.
-- Do not proactively remove/replace common allergens (e.g. peanuts, dairy, gluten) unless they appear in the user's listed allergies.
-- If the user explicitly asks for an ingredient that is a common allergen (e.g. "peanut butter"), include it as requested unless it conflicts with the user's listed allergies.
+${ALLERGEN_HANDLING_RULES}
 ${modeInstructions}
 
 Generate the response as a structured JSON object matching the schema.
