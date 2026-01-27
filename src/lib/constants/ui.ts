@@ -79,3 +79,17 @@ export const Z_INDEX = {
   /** Toast notifications */
   TOAST: 1000,
 } as const;
+
+/**
+ * Recipe display constants
+ */
+export const RECIPE = {
+  /** Maximum number of ingredients to show in recipe card preview */
+  PREVIEW_INGREDIENTS_COUNT: 3,
+  /** Default recipe title when none can be extracted */
+  DEFAULT_TITLE: "New Recipe",
+  /** Maximum title length for validation */
+  MAX_TITLE_LENGTH: 100,
+  /** Maximum servings value */
+  MAX_SERVINGS: 100,
+} as const;

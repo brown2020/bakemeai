@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Input } from "@/components/ui";
 
 interface RecipeSearchProps {
@@ -7,8 +8,12 @@ interface RecipeSearchProps {
 
 /**
  * Search input component for filtering saved recipes.
+ * Memoized to prevent re-renders when recipe list changes.
  */
-export function RecipeSearch({ searchTerm, onSearchChange }: RecipeSearchProps) {
+export const RecipeSearch = memo(function RecipeSearch({ 
+  searchTerm, 
+  onSearchChange 
+}: RecipeSearchProps) {
   return (
     <div className="mb-6 max-w-xs">
       <Input
@@ -19,4 +24,4 @@ export function RecipeSearch({ searchTerm, onSearchChange }: RecipeSearchProps) 
       />
     </div>
   );
-}
+});

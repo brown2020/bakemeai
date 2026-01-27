@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Recipe } from "@/lib/schemas";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
@@ -8,8 +9,9 @@ interface RecipeDetailProps {
 /**
  * Detail view for the selected recipe displayed in the right panel.
  * Shows the full recipe content with markdown formatting.
+ * Memoized to prevent unnecessary re-renders when other state changes.
  */
-export function RecipeDetail({ recipe }: RecipeDetailProps) {
+export const RecipeDetail = memo(function RecipeDetail({ recipe }: RecipeDetailProps) {
   if (!recipe) {
     return (
       <div className="h-full flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300">
@@ -26,4 +28,4 @@ export function RecipeDetail({ recipe }: RecipeDetailProps) {
       <MarkdownRenderer content={recipe.content} />
     </div>
   );
-}
+});

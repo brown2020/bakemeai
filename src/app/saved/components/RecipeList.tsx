@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Recipe } from "@/lib/schemas";
 import { RecipeCard } from "@/components/RecipeCard";
 
@@ -11,8 +12,9 @@ interface RecipeListProps {
 /**
  * List of recipe cards displayed in the left panel.
  * Handles recipe selection and deletion actions.
+ * Memoized to prevent re-renders when parent updates but recipes haven't changed.
  */
-export function RecipeList({
+export const RecipeList = memo(function RecipeList({
   recipes,
   selectedRecipeId,
   onSelectRecipe,
@@ -39,4 +41,4 @@ export function RecipeList({
       ))}
     </div>
   );
-}
+});

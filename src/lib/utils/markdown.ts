@@ -1,8 +1,39 @@
 import { RecipeStructure } from "../schemas";
+import { RECIPE } from "../constants/ui";
 
 /**
  * Markdown parsing and conversion utilities for recipe content.
  */
+
+/**
+ * Generic markdown section extractor.
+ * Eliminates duplication by providing a flexible extraction pattern.
+ * @param content - The markdown content to parse
+ * @param sectionName - The heading name (e.g., "Ingredients", "Instructions")
+ * @param parser - Function to parse the extracted section content
+ * @returns Parsed section data
+ */
+function extractMarkdownSection<T>(
+  content: string,
+  sectionName: string,
+  parser: (text: string) => T
+): T | null {
+  if (!content || !sectionName) return null;
+  
+  // Match section heading with flexible spacing/casing
+  const escapedName = sectionName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = content.match(
+    new RegExp(`##\\s*${escapedName}\\s*\\n([\\s\\S]*?)(?=\\n##|\\n#|$)`, "i")
+  );
+  
+  if (!match || !match[1]) return null;
+  
+  try {
+    return parser(match[1]);
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Converts a structured recipe object to markdown format.
@@ -53,7 +84,7 @@ export function convertToMarkdown(recipe: RecipeStructure): string {
  * Handles multiple heading formats and edge cases.
  */
 export function extractTitle(content: string): string {
-  if (!content) return "New Recipe";
+  if (!content) return RECIPE.DEFAULT_TITLE;
   
   // Try H1 markdown syntax first (# Title)
   const h1Match = content.match(/^#\s+(.+?)$/m);
@@ -63,34 +94,28 @@ export function extractTitle(content: string): string {
   
   // Fallback: try to find any heading-like text at the start
   const firstLine = content.split("\n")[0]?.trim();
-  if (firstLine && firstLine.length > 0 && firstLine.length < 100) {
-    return firstLine.replace(/^#+\s*/, "").trim() || "New Recipe";
+  if (firstLine && firstLine.length > 0 && firstLine.length < RECIPE.MAX_TITLE_LENGTH) {
+    return firstLine.replace(/^#+\s*/, "").trim() || RECIPE.DEFAULT_TITLE;
   }
   
-  return "New Recipe";
+  return RECIPE.DEFAULT_TITLE;
 }
 
 /**
  * Extracts ingredients list from markdown content.
  * Fallback function used when structured data is unavailable.
- * Handles variations in heading format (##, ##Ingredients, ## Ingredients, etc.)
+ * Uses generic extraction helper for cleaner implementation.
  */
 export function extractIngredients(content: string): string[] {
-  if (!content) return [];
-  
-  // More flexible regex: matches "Ingredients" heading with varying spacing/casing
-  const match = content.match(/##\s*Ingredients\s*\n([\s\S]*?)(?=\n##|\n#|$)/i);
-  if (!match || !match[1]) return [];
-  
-  // Extract list items, supporting both "- " and "* " markdown list syntax
-  const ingredients = match[1]
-    .split("\n")
-    .map(line => line.trim())
-    .filter((line) => line.startsWith("-") || line.startsWith("*"))
-    .map((line) => line.replace(/^[-*]\s*/, "").trim())
-    .filter(item => item.length > 0);
-  
-  return ingredients;
+  return extractMarkdownSection(content, "Ingredients", (text) => {
+    // Extract list items, supporting both "- " and "* " markdown list syntax
+    return text
+      .split("\n")
+      .map(line => line.trim())
+      .filter((line) => line.startsWith("-") || line.startsWith("*"))
+      .map((line) => line.replace(/^[-*]\s*/, "").trim())
+      .filter(item => item.length > 0);
+  }) ?? [];
 }
 
 /**
@@ -120,6 +145,6 @@ export function extractServings(content: string): number {
   if (!match || !match[1]) return 0;
   
   const servings = parseInt(match[1], 10);
-  // Validate reasonable serving size range (1-100)
-  return servings > 0 && servings <= 100 ? servings : 0;
+  // Validate reasonable serving size range
+  return servings > 0 && servings <= RECIPE.MAX_SERVINGS ? servings : 0;
 }

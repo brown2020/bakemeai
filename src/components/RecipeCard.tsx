@@ -2,6 +2,7 @@ import { memo } from "react";
 import { Trash2 } from "lucide-react";
 import clsx from "clsx";
 import { Recipe } from "@/lib/schemas";
+import { RECIPE } from "@/lib/constants/ui";
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -47,8 +48,8 @@ export const RecipeCard = memo(function RecipeCard({
         </button>
       </div>
       <div className="text-sm text-gray-500 mt-2 break-words">
-        {recipe.ingredients.slice(0, 3).join(", ")}
-        {recipe.ingredients.length > 3 && "..."}
+        {recipe.ingredients.slice(0, RECIPE.PREVIEW_INGREDIENTS_COUNT).join(", ")}
+        {recipe.ingredients.length > RECIPE.PREVIEW_INGREDIENTS_COUNT && "..."}
       </div>
     </div>
   );

@@ -28,7 +28,7 @@ import {
   extractField,
   extractServings,
 } from "./utils/markdown";
-import { serializeFirestoreDoc } from "./utils/firestore";
+import { serializeFirestoreDoc, getFirestoreErrorMessage } from "./utils/firestore";
 import { handleError, ERROR_MESSAGES } from "./utils/error-handler";
 import { sanitizeUserInput } from "./utils/sanitize";
 
@@ -86,11 +86,12 @@ export async function saveRecipe({
     const docRef = await addDoc(collection(db, COLLECTIONS.RECIPES), recipe);
     return { id: docRef.id, ...recipe };
   } catch (error) {
+    const userMessage = getFirestoreErrorMessage(error, ERROR_MESSAGES.RECIPE.SAVE_FAILED);
     const message = handleError(
       error,
       "Failed to save recipe to Firestore",
       { userId },
-      ERROR_MESSAGES.RECIPE.SAVE_FAILED
+      userMessage
     );
     throw new Error(message);
   }
@@ -123,11 +124,12 @@ export async function getUserRecipes(userId: string): Promise<Recipe[]> {
     }
     return result.data;
   } catch (error) {
+    const userMessage = getFirestoreErrorMessage(error, ERROR_MESSAGES.RECIPE.LOAD_FAILED);
     const message = handleError(
       error,
       "Failed to fetch user recipes from Firestore",
       { userId },
-      ERROR_MESSAGES.RECIPE.LOAD_FAILED
+      userMessage
     );
     throw new Error(message);
   }
@@ -141,11 +143,12 @@ export async function deleteRecipe(recipeId: string): Promise<void> {
   try {
     await deleteDoc(doc(db, COLLECTIONS.RECIPES, recipeId));
   } catch (error) {
+    const userMessage = getFirestoreErrorMessage(error, ERROR_MESSAGES.RECIPE.DELETE_FAILED);
     const message = handleError(
       error,
       "Failed to delete recipe from Firestore",
       { recipeId },
-      ERROR_MESSAGES.RECIPE.DELETE_FAILED
+      userMessage
     );
     throw new Error(message);
   }
