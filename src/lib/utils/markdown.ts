@@ -179,15 +179,17 @@ export function extractField(content: string, fieldName: string): string {
  * Extracts the servings number from markdown content.
  * Fallback function used when structured data is unavailable.
  * Uses robust parsing with validation and default fallback.
+ * Returns 4 as default when extraction fails (consistent with extractTitle returning fallback).
  */
 export function extractServings(content: string): number {
-  if (!content) return 0;
+  const DEFAULT_SERVINGS = 4;
+  if (!content) return DEFAULT_SERVINGS;
   
   // Case-insensitive match with flexible spacing
   const match = content.match(/[-*]\s*Servings?\s*:\s*(\d+)/i);
-  if (!match || !match[1]) return 0;
+  if (!match || !match[1]) return DEFAULT_SERVINGS;
   
   const servings = parseInt(match[1], 10);
   // Validate reasonable serving size range
-  return servings > 0 && servings <= RECIPE.MAX_SERVINGS ? servings : 0;
+  return servings > 0 && servings <= RECIPE.MAX_SERVINGS ? servings : DEFAULT_SERVINGS;
 }

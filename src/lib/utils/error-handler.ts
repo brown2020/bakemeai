@@ -72,34 +72,6 @@ export function isAppError(error: unknown): error is AppError {
 }
 
 /**
- * Type guard to check if an error is a ValidationError.
- */
-export function isValidationError(error: unknown): error is ValidationError {
-  return error instanceof ValidationError;
-}
-
-/**
- * Type guard to check if an error is an AuthenticationError.
- */
-export function isAuthenticationError(error: unknown): error is AuthenticationError {
-  return error instanceof AuthenticationError;
-}
-
-/**
- * Type guard to check if an error is a NetworkError.
- */
-export function isNetworkError(error: unknown): error is NetworkError {
-  return error instanceof NetworkError;
-}
-
-/**
- * Type guard to check if an error is a DatabaseError.
- */
-export function isDatabaseError(error: unknown): error is DatabaseError {
-  return error instanceof DatabaseError;
-}
-
-/**
  * Union type of all possible error types for better type safety.
  */
 export type AppErrorLike = Error | AppError | { message: string }
@@ -182,24 +154,3 @@ export function handleError(
   return userMessage;
 }
 
-/**
- * Wraps an async operation with standardized error handling.
- * @param operation - The async operation to execute
- * @param logMessage - The message to log on error
- * @param context - Additional context for debugging
- * @param userMessage - The message to show to the user on error
- * @returns Promise that resolves to result or rejects with user message
- */
-export async function withErrorHandling<T>(
-  operation: () => Promise<T>,
-  logMessage: string,
-  context: ErrorContext,
-  userMessage: string
-): Promise<T> {
-  try {
-    return await operation();
-  } catch (error) {
-    const message = handleError(error, logMessage, context, userMessage);
-    throw new Error(message);
-  }
-}

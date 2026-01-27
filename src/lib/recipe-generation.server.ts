@@ -10,6 +10,9 @@ import { getRecipeSystemPrompt } from "./prompts";
 /**
  * Schema for AI-generated recipe structure.
  * Different from the stored recipe schema - this is specifically for OpenAI streaming responses.
+ * 
+ * Note: Uses .describe() for each field to provide context to the AI model.
+ * This is only needed for AI-facing schemas; validation-only schemas don't need descriptions.
  */
 const recipeGenerationSchema = z
   .object({

@@ -40,6 +40,19 @@ export const serializableUserProfileSchema = userProfileSchema.omit({
   updatedAt: true,
 });
 
+/**
+ * Recipe structure schema for AI-generated recipes.
+ * 
+ * All fields are optional to support progressive updates during AI streaming.
+ * As the AI generates the recipe, partial objects are streamed and validated
+ * against this schema. Fields populate incrementally until the full recipe is complete.
+ * 
+ * This differs from `recipeSchema` which represents a complete, saved recipe
+ * in Firestore where all fields are required.
+ * 
+ * Note: This is a validation-only schema. The AI generation schema with .describe()
+ * annotations is defined separately in recipe-generation.server.ts.
+ */
 export const recipeStructureSchema = z.object({
   title: z.string().optional(),
   preparationTime: z.string().optional(),

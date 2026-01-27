@@ -1,12 +1,13 @@
 /**
- * Centralized constants for the application.
- * Keeps all configuration in one place for easier maintenance.
+ * Application domain constants.
+ * Keeps all non-auth configuration in one place for easier maintenance.
  * 
  * Organization:
- * - UI constants: Timing, layout, validation rules
+ * - UI constants: Timing, layout, validation rules (re-exported)
  * - Database: Firestore collection names
- * - Auth: Routes, cookies, JWT configuration
  * - Domain: Dietary options, cuisines, experience levels
+ * 
+ * Note: Authentication constants are in auth-constants.ts
  */
 
 // Re-export UI constants for convenience
@@ -50,26 +51,4 @@ export const EXPERIENCE_LEVELS = [
 ] as const;
 
 export type CookingExperience = (typeof EXPERIENCE_LEVELS)[number]["value"];
-
-/**
- * Private routes that require authentication.
- * Used by middleware for route protection.
- */
-export const PRIVATE_ROUTES = ["/generate", "/profile", "/saved"] as const;
-
-/**
- * Public authentication pages.
- * These pages should be accessible when logged out and redirect away when logged in.
- */
-export const AUTH_PAGES = ["/login", "/signup", "/reset-password"] as const;
-
-/**
- * Authentication cookie configuration.
- */
-export const AUTH_COOKIE_CONFIG = {
-  /** Cookie expiry in days */
-  EXPIRY_DAYS: 7,
-  /** Leeway in seconds to account for clock skew when validating JWT expiry */
-  JWT_EXPIRY_LEEWAY_SECONDS: 5,
-} as const;
 

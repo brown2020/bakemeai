@@ -43,12 +43,15 @@ export function AuthListener(): null {
 
       try {
         await setUserAuthToken(user);
+        
+        // Recheck after async operation - user might have signed out during token refresh
+        if (currentEventId !== authEventId || !isMounted) return;
       } catch (error) {
         // Log token refresh errors but don't crash the auth listener
         console.error("Failed to set auth token:", error);
         // Continue anyway - user is still authenticated in Firebase
       } finally {
-        if (isMounted) {
+        if (isMounted && currentEventId === authEventId) {
           setLoading(false);
         }
       }

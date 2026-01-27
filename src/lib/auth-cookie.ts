@@ -4,8 +4,8 @@ import Cookies from "js-cookie";
 import {
   FIREBASE_AUTH_COOKIE,
   LEGACY_FIREBASE_AUTH_COOKIE,
+  AUTH_COOKIE_CONFIG,
 } from "@/lib/auth-constants";
-import { AUTH_COOKIE_CONFIG } from "@/lib/constants";
 
 /**
  * Cookie configuration for Firebase authentication tokens.

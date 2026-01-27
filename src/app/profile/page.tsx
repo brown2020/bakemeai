@@ -122,13 +122,13 @@ export default function Profile() {
           <ChipSelect
             label="Dietary Preferences"
             options={[...DIETARY_OPTIONS]}
-            selected={profile.dietary || []}
+            selected={profile.dietary}
             onChange={(option) => toggleArrayItem("dietary", option)}
           />
 
           <TagInput
             label="Allergies"
-            value={profile.allergies || []}
+            value={profile.allergies}
             onChange={(allergies) =>
               setProfile((prev) => ({ ...prev, allergies }))
             }
@@ -137,7 +137,7 @@ export default function Profile() {
 
           <TagInput
             label="Ingredients You Dislike"
-            value={profile.dislikedIngredients || []}
+            value={profile.dislikedIngredients}
             onChange={(dislikedIngredients) =>
               setProfile((prev) => ({ ...prev, dislikedIngredients }))
             }
@@ -147,7 +147,7 @@ export default function Profile() {
           <ChipSelect
             label="Preferred Cuisines"
             options={[...CUISINE_OPTIONS]}
-            selected={profile.preferredCuisines || []}
+            selected={profile.preferredCuisines}
             onChange={(cuisine) =>
               toggleArrayItem("preferredCuisines", cuisine)
             }
@@ -175,7 +175,7 @@ export default function Profile() {
 
           <NumberInput
             label="Default Serving Size"
-            value={profile.servingSize || NUMBER_INPUT.SERVING_SIZE_DEFAULT}
+            value={profile.servingSize}
             onChange={(servingSize) =>
               setProfile((prev) => ({ ...prev, servingSize }))
             }

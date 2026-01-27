@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { generateRecipe } from "@/lib/actions";
+import { generateRecipe } from "@/lib/recipe-generation.server";
 import { readStreamableValue } from "@ai-sdk/rsc";
 import { saveRecipe } from "@/lib/db";
 import { SerializableUserProfile, RecipeStructure, ParsedRecipe, recipeStructureSchema } from "@/lib/schemas";
@@ -25,7 +25,7 @@ interface RecipeState {
   saveError: string | null;
   saved: boolean;
 
-  // Computed getters (derived from structuredRecipe)
+  // Computed selectors (transform structuredRecipe on each call - not memoized)
   getParsedRecipe: () => ParsedRecipe;
   getMarkdown: () => string;
 
@@ -57,7 +57,8 @@ export const useRecipeStore = create<RecipeState>()(
       saveError: null,
       saved: false,
 
-      // Computed getter: derives ParsedRecipe from structuredRecipe
+      // Computed selector: transforms structuredRecipe to ParsedRecipe format
+      // Called on each render - not memoized (structuredRecipe changes infrequently)
       getParsedRecipe: (): ParsedRecipe => {
         const { structuredRecipe } = get();
         if (!structuredRecipe) {
@@ -69,7 +70,7 @@ export const useRecipeStore = create<RecipeState>()(
         return { title, content, structuredData: structuredRecipe };
       },
 
-      // Computed getter: derives markdown from structuredRecipe
+      // Computed selector: transforms structuredRecipe to markdown string
       getMarkdown: (): string => {
         const { structuredRecipe } = get();
         return structuredRecipe ? convertToMarkdown(structuredRecipe) : "";

@@ -8,7 +8,7 @@ interface UseFirestoreQueryOptions<T> {
   userId?: string;
   /** User-facing error message to display on failure */
   errorMessage: string;
-  /** Optional context for error logging */
+  /** Optional context for error logging (should be stable/memoized to avoid refetches) */
   logContext?: Record<string, unknown>;
   /** Whether to automatically refetch when userId changes (default: true) */
   enabled?: boolean;
@@ -76,10 +76,7 @@ export function useFirestoreQuery<T>({
     } finally {
       setLoading(false);
     }
-    // Note: logContext is intentionally excluded from deps to avoid infinite loops
-    // since it's typically an inline object.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, errorMessage, enabled, queryFn]);
+  }, [userId, errorMessage, enabled, queryFn, logContext]);
 
   useEffect(() => {
     fetchData();

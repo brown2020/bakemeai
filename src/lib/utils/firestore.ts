@@ -65,14 +65,6 @@ export function timestampToString(timestamp?: Timestamp | null): string | undefi
 }
 
 /**
- * Converts a Firestore Timestamp to milliseconds since epoch.
- */
-export function timestampToMillis(timestamp?: Timestamp | null): number | undefined {
-  if (!timestamp) return undefined;
-  return timestamp.toMillis();
-}
-
-/**
  * Serializes a Firestore document that may contain Timestamps.
  * Converts Timestamp fields to ISO strings for client-side use.
  */

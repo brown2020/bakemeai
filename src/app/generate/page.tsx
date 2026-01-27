@@ -60,12 +60,12 @@ function GenerateContent() {
     handleGenerate,
   } = useRecipeGeneration(userProfile);
 
-  // Fetch user profile when user is available
+  // Fetch user profile when user ID changes
   useEffect(() => {
-    if (user?.uid) {
-      fetchUserProfile(user.uid);
+    if (userId) {
+      fetchUserProfile(userId);
     }
-  }, [user?.uid, fetchUserProfile]);
+  }, [userId, fetchUserProfile]);
 
   const handleSave = useCallback(async () => {
     if (userId) {

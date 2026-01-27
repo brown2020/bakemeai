@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { PRIVATE_ROUTES, AUTH_PAGES, AUTH_COOKIE_CONFIG } from "@/lib/constants";
-import { FIREBASE_AUTH_COOKIE } from "@/lib/auth-constants";
+import {
+  PRIVATE_ROUTES,
+  AUTH_PAGES,
+  AUTH_COOKIE_CONFIG,
+  FIREBASE_AUTH_COOKIE,
+} from "@/lib/auth-constants";
 import { deleteAuthCookies } from "@/lib/utils/cookies";
 import { logError } from "@/lib/utils/logger";
 
@@ -136,24 +140,14 @@ function withDebugHeaders(
 }
 
 /**
- * Available route actions for proxy decision-making.
- * Using enum for type safety and better IDE support.
- */
-export enum RouteAction {
-  ALLOW = "allow",
-  REDIRECT = "redirect",
-  CLEAR_AND_ALLOW = "clear-and-allow",
-  CLEAR_AND_REDIRECT = "clear-and-redirect",
-}
-
-/**
  * Route decision result for cleaner proxy logic.
+ * Discriminated union ensures type safety - each action type has exactly the fields it needs.
  */
-interface RouteDecision {
-  action: RouteAction;
-  redirectTo?: string;
-  includeRedirectParam?: boolean;
-}
+type RouteDecision =
+  | { action: "allow" }
+  | { action: "redirect"; redirectTo: string }
+  | { action: "clear-and-allow" }
+  | { action: "clear-and-redirect"; redirectTo: string; includeRedirectParam: boolean };
 
 /**
  * Determines the appropriate routing action based on auth state and route type.
@@ -168,25 +162,25 @@ function determineRouteAction(
 ): RouteDecision {
   // Auth pages with valid authentication => redirect to app
   if (isAuthPage && isAuthenticated) {
-    return { action: RouteAction.REDIRECT, redirectTo: "/generate" };
+    return { action: "redirect", redirectTo: "/generate" };
   }
 
   // Auth pages with invalid cookie => clear cookie and stay
   if (isAuthPage && cookiePresent && !jwtValid) {
-    return { action: RouteAction.CLEAR_AND_ALLOW };
+    return { action: "clear-and-allow" };
   }
 
   // Protected routes without authentication => redirect to login
   if (isPrivateRoute(pathname) && !isAuthenticated) {
     return { 
-      action: RouteAction.CLEAR_AND_REDIRECT, 
+      action: "clear-and-redirect", 
       redirectTo: "/login", 
       includeRedirectParam: true 
     };
   }
 
   // All other cases => allow through
-  return { action: RouteAction.ALLOW };
+  return { action: "allow" };
 }
 
 /**
@@ -206,21 +200,21 @@ function executeRouteDecision(
   const { pathname } = request.nextUrl;
 
   switch (decision.action) {
-    case RouteAction.REDIRECT: {
+    case "redirect": {
       const url = request.nextUrl.clone();
-      url.pathname = decision.redirectTo!;
+      url.pathname = decision.redirectTo;
       return withDebugHeaders(NextResponse.redirect(url), debugContext);
     }
 
-    case RouteAction.CLEAR_AND_ALLOW: {
+    case "clear-and-allow": {
       const response = NextResponse.next();
       deleteAuthCookies(response);
       return withDebugHeaders(response, debugContext);
     }
 
-    case RouteAction.CLEAR_AND_REDIRECT: {
+    case "clear-and-redirect": {
       const url = request.nextUrl.clone();
-      url.pathname = decision.redirectTo!;
+      url.pathname = decision.redirectTo;
       if (decision.includeRedirectParam) {
         url.searchParams.set("redirect", pathname);
       }
@@ -229,7 +223,7 @@ function executeRouteDecision(
       return withDebugHeaders(response, debugContext);
     }
 
-    case RouteAction.ALLOW: {
+    case "allow": {
       const response = NextResponse.next();
       // Attach user ID header for downstream usage if authenticated
       if (debugContext.userId && debugContext.jwtValid) {
@@ -269,6 +263,15 @@ export async function proxy(request: NextRequest) {
     const jwtValid = !!authToken && !!payload && isUnexpiredJwt(authToken);
     const userId = payload?.user_id ?? payload?.sub ?? null;
     const isAuthenticated = cookiePresent && jwtValid;
+
+    // Log expired token detection for debugging
+    if (cookiePresent && !jwtValid && process.env.NODE_ENV === "development") {
+      logError("Expired or invalid auth token detected", undefined, {
+        pathname,
+        userId,
+        isAuthPage,
+      });
+    }
 
     // Determine what to do
     const decision = determineRouteAction(

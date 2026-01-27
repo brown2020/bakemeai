@@ -88,12 +88,11 @@ export async function saveRecipe({
     const docRef = await addDoc(collection(db, COLLECTIONS.RECIPES), recipe);
     return { id: docRef.id, ...recipe };
   } catch (error) {
-    const userMessage = getFirestoreErrorMessage(error, ERROR_MESSAGES.RECIPE.SAVE_FAILED);
     const message = handleError(
       error,
       "Failed to save recipe to Firestore",
       { userId },
-      userMessage
+      getFirestoreErrorMessage(error, ERROR_MESSAGES.RECIPE.SAVE_FAILED)
     );
     throw new Error(message);
   }
@@ -126,12 +125,11 @@ export async function getUserRecipes(userId: string): Promise<Recipe[]> {
     }
     return result.data;
   } catch (error) {
-    const userMessage = getFirestoreErrorMessage(error, ERROR_MESSAGES.RECIPE.LOAD_FAILED);
     const message = handleError(
       error,
       "Failed to fetch user recipes from Firestore",
       { userId },
-      userMessage
+      getFirestoreErrorMessage(error, ERROR_MESSAGES.RECIPE.LOAD_FAILED)
     );
     throw new Error(message);
   }
@@ -145,12 +143,11 @@ export async function deleteRecipe(recipeId: string): Promise<void> {
   try {
     await deleteDoc(doc(db, COLLECTIONS.RECIPES, recipeId));
   } catch (error) {
-    const userMessage = getFirestoreErrorMessage(error, ERROR_MESSAGES.RECIPE.DELETE_FAILED);
     const message = handleError(
       error,
       "Failed to delete recipe from Firestore",
       { recipeId },
-      userMessage
+      getFirestoreErrorMessage(error, ERROR_MESSAGES.RECIPE.DELETE_FAILED)
     );
     throw new Error(message);
   }
@@ -160,12 +157,11 @@ export async function deleteRecipe(recipeId: string): Promise<void> {
  * Saves or updates a user profile in Firestore.
  * @param userId - The user's unique identifier
  * @param profile - The profile data to save
- * @returns The saved profile
  */
 export async function saveUserProfile(
   userId: string,
   profile: UserProfileInput
-): Promise<UserProfile> {
+): Promise<void> {
   try {
     // Sanitize user-input arrays to prevent HTML injection in stored data
     const sanitizedProfile = {
@@ -176,13 +172,6 @@ export async function saveUserProfile(
     };
 
     await setDoc(doc(db, COLLECTIONS.USER_PROFILES, userId), sanitizedProfile);
-    return { 
-      id: userId, 
-      ...profile,
-      allergies: sanitizedProfile.allergies,
-      dislikedIngredients: sanitizedProfile.dislikedIngredients,
-      updatedAt: sanitizedProfile.updatedAt as unknown as Timestamp,
-    };
   } catch (error) {
     const message = handleError(
       error,
