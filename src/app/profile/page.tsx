@@ -20,7 +20,7 @@ import {
 import { UI_TIMING, NUMBER_INPUT } from "@/lib/constants/ui";
 import PageLayout from "@/components/PageLayout";
 import { Button } from "@/components/Button";
-import { useLoadData } from "@/hooks/useLoadData";
+import { useFirestoreQuery } from "@/hooks/useFirestoreQuery";
 import { logError } from "@/lib/utils/logger";
 
 export default function Profile() {
@@ -41,8 +41,8 @@ export default function Profile() {
     data: loadedProfile,
     loading,
     error: loadError,
-  } = useLoadData({
-    loadFn: getUserProfile,
+  } = useFirestoreQuery({
+    queryFn: getUserProfile,
     userId: user?.uid,
     errorMessage: "Failed to load profile. Please refresh the page.",
   });

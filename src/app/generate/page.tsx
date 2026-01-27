@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Suspense } from "react";
 import PageLayout from "@/components/PageLayout";
@@ -16,6 +16,10 @@ import { Mode } from "./types";
 import { useRecipeStore } from "@/lib/store/recipe-store";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useUserProfileStore } from "@/lib/store/user-profile-store";
+import {
+  specificRecipeInputSchema,
+  ingredientsRecipeInputSchema,
+} from "@/lib/schemas";
 
 // Main component
 export default function GeneratePage() {
@@ -31,6 +35,7 @@ function GenerateContent() {
   const { user } = useAuthStore();
   const { userProfile, fetchUserProfile } = useUserProfileStore();
   const userId = user?.uid;
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const {
     recipe,
@@ -63,13 +68,18 @@ function GenerateContent() {
     async (e: React.FormEvent) => {
       e.preventDefault();
       resetSaveState();
+      setValidationError(null);
 
-      // Validate input based on mode
-      if (mode === "specific" && !input.trim()) {
-        return;
-      }
+      // Validate input based on mode using Zod schemas
+      const promptInput = mode === "specific" ? input : ingredients;
+      const schema =
+        mode === "specific"
+          ? specificRecipeInputSchema
+          : ingredientsRecipeInputSchema;
 
-      if (mode === "ingredients" && !ingredients.trim()) {
+      const validation = schema.safeParse(promptInput);
+      if (!validation.success) {
+        setValidationError(validation.error.issues[0].message);
         return;
       }
 
@@ -79,8 +89,7 @@ function GenerateContent() {
           ? RECIPE_PROMPTS.specific
           : RECIPE_PROMPTS.ingredients;
 
-      const promptInput = mode === "specific" ? input : ingredients;
-      const prompt = promptFn(promptInput);
+      const prompt = promptFn(validation.data);
 
       // Generate recipe with user profile preferences
       await generateRecipeContent(prompt, mode === "ingredients", userProfile);
@@ -139,6 +148,7 @@ function GenerateContent() {
               onIngredientsChange={setIngredients}
             />
 
+            {validationError && <ErrorMessage message={validationError} />}
             {generationError && <ErrorMessage message={generationError} />}
 
             {recipe && (

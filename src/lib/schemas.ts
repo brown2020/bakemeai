@@ -84,6 +84,19 @@ export const recipeInputSchema = z.object({
     .max(1000, "Ingredients list is too long (max 1000 characters)"),
 });
 
+// Individual validation schemas for each input mode
+export const specificRecipeInputSchema = z
+  .string()
+  .trim()
+  .min(3, "Please describe what you'd like to make (at least 3 characters)")
+  .max(500, "Description is too long (max 500 characters)");
+
+export const ingredientsRecipeInputSchema = z
+  .string()
+  .trim()
+  .min(3, "Please list at least one ingredient (at least 3 characters)")
+  .max(1000, "Ingredients list is too long (max 1000 characters)");
+
 // Type exports for use across the app
 export type Recipe = z.infer<typeof recipeSchema>;
 export type UserProfile = z.infer<typeof userProfileSchema>;
