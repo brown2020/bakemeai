@@ -40,6 +40,12 @@ interface SaveRecipeParams {
 /**
  * Saves a recipe to Firestore.
  * Uses structured data if available, otherwise falls back to parsing markdown.
+ * 
+ * Strategy:
+ * 1. Prefer structured data from AI (more reliable)
+ * 2. Fall back to markdown parsing if structured data is missing
+ * 3. Store both structured metadata and full markdown content
+ * 
  * @param params - Recipe save parameters
  * @param params.userId - The user's unique identifier
  * @param params.content - Full markdown content of the recipe
@@ -52,7 +58,7 @@ export async function saveRecipe({
   structuredData,
 }: SaveRecipeParams): Promise<Recipe> {
   try {
-    // Use structured data if available, otherwise parse from markdown
+    // Extract metadata: prefer structured data from AI, fall back to markdown parsing
     const title = structuredData?.title || extractTitle(content);
     const ingredients =
       structuredData?.ingredients || extractIngredients(content);

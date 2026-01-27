@@ -39,11 +39,16 @@ const recipeGenerationSchema = z
   // OpenAI strict schema requires `additionalProperties: false` for objects.
   .strict();
 
+/**
+ * Constructs the AI system prompt based on recipe mode and user preferences.
+ * Dynamically includes dietary restrictions, allergies, and cooking experience.
+ */
 const getSystemPrompt = (
   isIngredientBased: boolean,
   userProfile?: SerializableUserProfile | null
 ) => {
-  // Build dietary restrictions and preferences
+  // Build dietary restrictions and preferences dynamically
+  // Only include sections where the user has provided information
   const dietaryInfo = userProfile?.dietary?.length
     ? `\nDietary Requirements: ${userProfile.dietary.join(", ")}`
     : "";

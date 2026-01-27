@@ -18,4 +18,3 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading });
   },
 }));
-

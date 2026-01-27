@@ -1,10 +1,16 @@
 /**
  * Navigation and redirect utilities.
- * Provides safe redirect validation for auth flows.
+ * Provides safe redirect validation for auth flows to prevent open redirect attacks.
  */
 
 /**
  * Validates that a redirect path is safe (prevents open redirect vulnerabilities).
+ * 
+ * Security rules:
+ * - Must be a string
+ * - Must start with "/" (relative path)
+ * - Must NOT start with "//" (prevents protocol-relative URLs like //evil.com)
+ * 
  * @param path - The path to validate
  * @returns True if the path is safe to redirect to
  */

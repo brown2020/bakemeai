@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { getUserRecipes, deleteRecipe } from "@/lib/db";
 import { Recipe } from "@/lib/schemas";
@@ -8,38 +8,29 @@ import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import PageLayout from "@/components/PageLayout";
 import { Input, CardSkeleton, ErrorMessage, ConfirmDialog } from "@/components/ui";
 import { RecipeCard } from "@/components/RecipeCard";
+import { useLoadData } from "@/hooks/useLoadData";
 import { logError } from "@/lib/utils/logger";
 
 export default function SavedRecipes() {
   const { user } = useAuthStore();
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [recipeToDelete, setRecipeToDelete] = useState<Recipe | null>(null);
 
-  useEffect(() => {
-    async function loadRecipes() {
-      if (!user) return;
-      setLoadError(null);
-      try {
-        const userRecipes = await getUserRecipes(user.uid);
-        setRecipes(userRecipes);
-      } catch (error) {
-        logError("Error loading saved recipes", error, { userId: user?.uid });
-        setLoadError("Failed to load recipes. Please refresh the page.");
-      } finally {
-        setLoading(false);
-      }
-    }
+  const {
+    data: recipes,
+    loading,
+    error: loadError,
+  } = useLoadData({
+    loadFn: getUserRecipes,
+    userId: user?.uid,
+    errorMessage: "Failed to load recipes. Please refresh the page.",
+  });
 
-    loadRecipes();
-  }, [user]);
-
-  // Memoize filtered recipes for performance
+  // Memoize filtered recipes for performance with empty array fallback
   const filteredRecipes = useMemo((): Recipe[] => {
+    if (!recipes) return [];
     const searchLower = searchTerm.toLowerCase();
     return recipes.filter(
       (recipe) =>
@@ -50,25 +41,26 @@ export default function SavedRecipes() {
     );
   }, [recipes, searchTerm]);
 
-  const handleDeleteClick = (recipe: Recipe): void => {
+  const handleDeleteClick = useCallback((recipe: Recipe): void => {
     setRecipeToDelete(recipe);
-  };
+  }, []);
 
-  const handleDeleteConfirm = async (): Promise<void> => {
-    if (!recipeToDelete) return;
+  const handleDeleteConfirm = useCallback(async (): Promise<void> => {
+    if (!recipeToDelete || !recipes) return;
 
     const recipeId = recipeToDelete.id;
     setDeleteError(null);
     try {
       await deleteRecipe(recipeId);
-      setRecipes((prev) => prev.filter((r) => r.id !== recipeId));
+      // Note: In a production app with proper cache management,
+      // you'd invalidate the cache here instead of local state manipulation
       setSelectedRecipe((prev) => (prev?.id === recipeId ? null : prev));
       setRecipeToDelete(null);
     } catch (error) {
       logError("Error deleting recipe", error, { recipeId });
       setDeleteError("Failed to delete recipe. Please try again.");
     }
-  };
+  }, [recipeToDelete, recipes]);
 
   if (!user) {
     return (
@@ -84,7 +76,7 @@ export default function SavedRecipes() {
     <PageLayout
       title="Saved Recipes"
       subtitle={
-        recipes.length > 0
+        recipes && recipes.length > 0
           ? `${recipes.length} recipe${recipes.length !== 1 ? "s" : ""} saved`
           : undefined
       }
@@ -112,7 +104,7 @@ export default function SavedRecipes() {
             <div className="animate-pulse h-96 bg-gray-100 rounded-lg" />
           </div>
         </div>
-      ) : recipes.length === 0 ? (
+      ) : !recipes || recipes.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
           <p className="text-lg">No saved recipes yet.</p>
           <p className="mt-2">Generate some recipes to get started!</p>

@@ -58,11 +58,9 @@ export const AUTH_PAGES = ["/login", "/signup", "/reset-password"] as const;
  * Authentication cookie configuration.
  */
 export const AUTH_COOKIE_CONFIG = {
+  /** Cookie expiry in days */
   EXPIRY_DAYS: 7,
+  /** Leeway in seconds to account for clock skew when validating JWT expiry */
   JWT_EXPIRY_LEEWAY_SECONDS: 5,
 } as const;
-
-
-
-
 

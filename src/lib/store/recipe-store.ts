@@ -45,38 +45,38 @@ interface RecipeState {
 function convertToMarkdown(recipe: RecipeStructure): string {
   if (!recipe.title) return "";
 
-  let md = `# ${recipe.title}\n\n`;
+  let markdown = `# ${recipe.title}\n\n`;
 
-  md += `# Recipe Details\n`;
+  markdown += `# Recipe Details\n`;
   if (recipe.preparationTime)
-    md += `- Preparation Time: ${recipe.preparationTime}\n`;
-  if (recipe.cookingTime) md += `- Cooking Time: ${recipe.cookingTime}\n`;
-  if (recipe.servings) md += `- Servings: ${recipe.servings}\n`;
-  if (recipe.difficulty) md += `- Difficulty: ${recipe.difficulty}\n`;
-  if (recipe.calories != null) md += `- Calories: ${recipe.calories} kcal\n`;
+    markdown += `- Preparation Time: ${recipe.preparationTime}\n`;
+  if (recipe.cookingTime) markdown += `- Cooking Time: ${recipe.cookingTime}\n`;
+  if (recipe.servings) markdown += `- Servings: ${recipe.servings}\n`;
+  if (recipe.difficulty) markdown += `- Difficulty: ${recipe.difficulty}\n`;
+  if (recipe.calories != null) markdown += `- Calories: ${recipe.calories} kcal\n`;
 
   if (recipe.ingredients && recipe.ingredients.length > 0) {
-    md += `\n## Ingredients\n`;
+    markdown += `\n## Ingredients\n`;
     recipe.ingredients.forEach((ing) => {
-      md += `- ${ing}\n`;
+      markdown += `- ${ing}\n`;
     });
   }
 
   if (recipe.instructions && recipe.instructions.length > 0) {
-    md += `\n## Instructions\n`;
+    markdown += `\n## Instructions\n`;
     recipe.instructions.forEach((step, index) => {
-      md += `${index + 1}. ${step}\n`;
+      markdown += `${index + 1}. ${step}\n`;
     });
   }
 
   if (recipe.tips && recipe.tips.length > 0) {
-    md += `\n## Tips\n`;
+    markdown += `\n## Tips\n`;
     recipe.tips.forEach((tip) => {
-      md += `- ${tip}\n`;
+      markdown += `- ${tip}\n`;
     });
   }
 
-  return md;
+  return markdown;
 }
 
 export const useRecipeStore = create<RecipeState>()(
@@ -135,6 +135,13 @@ export const useRecipeStore = create<RecipeState>()(
               const validationResult = recipeStructureSchema.safeParse(partialObject);
               if (!validationResult.success) {
                 // Skip invalid partial updates during streaming
+                // Log validation errors in development to help catch schema issues
+                if (process.env.NODE_ENV === "development") {
+                  console.warn(
+                    "Invalid partial recipe data during streaming:",
+                    validationResult.error.flatten()
+                  );
+                }
                 continue;
               }
               

@@ -1,15 +1,18 @@
+import { memo } from "react";
 import { ModeSelectorProps, ModeCardProps } from "../types";
 import { CARD_STYLES } from "../constants";
 
-const ModeCard = ({ title, description, onClick }: ModeCardProps) => (
-  <div
-    className={`${CARD_STYLES.container} ${CARD_STYLES.hoverEffect}`}
-    onClick={onClick}
-  >
-    <h2 className={CARD_STYLES.title}>{title}</h2>
-    <p className={CARD_STYLES.description}>{description}</p>
-  </div>
-);
+const ModeCard = memo(function ModeCard({ title, description, onClick }: ModeCardProps) {
+  return (
+    <div
+      className={`${CARD_STYLES.container} ${CARD_STYLES.hoverEffect}`}
+      onClick={onClick}
+    >
+      <h2 className={CARD_STYLES.title}>{title}</h2>
+      <p className={CARD_STYLES.description}>{description}</p>
+    </div>
+  );
+});
 
 /**
  * Mode selector component for recipe generation.

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Trash2 } from "lucide-react";
 import { Recipe } from "@/lib/schemas";
 
@@ -11,8 +12,9 @@ interface RecipeCardProps {
 /**
  * Recipe card component for displaying recipe summaries in a list.
  * Shows recipe title, preview of ingredients, and delete button.
+ * Memoized to prevent unnecessary re-renders in large lists.
  */
-export function RecipeCard({
+export const RecipeCard = memo(function RecipeCard({
   recipe,
   isSelected,
   onSelect,
@@ -48,4 +50,4 @@ export function RecipeCard({
       </div>
     </div>
   );
-}
+});

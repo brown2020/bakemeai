@@ -20,12 +20,11 @@ import {
 import { UI_TIMING, NUMBER_INPUT } from "@/lib/constants/ui";
 import PageLayout from "@/components/PageLayout";
 import { Button } from "@/components/Button";
+import { useLoadData } from "@/hooks/useLoadData";
 import { logError } from "@/lib/utils/logger";
 
 export default function Profile() {
   const { user } = useAuthStore();
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -38,31 +37,29 @@ export default function Profile() {
     preferredCuisines: [],
   });
 
+  const {
+    data: loadedProfile,
+    loading,
+    error: loadError,
+  } = useLoadData({
+    loadFn: getUserProfile,
+    userId: user?.uid,
+    errorMessage: "Failed to load profile. Please refresh the page.",
+  });
+
+  // Update local state when profile loads
   useEffect(() => {
-    async function loadProfile() {
-      if (!user) return;
-      setLoadError(null);
-      try {
-        const userProfile = await getUserProfile(user.uid);
-        if (userProfile) {
-          setProfile({
-            dietary: userProfile.dietary,
-            allergies: userProfile.allergies,
-            dislikedIngredients: userProfile.dislikedIngredients,
-            cookingExperience: userProfile.cookingExperience,
-            servingSize: userProfile.servingSize,
-            preferredCuisines: userProfile.preferredCuisines,
-          });
-        }
-      } catch (error) {
-        logError("Error loading user profile", error, { userId: user?.uid });
-        setLoadError("Failed to load profile. Please refresh the page.");
-      } finally {
-        setLoading(false);
-      }
+    if (loadedProfile) {
+      setProfile({
+        dietary: loadedProfile.dietary,
+        allergies: loadedProfile.allergies,
+        dislikedIngredients: loadedProfile.dislikedIngredients,
+        cookingExperience: loadedProfile.cookingExperience,
+        servingSize: loadedProfile.servingSize,
+        preferredCuisines: loadedProfile.preferredCuisines,
+      });
     }
-    loadProfile();
-  }, [user]);
+  }, [loadedProfile]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

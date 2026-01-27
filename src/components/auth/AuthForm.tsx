@@ -186,5 +186,3 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
     </div>
   );
 }
-
-

@@ -18,7 +18,9 @@ function isPrivateRoute(path: string): boolean {
  * @returns The decoded UTF-8 string
  */
 function base64UrlToUtf8(input: string): string {
+  // Convert base64url to standard base64 by replacing URL-safe characters
   const base64 = input.replace(/-/g, "+").replace(/_/g, "/");
+  // Add padding if needed (base64 strings must be multiples of 4)
   const padded = base64.padEnd(
     base64.length + ((4 - (base64.length % 4)) % 4),
     "="
@@ -26,6 +28,8 @@ function base64UrlToUtf8(input: string): string {
 
   // Edge runtime: atob is available. Node: fall back to Buffer.
   if (typeof atob === "function") {
+    // Decode base64 to binary string, then convert to UTF-8
+    // This handles multi-byte UTF-8 characters correctly
     const binary = atob(padded);
     const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
     return new TextDecoder().decode(bytes);
@@ -47,15 +51,19 @@ function base64UrlToUtf8(input: string): string {
 function isUnexpiredJwt(token: string): boolean {
   // Firebase ID token is a JWT. We do a lightweight expiry check here.
   // (Signature verification would require Admin SDK and is out of scope for this app's current model.)
+  
+  // JWT structure: header.payload.signature (3 parts separated by dots)
   const parts = token.split(".");
   if (parts.length !== 3) return false;
 
   try {
     const payload = JSON.parse(base64UrlToUtf8(parts[1])) as FirebaseJwtPayload;
     if (!payload?.exp) return false;
+    
     const nowSeconds = Math.floor(Date.now() / 1000);
-    // Small leeway for clock skew
-    return payload.exp > nowSeconds + AUTH_COOKIE_CONFIG.JWT_EXPIRY_LEEWAY_SECONDS;
+    // Add leeway (5s) to account for small time differences between servers
+    // Token is valid if: exp > (now - leeway), or equivalently: exp > now + (-leeway)
+    return payload.exp > nowSeconds - AUTH_COOKIE_CONFIG.JWT_EXPIRY_LEEWAY_SECONDS;
   } catch {
     return false;
   }
@@ -124,19 +132,31 @@ function withDebugHeaders(
 
 /**
  * Next.js 16 Proxy - handles route protection at the edge.
- * This runs before the page renders, preventing flash of protected content.
+ * 
+ * Execution flow:
+ * 1. Runs before every page render (edge runtime)
+ * 2. Validates JWT token from cookie (expiry check only, no signature verification)
+ * 3. Redirects to login if accessing protected route without valid auth
+ * 4. Redirects to app if accessing auth pages with valid auth
+ * 5. Clears invalid/expired cookies to prevent stale auth state
+ * 
+ * Benefits:
+ * - Prevents flash of protected content
+ * - Centralized auth logic
+ * - Clean redirects with proper error handling
  */
 export async function proxy(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl;
 
-    // Auth pages should be reachable when signed out, and should redirect away when signed in.
+    // Auth pages should be reachable when signed out, and should redirect away when signed in
     const isAuthPage = AUTH_PAGES.some((page) => pathname.startsWith(page));
 
-    // Only trust BakeMe's namespaced cookie to avoid collisions on localhost.
+    // Only trust BakeMe's namespaced cookie to avoid collisions on localhost
     const authToken = request.cookies.get(FIREBASE_AUTH_COOKIE)?.value;
     const cookiePresent = !!authToken;
 
+    // Parse and validate JWT token
     const payload = authToken ? tryGetJwtPayload(authToken) : null;
     const jwtValid = !!authToken && !!payload && isUnexpiredJwt(authToken);
     const userId = payload?.user_id ?? payload?.sub ?? null;

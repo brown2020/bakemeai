@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { RecipeDisplayProps } from "../types";
 import { Button } from "@/components/Button";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
@@ -6,8 +7,9 @@ import { CARD_STYLES } from "../constants";
 /**
  * Recipe display component with save functionality.
  * Shows generated recipe content and provides save button with state feedback.
+ * Memoized to prevent re-renders during streaming updates.
  */
-export function RecipeDisplay({
+export const RecipeDisplay = memo(function RecipeDisplay({
   parsedRecipe,
   onSave,
   isSaving,
@@ -35,4 +37,4 @@ export function RecipeDisplay({
       </div>
     </div>
   );
-}
+});

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import ReactMarkdown from "react-markdown";
 
 interface MarkdownRendererProps {
@@ -8,8 +9,9 @@ interface MarkdownRendererProps {
 /**
  * Shared markdown renderer with consistent styling for recipes.
  * Used in RecipeDisplay and SavedRecipes pages.
+ * Memoized to prevent unnecessary re-renders when parent components update.
  */
-export function MarkdownRenderer({
+export const MarkdownRenderer = memo(function MarkdownRenderer({
   content,
   className = "prose prose-sm sm:prose-base max-w-none",
 }: MarkdownRendererProps) {
@@ -18,7 +20,7 @@ export function MarkdownRenderer({
       <ReactMarkdown components={markdownComponents}>{content}</ReactMarkdown>
     </div>
   );
-}
+});
 
 /**
  * Consistent markdown component styling across the app.
@@ -44,8 +46,4 @@ export const markdownComponents = {
     <li className="ml-2">{children}</li>
   ),
 };
-
-
-
-
 

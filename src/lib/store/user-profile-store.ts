@@ -47,4 +47,3 @@ export const useUserProfileStore = create<UserProfileState>((set) => ({
     set({ userProfile: null, error: null, isLoading: false });
   },
 }));
-

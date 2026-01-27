@@ -10,7 +10,27 @@ export interface ErrorContext {
 }
 
 /**
+ * Custom application error type with optional error code and context.
+ * Provides richer error information for debugging and handling.
+ */
+export class AppError extends Error {
+  constructor(
+    message: string,
+    public code?: string,
+    public context?: ErrorContext
+  ) {
+    super(message);
+    this.name = "AppError";
+  }
+}
+
+/**
  * Standard error messages for common operations.
+ */
+/**
+ * Standard error messages for common operations.
+ * Centralized to ensure consistent user experience.
+ * These are user-facing messages - keep them friendly and actionable.
  */
 export const ERROR_MESSAGES = {
   RECIPE: {
@@ -36,9 +56,15 @@ export const ERROR_MESSAGES = {
 
 /**
  * Handles errors with consistent logging and user-friendly messages.
- * @param error - The error object
+ * 
+ * Purpose:
+ * - Logs technical details for debugging (developer-facing)
+ * - Returns user-friendly message for display (user-facing)
+ * - Ensures consistent error handling across the app
+ * 
+ * @param error - The error object (can be Error, AppError, or unknown)
  * @param logMessage - The message to log for debugging
- * @param context - Additional context for debugging
+ * @param context - Additional context for debugging (e.g., userId, recipeId)
  * @param userMessage - The message to show to the user
  * @returns The user-friendly error message
  */
@@ -48,7 +74,9 @@ export function handleError(
   context: ErrorContext,
   userMessage: string
 ): string {
+  // Log with full technical details for developers
   logError(logMessage, error, context);
+  // Return simplified message for end users
   return userMessage;
 }
 

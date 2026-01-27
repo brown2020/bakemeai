@@ -45,4 +45,3 @@ export function AuthListener(): null {
 
   return null;
 }
-

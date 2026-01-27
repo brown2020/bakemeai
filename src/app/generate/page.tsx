@@ -64,6 +64,7 @@ function GenerateContent() {
       e.preventDefault();
       resetSaveState();
 
+      // Validate input based on mode
       if (mode === "specific" && !input.trim()) {
         return;
       }
@@ -72,6 +73,7 @@ function GenerateContent() {
         return;
       }
 
+      // Generate appropriate prompt based on mode
       const promptFn =
         mode === "specific"
           ? RECIPE_PROMPTS.specific
@@ -80,6 +82,7 @@ function GenerateContent() {
       const promptInput = mode === "specific" ? input : ingredients;
       const prompt = promptFn(promptInput);
 
+      // Generate recipe with user profile preferences
       await generateRecipeContent(prompt, mode === "ingredients", userProfile);
     },
     [
