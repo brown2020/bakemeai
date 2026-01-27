@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { onIdTokenChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { clearAuthCookie } from "@/lib/auth-cookie";
+import { clearAuthCookie } from "@/lib/utils/auth-cookies";
 import { setUserAuthToken } from "@/lib/utils/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
 

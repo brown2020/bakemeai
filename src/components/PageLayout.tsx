@@ -8,7 +8,7 @@ interface PageLayoutProps {
  * Page layout wrapper with consistent styling and optional title/subtitle.
  * Provides standard container, padding, and semantic HTML structure.
  */
-export default function PageLayout({
+export function PageLayout({
   children,
   title,
   subtitle,

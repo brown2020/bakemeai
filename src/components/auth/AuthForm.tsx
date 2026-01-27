@@ -11,14 +11,16 @@ import {
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+
 import { auth } from "@/lib/firebase";
-import { GoogleSignInButton } from "./GoogleSignInButton";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { Input, ErrorMessage } from "@/components/ui";
 import { Button } from "@/components/Button";
 import { setUserAuthToken } from "@/lib/utils/auth";
 import { getSafeRedirectPath } from "@/lib/utils/navigation";
 import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
+
+import { GoogleSignInButton } from "./GoogleSignInButton";
 
 type AuthMode = "login" | "signup";
 

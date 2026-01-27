@@ -92,6 +92,7 @@ export function useRecipeGeneration(userProfile: SerializableUserProfile | null)
       const prompt = promptFn(validation.data);
 
       // Generate recipe with debouncing
+      // Note: Cleanup is handled by useDebounce hook's internal timeout clearing
       debouncedGeneration(prompt, mode === "ingredients");
     },
     [

@@ -5,8 +5,8 @@ import {
   AUTH_PAGES,
   AUTH_COOKIE_CONFIG,
   FIREBASE_AUTH_COOKIE,
-} from "@/lib/auth-constants";
-import { deleteAuthCookies } from "@/lib/utils/cookies";
+} from "@/lib/constants/auth";
+import { deleteAuthCookies } from "@/lib/utils/auth-cookies";
 import { logError } from "@/lib/utils/logger";
 
 /**
@@ -62,11 +62,11 @@ function isUnexpiredJwt(token: string): boolean {
   // (Signature verification would require Admin SDK and is out of scope for this app's current model.)
   
   // JWT structure: header.payload.signature (3 parts separated by dots)
-  const parts = token.split(".");
-  if (parts.length !== 3) return false;
+  const jwtParts = token.split(".");
+  if (jwtParts.length !== 3) return false;
 
   try {
-    const payload = JSON.parse(base64UrlToUtf8(parts[1])) as FirebaseJwtPayload;
+    const payload = JSON.parse(base64UrlToUtf8(jwtParts[1])) as FirebaseJwtPayload;
     if (!payload?.exp) return false;
     
     const nowSeconds = Math.floor(Date.now() / 1000);
@@ -93,10 +93,10 @@ interface FirebaseJwtPayload {
  * @returns The parsed payload or null if invalid
  */
 function tryGetJwtPayload(token: string): FirebaseJwtPayload | null {
-  const parts = token.split(".");
-  if (parts.length !== 3) return null;
+  const jwtParts = token.split(".");
+  if (jwtParts.length !== 3) return null;
   try {
-    return JSON.parse(base64UrlToUtf8(parts[1])) as FirebaseJwtPayload;
+    return JSON.parse(base64UrlToUtf8(jwtParts[1])) as FirebaseJwtPayload;
   } catch {
     return null;
   }
@@ -140,114 +140,18 @@ function withDebugHeaders(
 }
 
 /**
- * Route decision result for cleaner proxy logic.
- * Discriminated union ensures type safety - each action type has exactly the fields it needs.
- */
-type RouteDecision =
-  | { action: "allow" }
-  | { action: "redirect"; redirectTo: string }
-  | { action: "clear-and-allow" }
-  | { action: "clear-and-redirect"; redirectTo: string; includeRedirectParam: boolean };
-
-/**
- * Determines the appropriate routing action based on auth state and route type.
- * Centralized decision logic for better maintainability and testing.
- */
-function determineRouteAction(
-  pathname: string,
-  isAuthPage: boolean,
-  isAuthenticated: boolean,
-  cookiePresent: boolean,
-  jwtValid: boolean
-): RouteDecision {
-  // Auth pages with valid authentication => redirect to app
-  if (isAuthPage && isAuthenticated) {
-    return { action: "redirect", redirectTo: "/generate" };
-  }
-
-  // Auth pages with invalid cookie => clear cookie and stay
-  if (isAuthPage && cookiePresent && !jwtValid) {
-    return { action: "clear-and-allow" };
-  }
-
-  // Protected routes without authentication => redirect to login
-  if (isPrivateRoute(pathname) && !isAuthenticated) {
-    return { 
-      action: "clear-and-redirect", 
-      redirectTo: "/login", 
-      includeRedirectParam: true 
-    };
-  }
-
-  // All other cases => allow through
-  return { action: "allow" };
-}
-
-/**
- * Executes the routing decision by creating appropriate NextResponse.
- */
-function executeRouteDecision(
-  decision: RouteDecision,
-  request: NextRequest,
-  debugContext: {
-    path: string;
-    cookiePresent: boolean;
-    jwtValid: boolean;
-    userId: string | null;
-    isAuthPage: boolean;
-  }
-): NextResponse {
-  const { pathname } = request.nextUrl;
-
-  switch (decision.action) {
-    case "redirect": {
-      const url = request.nextUrl.clone();
-      url.pathname = decision.redirectTo;
-      return withDebugHeaders(NextResponse.redirect(url), debugContext);
-    }
-
-    case "clear-and-allow": {
-      const response = NextResponse.next();
-      deleteAuthCookies(response);
-      return withDebugHeaders(response, debugContext);
-    }
-
-    case "clear-and-redirect": {
-      const url = request.nextUrl.clone();
-      url.pathname = decision.redirectTo;
-      if (decision.includeRedirectParam) {
-        url.searchParams.set("redirect", pathname);
-      }
-      const response = NextResponse.redirect(url);
-      deleteAuthCookies(response);
-      return withDebugHeaders(response, debugContext);
-    }
-
-    case "allow": {
-      const response = NextResponse.next();
-      // Attach user ID header for downstream usage if authenticated
-      if (debugContext.userId && debugContext.jwtValid) {
-        response.headers.set("x-user-id", debugContext.userId);
-      }
-      return withDebugHeaders(response, debugContext);
-    }
-  }
-}
-
-/**
  * Next.js 16 Proxy - handles route protection at the edge.
  * 
  * Execution flow:
  * 1. Runs before every page render (edge runtime)
  * 2. Validates JWT token from cookie (expiry check only, no signature verification)
- * 3. Determines routing action based on auth state and route type
- * 4. Executes the routing decision (redirect, clear cookies, or allow)
+ * 3. Applies routing logic with early returns for clarity
+ * 4. Handles redirects and cookie cleanup as needed
  * 
  * Benefits:
  * - Prevents flash of protected content
- * - Centralized auth logic with clear decision flow
+ * - Clear control flow with early returns
  * - Clean redirects with proper error handling
- * - Easier to test and maintain
  */
 export async function proxy(request: NextRequest) {
   try {
@@ -273,23 +177,45 @@ export async function proxy(request: NextRequest) {
       });
     }
 
-    // Determine what to do
-    const decision = determineRouteAction(
-      pathname,
-      isAuthPage,
-      isAuthenticated,
-      cookiePresent,
-      jwtValid
-    );
-
-    // Execute the decision
-    return executeRouteDecision(decision, request, {
+    const debugContext = {
       path: pathname,
       cookiePresent,
       jwtValid,
       userId,
       isAuthPage,
-    });
+    };
+
+    // Auth pages with valid authentication => redirect to app
+    if (isAuthPage && isAuthenticated) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/generate";
+      return withDebugHeaders(NextResponse.redirect(url), debugContext);
+    }
+
+    // Auth pages with invalid cookie => clear cookie and stay
+    if (isAuthPage && cookiePresent && !jwtValid) {
+      const response = NextResponse.next();
+      deleteAuthCookies(response);
+      return withDebugHeaders(response, debugContext);
+    }
+
+    // Protected routes without authentication => redirect to login
+    if (isPrivateRoute(pathname) && !isAuthenticated) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("redirect", pathname);
+      const response = NextResponse.redirect(url);
+      deleteAuthCookies(response);
+      return withDebugHeaders(response, debugContext);
+    }
+
+    // All other cases => allow through
+    const response = NextResponse.next();
+    // Attach user ID header for downstream usage if authenticated
+    if (userId && jwtValid) {
+      response.headers.set("x-user-id", userId);
+    }
+    return withDebugHeaders(response, debugContext);
   } catch (error) {
     // Fail closed: redirect to login for protected routes
     const { pathname } = request.nextUrl;

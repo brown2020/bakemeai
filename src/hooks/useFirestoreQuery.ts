@@ -76,7 +76,8 @@ export function useFirestoreQuery<T>({
     } finally {
       setLoading(false);
     }
-  }, [userId, errorMessage, enabled, queryFn, logContext]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, errorMessage, enabled, queryFn]);
 
   useEffect(() => {
     fetchData();

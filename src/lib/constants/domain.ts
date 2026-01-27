@@ -1,17 +1,12 @@
 /**
- * Application domain constants.
- * Keeps all non-auth configuration in one place for easier maintenance.
+ * Domain-specific constants for the application.
  * 
  * Organization:
- * - UI constants: Timing, layout, validation rules (re-exported)
  * - Database: Firestore collection names
- * - Domain: Dietary options, cuisines, experience levels
- * 
- * Note: Authentication constants are in auth-constants.ts
+ * - Dietary: Dietary options and preferences
+ * - Cuisines: Available cuisine types
+ * - Experience: Cooking experience levels
  */
-
-// Re-export UI constants for convenience
-export * from "./constants/ui";
 
 /**
  * Firestore collection names.
@@ -51,4 +46,3 @@ export const EXPERIENCE_LEVELS = [
 ] as const;
 
 export type CookingExperience = (typeof EXPERIENCE_LEVELS)[number]["value"];
-

@@ -16,12 +16,12 @@ import {
   CUISINE_OPTIONS,
   EXPERIENCE_LEVELS,
   CookingExperience,
-} from "@/lib/constants";
+} from "@/lib/constants/domain";
 import { UI_TIMING, NUMBER_INPUT } from "@/lib/constants/ui";
-import PageLayout from "@/components/PageLayout";
+import { PageLayout } from "@/components/PageLayout";
 import { Button } from "@/components/Button";
 import { useFirestoreQuery } from "@/hooks/useFirestoreQuery";
-import { logError } from "@/lib/utils/logger";
+import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 
 export default function Profile() {
   const { user } = useAuthStore();
@@ -73,8 +73,13 @@ export default function Profile() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), UI_TIMING.SUCCESS_MESSAGE_DURATION);
     } catch (error) {
-      logError("Error saving user profile", error, { userId: user?.uid });
-      setSaveError("Failed to save preferences. Please try again.");
+      const message = handleError(
+        error,
+        "Error saving user profile",
+        { userId: user?.uid },
+        ERROR_MESSAGES.PROFILE.SAVE_FAILED
+      );
+      setSaveError(message);
     } finally {
       setSaving(false);
     }
@@ -159,7 +164,7 @@ export default function Profile() {
             selected={[
               EXPERIENCE_LEVELS.find(
                 (l) => l.value === profile.cookingExperience
-              )?.label || "Beginner",
+              )?.label ?? "Beginner",
             ]}
             onChange={(label) => {
               const level = EXPERIENCE_LEVELS.find((l) => l.label === label);

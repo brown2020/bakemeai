@@ -36,7 +36,7 @@ export function getFirestoreErrorMessage(
     "unauthenticated": "Please sign in to continue.",
   };
 
-  return errorMessages[code] || defaultMessage;
+  return errorMessages[code] ?? defaultMessage;
 }
 
 /**

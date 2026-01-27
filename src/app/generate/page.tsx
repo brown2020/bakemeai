@@ -2,10 +2,14 @@
 
 import { useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Suspense } from "react";
-import PageLayout from "@/components/PageLayout";
-import { LoadingSpinner } from "@/components/ui";
+
+import { PageLayout } from "@/components/PageLayout";
 import { FeatureErrorBoundary } from "@/components/FeatureErrorBoundary";
+import { useRecipeStore } from "@/lib/store/recipe-store";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { useUserProfileStore } from "@/lib/store/user-profile-store";
+import { useRecipeGeneration } from "@/hooks/useRecipeGeneration";
+
 import {
   ModeSelector,
   RecipeForm,
@@ -13,10 +17,6 @@ import {
   ErrorMessage,
 } from "./components";
 import { Mode } from "./types";
-import { useRecipeStore } from "@/lib/store/recipe-store";
-import { useAuthStore } from "@/lib/store/auth-store";
-import { useUserProfileStore } from "@/lib/store/user-profile-store";
-import { useRecipeGeneration } from "@/hooks/useRecipeGeneration";
 
 // Main component
 export default function GeneratePage() {
@@ -35,7 +35,7 @@ function GenerateContent() {
 
   const {
     structuredRecipe,
-    getParsedRecipe,
+    convertToDisplayFormat,
     mode,
     isSaving,
     saveError,
@@ -46,7 +46,7 @@ function GenerateContent() {
   } = useRecipeStore();
   
   // Derive display format from structured data
-  const parsedRecipe = getParsedRecipe();
+  const parsedRecipe = convertToDisplayFormat();
 
   // Custom hook for generation logic
   const {
@@ -88,51 +88,43 @@ function GenerateContent() {
   }, [setMode, resetRecipe]);
 
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center h-96">
-          <LoadingSpinner size="lg" />
-        </div>
-      }
-    >
-      <div className="space-y-6">
-        {!mode ? (
-          <FeatureErrorBoundary featureName="Mode Selection">
-            <ModeSelector onSelectMode={handleModeSelect} />
+    <div className="space-y-6">
+      {!mode ? (
+        <FeatureErrorBoundary featureName="Mode Selection">
+          <ModeSelector onSelectMode={handleModeSelect} />
+        </FeatureErrorBoundary>
+      ) : (
+        <>
+          <FeatureErrorBoundary featureName="Recipe Form">
+            <RecipeForm
+              mode={mode}
+              onBack={handleBack}
+              onSubmit={handleGenerate}
+              isLoading={isGenerating}
+              input={input}
+              onInputChange={setInput}
+              ingredients={ingredients}
+              onIngredientsChange={setIngredients}
+            />
           </FeatureErrorBoundary>
-        ) : (
-          <>
-            <FeatureErrorBoundary featureName="Recipe Form">
-              <RecipeForm
-                mode={mode}
-                onBack={handleBack}
-                onSubmit={handleGenerate}
-                isLoading={isGenerating}
-                input={input}
-                onInputChange={setInput}
-                ingredients={ingredients}
-                onIngredientsChange={setIngredients}
+
+          {validationError && <ErrorMessage message={validationError} />}
+          {generationError && <ErrorMessage message={generationError} />}
+
+          {structuredRecipe && (
+            <FeatureErrorBoundary featureName="Recipe Display">
+              <RecipeDisplay
+                parsedRecipe={parsedRecipe}
+                onSave={handleSave}
+                isSaving={isSaving}
+                saved={saved}
+                isGenerating={isGenerating}
+                saveError={saveError || ""}
               />
             </FeatureErrorBoundary>
-
-            {validationError && <ErrorMessage message={validationError} />}
-            {generationError && <ErrorMessage message={generationError} />}
-
-            {structuredRecipe && (
-              <FeatureErrorBoundary featureName="Recipe Display">
-                <RecipeDisplay
-                  parsedRecipe={parsedRecipe}
-                  onSave={handleSave}
-                  isSaving={isSaving}
-                  saved={saved}
-                  isGenerating={isGenerating}
-                  saveError={saveError || ""}
-                />
-              </FeatureErrorBoundary>
-            )}
-          </>
-        )}
-      </div>
-    </Suspense>
+          )}
+        </>
+      )}
+    </div>
   );
 }

@@ -4,11 +4,11 @@ import { useState, useMemo, useCallback } from "react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { getUserRecipes, deleteRecipe } from "@/lib/db";
 import { Recipe } from "@/lib/schemas";
-import PageLayout from "@/components/PageLayout";
+import { PageLayout } from "@/components/PageLayout";
 import { ErrorMessage, ConfirmDialog } from "@/components/ui";
 import { FeatureErrorBoundary } from "@/components/FeatureErrorBoundary";
 import { useFirestoreQuery } from "@/hooks/useFirestoreQuery";
-import { logError } from "@/lib/utils/logger";
+import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 import {
   RecipeSearch,
   RecipeList,
@@ -75,8 +75,13 @@ export default function SavedRecipes() {
     try {
       await deleteRecipe(recipeId);
     } catch (error) {
-      logError("Error deleting recipe", error, { recipeId });
-      setDeleteError("Failed to delete recipe. Please try again.");
+      const message = handleError(
+        error,
+        "Error deleting recipe",
+        { recipeId },
+        ERROR_MESSAGES.RECIPE.DELETE_FAILED
+      );
+      setDeleteError(message);
       // On error, refetch from server to restore actual state
       await refetch();
     }
@@ -121,7 +126,7 @@ export default function SavedRecipes() {
             <FeatureErrorBoundary featureName="Recipe List">
               <RecipeList
                 recipes={filteredRecipes}
-                selectedRecipeId={selectedRecipe?.id || null}
+                selectedRecipeId={selectedRecipe?.id ?? null}
                 onSelectRecipe={setSelectedRecipe}
                 onDeleteRecipe={handleDeleteClick}
               />

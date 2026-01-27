@@ -26,7 +26,7 @@ interface RecipeState {
   saved: boolean;
 
   // Computed selectors (transform structuredRecipe on each call - not memoized)
-  getParsedRecipe: () => ParsedRecipe;
+  convertToDisplayFormat: () => ParsedRecipe;
   getMarkdown: () => string;
 
   // Actions
@@ -59,13 +59,13 @@ export const useRecipeStore = create<RecipeState>()(
 
       // Computed selector: transforms structuredRecipe to ParsedRecipe format
       // Called on each render - not memoized (structuredRecipe changes infrequently)
-      getParsedRecipe: (): ParsedRecipe => {
+      convertToDisplayFormat: (): ParsedRecipe => {
         const { structuredRecipe } = get();
         if (!structuredRecipe) {
           return { title: "", content: "" };
         }
         const markdown = convertToMarkdown(structuredRecipe);
-        const title = structuredRecipe.title || "";
+        const title = structuredRecipe.title ?? "";
         const content = markdown.replace(/^# .*\n\n/, "");
         return { title, content, structuredData: structuredRecipe };
       },

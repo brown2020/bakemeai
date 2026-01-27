@@ -7,50 +7,6 @@ import { logWarning } from "./logger";
  */
 
 /**
- * Generic markdown section extractor.
- * Eliminates duplication by providing a flexible extraction pattern.
- * 
- * @template T - The type of data to extract from the section
- * @param content - The markdown content to parse
- * @param sectionName - The heading name (e.g., "Ingredients", "Instructions")
- * @param parser - Function to parse the extracted section content
- * @returns Parsed section data or null if section not found or parsing fails
- * 
- * @example
- * const ingredients = extractMarkdownSection(
- *   markdown,
- *   "Ingredients",
- *   (text) => text.split("\n").filter(line => line.startsWith("-"))
- * );
- */
-function extractMarkdownSection<T>(
-  content: string,
-  sectionName: string,
-  parser: (text: string) => T
-): T | null {
-  if (!content || !sectionName) return null;
-  
-  // Match section heading with flexible spacing/casing
-  const escapedName = sectionName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const match = content.match(
-    new RegExp(`##\\s*${escapedName}\\s*\\n([\\s\\S]*?)(?=\\n##|\\n#|$)`, "i")
-  );
-  
-  if (!match || !match[1]) return null;
-  
-  try {
-    return parser(match[1]);
-  } catch (error) {
-    // Log parsing failures in development to help debug markdown extraction issues
-    logWarning(`Failed to parse markdown section: ${sectionName}`, {
-      error: error instanceof Error ? error.message : String(error),
-      contentPreview: match[1].substring(0, 100),
-    });
-    return null;
-  }
-}
-
-/**
  * Converts a structured recipe object to markdown format.
  * Used for displaying AI-generated recipes in a readable format.
  * 
@@ -147,18 +103,32 @@ export function extractTitle(content: string): string {
 /**
  * Extracts ingredients list from markdown content.
  * Fallback function used when structured data is unavailable.
- * Uses generic extraction helper for cleaner implementation.
+ * Parses the "Ingredients" section and returns list items.
  */
 export function extractIngredients(content: string): string[] {
-  return extractMarkdownSection(content, "Ingredients", (text) => {
+  if (!content) return [];
+  
+  // Match Ingredients section heading with flexible spacing/casing
+  const match = content.match(/##\s*Ingredients\s*\n([\s\S]*?)(?=\n##|\n#|$)/i);
+  
+  if (!match || !match[1]) return [];
+  
+  try {
     // Extract list items, supporting both "- " and "* " markdown list syntax
-    return text
+    return match[1]
       .split("\n")
       .map(line => line.trim())
       .filter((line) => line.startsWith("-") || line.startsWith("*"))
       .map((line) => line.replace(/^[-*]\s*/, "").trim())
       .filter(item => item.length > 0);
-  }) ?? [];
+  } catch (error) {
+    // Log parsing failures in development to help debug markdown extraction issues
+    logWarning("Failed to parse ingredients section", {
+      error: error instanceof Error ? error.message : String(error),
+      contentPreview: match[1].substring(0, 100),
+    });
+    return [];
+  }
 }
 
 /**

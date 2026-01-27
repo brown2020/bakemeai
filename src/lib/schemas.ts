@@ -41,37 +41,66 @@ export const serializableUserProfileSchema = userProfileSchema.omit({
 });
 
 /**
- * Recipe structure schema for AI-generated recipes.
+ * Base recipe structure fields (core definitions without modifiers).
+ * Single source of truth for recipe field structure.
+ */
+const baseRecipeFields = {
+  title: z.string(),
+  preparationTime: z.string(),
+  cookingTime: z.string(),
+  servings: z.number(),
+  difficulty: z.enum(["Easy", "Moderate", "Advanced"]),
+  ingredients: z.array(z.string()),
+  instructions: z.array(z.string()),
+  tips: z.array(z.string()),
+  calories: z.number().nullable(),
+  macros: z.object({
+    protein: z.string().nullable(),
+    carbs: z.string().nullable(),
+    fat: z.string().nullable(),
+  }).nullable(),
+} as const;
+
+/**
+ * Recipe structure schema for streaming validation.
  * 
  * All fields are optional to support progressive updates during AI streaming.
  * As the AI generates the recipe, partial objects are streamed and validated
  * against this schema. Fields populate incrementally until the full recipe is complete.
- * 
- * This differs from `recipeSchema` which represents a complete, saved recipe
- * in Firestore where all fields are required.
- * 
- * Note: This is a validation-only schema. The AI generation schema with .describe()
- * annotations is defined separately in recipe-generation.server.ts.
  */
 export const recipeStructureSchema = z.object({
-  title: z.string().optional(),
-  preparationTime: z.string().optional(),
-  cookingTime: z.string().optional(),
-  servings: z.number().optional(),
-  difficulty: z.enum(["Easy", "Moderate", "Advanced"]).optional(),
-  ingredients: z.array(z.string()).optional(),
-  instructions: z.array(z.string()).optional(),
-  tips: z.array(z.string()).optional(),
-  calories: z.number().nullable().optional(),
-  macros: z
-    .object({
-      protein: z.string().nullable(),
-      carbs: z.string().nullable(),
-      fat: z.string().nullable(),
-    })
-    .nullable()
-    .optional(),
+  title: baseRecipeFields.title.optional(),
+  preparationTime: baseRecipeFields.preparationTime.optional(),
+  cookingTime: baseRecipeFields.cookingTime.optional(),
+  servings: baseRecipeFields.servings.optional(),
+  difficulty: baseRecipeFields.difficulty.optional(),
+  ingredients: baseRecipeFields.ingredients.optional(),
+  instructions: baseRecipeFields.instructions.optional(),
+  tips: baseRecipeFields.tips.optional(),
+  calories: baseRecipeFields.calories.optional(),
+  macros: baseRecipeFields.macros.optional(),
 });
+
+/**
+ * Base recipe fields for AI generation (exported for use in server actions).
+ * Includes .describe() annotations for AI context.
+ */
+export const aiRecipeFields = {
+  title: baseRecipeFields.title.describe("The title of the recipe"),
+  preparationTime: baseRecipeFields.preparationTime.describe("Time needed for preparation (e.g. '15 mins')"),
+  cookingTime: baseRecipeFields.cookingTime.describe("Time needed for cooking (e.g. '45 mins')"),
+  servings: baseRecipeFields.servings.describe("Number of people served"),
+  difficulty: baseRecipeFields.difficulty.describe("Difficulty level"),
+  ingredients: baseRecipeFields.ingredients.describe("List of ingredients with measurements"),
+  instructions: baseRecipeFields.instructions.describe("Step-by-step cooking instructions"),
+  tips: baseRecipeFields.tips.describe("Helpful cooking tips"),
+  calories: baseRecipeFields.calories.describe("Approximate calories per serving (use null if unknown)"),
+  macros: z.object({
+    protein: z.string().nullable().describe("Protein per serving (use null if unknown)"),
+    carbs: z.string().nullable().describe("Carbs per serving (use null if unknown)"),
+    fat: z.string().nullable().describe("Fat per serving (use null if unknown)"),
+  }).strict().nullable().describe("Macronutrients per serving (use null if unknown)"),
+} as const;
 
 // Input schema for profile updates (without server-generated fields)
 export const userProfileInputSchema = userProfileSchema.omit({

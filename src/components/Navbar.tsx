@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { auth } from "@/lib/firebase";
-import { clearAuthCookie } from "@/lib/auth-cookie";
+import { clearAuthCookie } from "@/lib/utils/auth-cookies";
 import Image from "next/image";
 import { Wand2, BookMarked, Settings } from "lucide-react";
 import { NavLink } from "@/components/ui";
@@ -14,7 +14,7 @@ import { UserMenu } from "@/components/UserMenu";
  * Shows authenticated navigation with user menu or login/signup buttons.
  * Fixed positioning with responsive design.
  */
-export default function Navbar() {
+export function Navbar() {
   const { user } = useAuthStore();
 
   const handleSignOut = async () => {

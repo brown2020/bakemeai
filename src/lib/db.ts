@@ -1,4 +1,3 @@
-import { db } from "./firebase";
 import {
   collection,
   addDoc,
@@ -13,6 +12,9 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
+import { z } from "zod";
+
+import { db } from "./firebase";
 import {
   Recipe,
   UserProfile,
@@ -21,8 +23,7 @@ import {
   recipeSchema,
   userProfileSchema,
 } from "./schemas";
-import { COLLECTIONS } from "./constants";
-import { z } from "zod";
+import { COLLECTIONS } from "./constants/domain";
 import {
   extractTitle,
   extractIngredients,

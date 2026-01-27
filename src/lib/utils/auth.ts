@@ -1,5 +1,5 @@
 import { User } from "firebase/auth";
-import { setAuthCookieToken } from "@/lib/auth-cookie";
+import { setAuthCookieToken } from "@/lib/utils/auth-cookies";
 
 /**
  * Authentication utility functions.

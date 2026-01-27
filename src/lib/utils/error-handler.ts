@@ -72,9 +72,10 @@ export function isAppError(error: unknown): error is AppError {
 }
 
 /**
- * Union type of all possible error types for better type safety.
+ * Union type representing errors from catch blocks.
+ * Covers standard Error objects, custom AppError instances, and error-like objects.
  */
-export type AppErrorLike = Error | AppError | { message: string }
+export type CatchBlockError = Error | AppError | { message: string }
 
 /**
  * Standard error messages for common operations.
@@ -107,9 +108,9 @@ export const ERROR_MESSAGES = {
 } as const;
 
 /**
- * Type guard to check if an unknown error can be treated as AppErrorLike.
+ * Type guard to convert unknown errors from catch blocks to typed errors.
  */
-function asAppErrorLike(error: unknown): AppErrorLike {
+function asCatchBlockError(error: unknown): CatchBlockError {
   if (error instanceof Error) {
     return error;
   }
@@ -139,8 +140,8 @@ export function handleError(
   context: ErrorContext,
   userMessage: string
 ): string {
-  // Convert unknown error to AppErrorLike for type safety
-  const typedError = asAppErrorLike(error);
+  // Convert unknown error to typed error for type safety
+  const typedError = asCatchBlockError(error);
   
   // Log with full technical details for developers
   logError(logMessage, typedError, context);
