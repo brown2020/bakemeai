@@ -8,7 +8,12 @@ interface RecipeSearchProps {
 
 /**
  * Search input component for filtering saved recipes.
- * Memoized to prevent re-renders when recipe list changes.
+ * 
+ * Memoization rationale:
+ * - Parent re-renders frequently (selection changes, delete operations)
+ * - Search state is independent of recipe list changes
+ * - Prevents input flicker/blur during parent updates
+ * - Minimal component, but improves UX consistency
  */
 export const RecipeSearch = memo(function RecipeSearch({ 
   searchTerm, 

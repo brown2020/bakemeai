@@ -7,7 +7,12 @@ import { CARD_STYLES } from "../constants";
 /**
  * Recipe display component with save functionality.
  * Shows generated recipe content and provides save button with state feedback.
- * Memoized to prevent re-renders during streaming updates.
+ * 
+ * Memoization rationale:
+ * - Parent re-renders frequently during AI streaming
+ * - Prevents full component re-render when only parsedRecipe.content changes
+ * - MarkdownRenderer inside handles its own memoization for content
+ * - Improves streaming performance by reducing React reconciliation work
  */
 export const RecipeDisplay = memo(function RecipeDisplay({
   parsedRecipe,

@@ -2,6 +2,16 @@ import { memo } from "react";
 import { ModeSelectorProps, ModeCardProps } from "../types";
 import { CARD_STYLES } from "../constants";
 
+/**
+ * Individual mode card component.
+ * 
+ * Memoization rationale:
+ * - Static content that never changes
+ * - Rendered in a small list (2 items)
+ * - Parent (ModeSelector) doesn't re-render in practice
+ * - Minimal benefit, but follows consistent pattern
+ * - Could be removed without performance impact
+ */
 const ModeCard = memo(function ModeCard({ title, description, onClick }: ModeCardProps) {
   return (
     <div

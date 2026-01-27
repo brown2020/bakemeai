@@ -25,9 +25,8 @@ export const useUserProfileStore = create<UserProfileState>((set) => ({
       const profile = await getUserProfile(userId);
       if (profile) {
         // Strip Firestore Timestamp - it's not serializable for server actions
-        // updatedAt is intentionally unused since Timestamps can't be passed to server actions
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { updatedAt, ...serializableProfile } = profile;
+        // Underscore convention indicates intentionally unused variable
+        const { updatedAt: _, ...serializableProfile } = profile;
         set({ userProfile: serializableProfile });
       } else {
         set({ userProfile: null });

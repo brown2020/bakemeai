@@ -73,17 +73,6 @@ export const passwordSchema = z
   .string()
   .min(6, "Password must be at least 6 characters");
 
-export const recipeInputSchema = z.object({
-  specificInput: z
-    .string()
-    .min(3, "Please describe what you'd like to make (at least 3 characters)")
-    .max(500, "Description is too long (max 500 characters)"),
-  ingredientsInput: z
-    .string()
-    .min(3, "Please list at least one ingredient")
-    .max(1000, "Ingredients list is too long (max 1000 characters)"),
-});
-
 // Individual validation schemas for each input mode
 export const specificRecipeInputSchema = z
   .string()

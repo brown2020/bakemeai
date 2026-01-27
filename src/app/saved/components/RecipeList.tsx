@@ -12,7 +12,13 @@ interface RecipeListProps {
 /**
  * List of recipe cards displayed in the left panel.
  * Handles recipe selection and deletion actions.
- * Memoized to prevent re-renders when parent updates but recipes haven't changed.
+ * 
+ * Memoization rationale:
+ * - Renders entire recipe collection (could be 100+ items)
+ * - Parent re-renders on various state changes (search, delete confirmation)
+ * - RecipeCard children are also memoized for granular optimization
+ * - Together creates efficient virtualization-like behavior
+ * - Critical for performance with large recipe collections
  */
 export const RecipeList = memo(function RecipeList({
   recipes,

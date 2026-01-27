@@ -34,8 +34,8 @@ function GenerateContent() {
   const userId = user?.uid;
 
   const {
-    recipe,
-    parsedRecipe,
+    structuredRecipe,
+    getParsedRecipe,
     mode,
     isSaving,
     saveError,
@@ -44,6 +44,9 @@ function GenerateContent() {
     saveRecipeToDb,
     resetRecipe,
   } = useRecipeStore();
+  
+  // Derive display format from structured data
+  const parsedRecipe = getParsedRecipe();
 
   // Custom hook for generation logic
   const {
@@ -115,7 +118,7 @@ function GenerateContent() {
             {validationError && <ErrorMessage message={validationError} />}
             {generationError && <ErrorMessage message={generationError} />}
 
-            {recipe && (
+            {structuredRecipe && (
               <FeatureErrorBoundary featureName="Recipe Display">
                 <RecipeDisplay
                   parsedRecipe={parsedRecipe}

@@ -8,10 +8,10 @@ import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 import { convertToMarkdown } from "@/lib/utils/markdown";
 
 interface RecipeState {
-  // Generation State
-  recipe: string; // Kept for markdown representation
-  parsedRecipe: ParsedRecipe;
+  // Single source of truth for recipe data
   structuredRecipe: RecipeStructure | null;
+  
+  // Generation State
   isGenerating: boolean;
   generationError: string | null;
 
@@ -24,6 +24,10 @@ interface RecipeState {
   isSaving: boolean;
   saveError: string | null;
   saved: boolean;
+
+  // Computed getters (derived from structuredRecipe)
+  getParsedRecipe: () => ParsedRecipe;
+  getMarkdown: () => string;
 
   // Actions
   setInput: (input: string) => void;
@@ -43,8 +47,6 @@ export const useRecipeStore = create<RecipeState>()(
   persist(
     (set, get) => ({
       // Initial State
-      recipe: "",
-      parsedRecipe: { title: "", content: "" },
       structuredRecipe: null,
       isGenerating: false,
       generationError: null,
@@ -55,6 +57,24 @@ export const useRecipeStore = create<RecipeState>()(
       saveError: null,
       saved: false,
 
+      // Computed getter: derives ParsedRecipe from structuredRecipe
+      getParsedRecipe: (): ParsedRecipe => {
+        const { structuredRecipe } = get();
+        if (!structuredRecipe) {
+          return { title: "", content: "" };
+        }
+        const markdown = convertToMarkdown(structuredRecipe);
+        const title = structuredRecipe.title || "";
+        const content = markdown.replace(/^# .*\n\n/, "");
+        return { title, content, structuredData: structuredRecipe };
+      },
+
+      // Computed getter: derives markdown from structuredRecipe
+      getMarkdown: (): string => {
+        const { structuredRecipe } = get();
+        return structuredRecipe ? convertToMarkdown(structuredRecipe) : "";
+      },
+
       setInput: (input: string) => {
         set({ input });
       },
@@ -64,8 +84,6 @@ export const useRecipeStore = create<RecipeState>()(
       setMode: (mode: "specific" | "ingredients" | null) => {
         set({
           mode,
-          recipe: "",
-          parsedRecipe: { title: "", content: "" },
           structuredRecipe: null,
           generationError: null,
           saved: false,
@@ -75,7 +93,6 @@ export const useRecipeStore = create<RecipeState>()(
       generateRecipeContent: async (prompt, isIngredientsMode, userProfile) => {
         set({
           isGenerating: true,
-          recipe: "",
           structuredRecipe: null,
           generationError: null,
           saved: false,
@@ -105,26 +122,9 @@ export const useRecipeStore = create<RecipeState>()(
                 continue;
               }
               
-              const structuredData = validationResult.data;
-              const markdownContent = convertToMarkdown(structuredData);
-              const title = structuredData.title || "";
-
-              // We need to strip the title from the markdown content for the display component
-              // since RecipeDisplay renders the title separately
-              const contentForDisplay = markdownContent.replace(
-                /^# .*\n\n/,
-                ""
-              );
-
-              set({
-                structuredRecipe: structuredData,
-                recipe: markdownContent,
-                parsedRecipe: {
-                  title,
-                  content: contentForDisplay,
-                  structuredData,
-                },
-              });
+              // Single source of truth: only store structuredRecipe
+              // All display formats are derived via getters
+              set({ structuredRecipe: validationResult.data });
             }
           }
         } catch (error) {
@@ -141,7 +141,7 @@ export const useRecipeStore = create<RecipeState>()(
       },
 
       saveRecipeToDb: async (userId) => {
-        const { recipe, structuredRecipe } = get();
+        const { structuredRecipe, getMarkdown } = get();
         if (!userId) {
           set({ saveError: "You must be logged in to save recipes" });
           return;
@@ -152,7 +152,7 @@ export const useRecipeStore = create<RecipeState>()(
         try {
           await saveRecipe({
             userId,
-            content: recipe,
+            content: getMarkdown(),
             structuredData: structuredRecipe || undefined,
           });
           set({ saved: true });
@@ -171,8 +171,6 @@ export const useRecipeStore = create<RecipeState>()(
 
       resetRecipe: () => {
         set({
-          recipe: "",
-          parsedRecipe: { title: "", content: "" },
           structuredRecipe: null,
           generationError: null,
           saved: false,

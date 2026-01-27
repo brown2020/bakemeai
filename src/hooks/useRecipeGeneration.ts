@@ -8,9 +8,6 @@ import {
 } from "@/lib/schemas";
 import { RECIPE_PROMPTS } from "@/app/generate/constants";
 
-// Rate limiting: Minimum time between recipe generation submissions (milliseconds)
-const MIN_SUBMISSION_INTERVAL_MS = AI_GENERATION_DEBOUNCE_MS;
-
 /**
  * Custom hook for recipe generation logic.
  * Encapsulates all generation-related state and validation logic.
@@ -64,7 +61,7 @@ export function useRecipeGeneration(userProfile: SerializableUserProfile | null)
       
       // Rate limiting: prevent rapid consecutive submissions
       const now = Date.now();
-      if (now - lastSubmitTimeRef.current < MIN_SUBMISSION_INTERVAL_MS) {
+      if (now - lastSubmitTimeRef.current < AI_GENERATION_DEBOUNCE_MS) {
         setValidationError("Please wait a moment before generating another recipe.");
         return;
       }

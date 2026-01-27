@@ -19,8 +19,11 @@ interface MarkdownRendererProps {
  * - Disallows dangerous elements (script, iframe, etc.)
  * - Defense-in-depth approach with multiple layers
  * 
- * Performance:
- * - Memoized to prevent unnecessary re-renders when parent components update
+ * Memoization rationale:
+ * - ReactMarkdown is expensive (parses markdown and renders complex DOM)
+ * - Content rarely changes once rendered (only on new recipe generation)
+ * - Prevents re-parsing when parent re-renders for other state changes
+ * - Critical for smooth UX during streaming recipe generation
  */
 export const MarkdownRenderer = memo(function MarkdownRenderer({
   content,

@@ -31,6 +31,17 @@ export default [
     settings: {
       react: { version: "detect" },
     },
+    rules: {
+      // Allow underscore-prefixed variables to be unused (common convention for destructuring)
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+    },
   },
 
   // React + hooks (JSX runtime — no `React` import needed)

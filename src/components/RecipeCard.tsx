@@ -14,7 +14,11 @@ interface RecipeCardProps {
 /**
  * Recipe card component for displaying recipe summaries in a list.
  * Shows recipe title, preview of ingredients, and delete button.
- * Memoized to prevent unnecessary re-renders in large lists.
+ * 
+ * Memoization rationale:
+ * - Renders inside .map() over potentially hundreds of recipes
+ * - Prevents re-renders of unselected cards when selection changes
+ * - Significant performance improvement in large recipe collections
  */
 export const RecipeCard = memo(function RecipeCard({
   recipe,

@@ -9,7 +9,12 @@ interface RecipeDetailProps {
 /**
  * Detail view for the selected recipe displayed in the right panel.
  * Shows the full recipe content with markdown formatting.
- * Memoized to prevent unnecessary re-renders when other state changes.
+ * 
+ * Memoization rationale:
+ * - Contains expensive MarkdownRenderer (which has its own memoization)
+ * - Parent re-renders on every list interaction (hover, click)
+ * - Only needs to re-render when selected recipe actually changes
+ * - Prevents expensive markdown re-parsing on unrelated updates
  */
 export const RecipeDetail = memo(function RecipeDetail({ recipe }: RecipeDetailProps) {
   if (!recipe) {
