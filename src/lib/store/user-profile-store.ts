@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { SerializableUserProfile } from "@/lib/schemas";
 import { getUserProfile } from "@/lib/db";
-import { logError } from "@/lib/utils/logger";
+import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 
 interface UserProfileState {
   userProfile: SerializableUserProfile | null;
@@ -32,8 +32,13 @@ export const useUserProfileStore = create<UserProfileState>((set) => ({
         set({ userProfile: null });
       }
     } catch (error) {
-      logError("Error loading user profile from store", error, { userId });
-      set({ error: "Failed to load user profile" });
+      const message = handleError(
+        error,
+        "Error loading user profile from store",
+        { userId },
+        ERROR_MESSAGES.PROFILE.LOAD_FAILED
+      );
+      set({ error: message });
     } finally {
       set({ isLoading: false });
     }

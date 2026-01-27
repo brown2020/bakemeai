@@ -110,7 +110,11 @@ export async function getUserRecipes(userId: string): Promise<Recipe[]> {
     }));
 
     // Validate data with Zod schema
-    return z.array(recipeSchema).parse(rawRecipes);
+    const result = z.array(recipeSchema).safeParse(rawRecipes);
+    if (!result.success) {
+      throw new Error("Invalid recipe data from Firestore");
+    }
+    return result.data;
   } catch (error) {
     const message = handleError(
       error,
@@ -189,7 +193,11 @@ export async function getUserProfile(
       });
 
       // Validate data with Zod schema
-      return userProfileSchema.parse(rawProfile);
+      const result = userProfileSchema.safeParse(rawProfile);
+      if (!result.success) {
+        throw new Error("Invalid profile data from Firestore");
+      }
+      return result.data;
     }
     return null;
   } catch (error) {

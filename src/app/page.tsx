@@ -1,74 +1,24 @@
 import Image from "next/image";
 import { HeroCTA } from "@/components/HeroCTA";
-
-/**
- * Feature icons as static SVG components for better performance
- */
-const LightningIcon = () => (
-  <svg
-    className="w-6 h-6"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M13 10V3L4 14h7v7l9-11h-7z"
-    />
-  </svg>
-);
-
-const CakeIcon = () => (
-  <svg
-    className="w-6 h-6"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z"
-    />
-  </svg>
-);
-
-const HeartIcon = () => (
-  <svg
-    className="w-6 h-6"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-    />
-  </svg>
-);
+import { LightningIcon, CakeIcon, HeartIcon } from "@/components/icons/FeatureIcons";
 
 const features = [
   {
     title: "AI-Powered Recipe Generation",
     description:
       "Get personalized recipes based on your ingredients or cravings",
-    icon: <LightningIcon />,
+    Icon: LightningIcon,
   },
   {
     title: "Dietary Preferences",
     description:
       "Customize recipes based on your dietary restrictions and preferences",
-    icon: <CakeIcon />,
+    Icon: CakeIcon,
   },
   {
     title: "Save Your Favorites",
     description: "Build your personal collection of favorite recipes",
-    icon: <HeartIcon />,
+    Icon: HeartIcon,
   },
 ];
 
@@ -137,19 +87,22 @@ export default function Home() {
 
           <div className="mt-10">
             <div className="space-y-10 md:space-y-0 md:grid md:grid-cols-3 md:gap-x-8 md:gap-y-10">
-              {features.map((feature) => (
-                <div key={feature.title} className="relative">
-                  <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-primary-500 text-white">
-                    {feature.icon}
+              {features.map((feature) => {
+                const { Icon } = feature;
+                return (
+                  <div key={feature.title} className="relative">
+                    <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-primary-500 text-white">
+                      <Icon />
+                    </div>
+                    <p className="ml-16 text-lg leading-6 font-medium text-gray-900">
+                      {feature.title}
+                    </p>
+                    <p className="mt-2 ml-16 text-base text-gray-500">
+                      {feature.description}
+                    </p>
                   </div>
-                  <p className="ml-16 text-lg leading-6 font-medium text-gray-900">
-                    {feature.title}
-                  </p>
-                  <p className="mt-2 ml-16 text-base text-gray-500">
-                    {feature.description}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

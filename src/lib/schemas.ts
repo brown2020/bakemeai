@@ -92,8 +92,12 @@ export type UserProfileInput = z.infer<typeof userProfileInputSchema>;
 export type RecipeStructure = z.infer<typeof recipeStructureSchema>;
 
 /**
- * Parsed recipe data structure for display.
- * Combines title, content, and optional structured data.
+ * Parsed recipe data structure for UI display.
+ * Used as an intermediate format between AI generation and rendering.
+ * 
+ * @property title - Recipe title (displayed separately from content)
+ * @property content - Markdown content without the title (for body rendering)
+ * @property structuredData - Original structured data from AI (for saving to DB)
  */
 export interface ParsedRecipe {
   title: string;

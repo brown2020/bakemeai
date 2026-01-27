@@ -5,9 +5,9 @@ import { useAuthStore } from "@/lib/store/auth-store";
 import { getUserRecipes, deleteRecipe } from "@/lib/db";
 import { Recipe } from "@/lib/schemas";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
-import { Trash2 } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
 import { Input, CardSkeleton, ErrorMessage, ConfirmDialog } from "@/components/ui";
+import { RecipeCard } from "@/components/RecipeCard";
 import { logError } from "@/lib/utils/logger";
 
 export default function SavedRecipes() {
@@ -167,50 +167,5 @@ export default function SavedRecipes() {
         variant="danger"
       />
     </PageLayout>
-  );
-}
-
-interface RecipeCardProps {
-  recipe: Recipe;
-  isSelected: boolean;
-  onSelect: () => void;
-  onDelete: () => void;
-}
-
-function RecipeCard({
-  recipe,
-  isSelected,
-  onSelect,
-  onDelete,
-}: RecipeCardProps) {
-  return (
-    <div
-      className={`p-3 sm:p-4 rounded-lg border cursor-pointer transition-colors ${
-        isSelected
-          ? "border-blue-500 bg-blue-50"
-          : "border-gray-200 hover:border-blue-300 bg-white"
-      }`}
-      onClick={onSelect}
-    >
-      <div className="flex justify-between items-start gap-2">
-        <h3 className="font-medium text-base break-words flex-1">
-          {recipe.title}
-        </h3>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          className="text-red-500 hover:text-red-600 shrink-0 p-1 rounded-full hover:bg-red-50 transition-colors"
-          aria-label="Delete recipe"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
-      </div>
-      <div className="text-sm text-gray-500 mt-2 break-words">
-        {recipe.ingredients.slice(0, 3).join(", ")}
-        {recipe.ingredients.length > 3 && "..."}
-      </div>
-    </div>
   );
 }

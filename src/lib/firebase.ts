@@ -5,12 +5,12 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 /**
  * Validates that all required Firebase environment variables are present.
- * Only throws in development to provide helpful error messages.
- * In production, Firebase SDK will handle missing config errors.
+ * Warns in development to help catch configuration issues early.
+ * Does not throw to avoid race conditions with Next.js 16 + Turbopack env loading.
+ * In production, Firebase SDK will handle missing config errors appropriately.
  */
 function validateFirebaseConfig(): void {
-  // Skip validation in production builds or when running in edge runtime
-  // The Firebase SDK will handle missing config appropriately
+  // Skip validation in production - Firebase SDK will handle missing config
   if (process.env.NODE_ENV === "production") return;
   
   const requiredEnvVars = [

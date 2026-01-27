@@ -51,7 +51,7 @@ function isUnexpiredJwt(token: string): boolean {
   if (parts.length !== 3) return false;
 
   try {
-    const payload = JSON.parse(base64UrlToUtf8(parts[1])) as { exp?: number };
+    const payload = JSON.parse(base64UrlToUtf8(parts[1])) as FirebaseJwtPayload;
     if (!payload?.exp) return false;
     const nowSeconds = Math.floor(Date.now() / 1000);
     // Small leeway for clock skew
@@ -62,21 +62,24 @@ function isUnexpiredJwt(token: string): boolean {
 }
 
 /**
+ * Firebase JWT token payload structure.
+ */
+interface FirebaseJwtPayload {
+  exp?: number;
+  sub?: string;
+  user_id?: string;
+}
+
+/**
  * Attempts to extract and parse the payload from a JWT token.
  * @param token - The JWT token
  * @returns The parsed payload or null if invalid
  */
-function tryGetJwtPayload(
-  token: string
-): { exp?: number; sub?: string; user_id?: string } | null {
+function tryGetJwtPayload(token: string): FirebaseJwtPayload | null {
   const parts = token.split(".");
   if (parts.length !== 3) return null;
   try {
-    return JSON.parse(base64UrlToUtf8(parts[1])) as {
-      exp?: number;
-      sub?: string;
-      user_id?: string;
-    };
+    return JSON.parse(base64UrlToUtf8(parts[1])) as FirebaseJwtPayload;
   } catch {
     return null;
   }
