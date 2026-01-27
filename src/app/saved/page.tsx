@@ -10,7 +10,7 @@ import { useAuthStore } from "@/lib/store/auth-store";
 import { useFirestoreQuery } from "@/hooks/useFirestoreQuery";
 import { getUserRecipes, deleteRecipe } from "@/lib/db";
 import { Recipe } from "@/lib/schemas";
-import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
+import { logAndConvertError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 
 import { RecipeSearch } from "./components/RecipeSearch";
 import { RecipeList } from "./components/RecipeList";
@@ -27,7 +27,7 @@ export default function Saved() {
 
   const {
     data: recipes,
-    loading,
+    isLoading,
     error: loadError,
     setData: setRecipes,
     refetch,
@@ -77,7 +77,7 @@ export default function Saved() {
     try {
       await deleteRecipe(recipeId);
     } catch (error) {
-      const message = handleError(
+      const message = logAndConvertError(
         error,
         "Error deleting recipe",
         { recipeId },
@@ -111,7 +111,7 @@ export default function Saved() {
       {loadError && <ErrorMessage message={loadError} />}
       {deleteError && <ErrorMessage message={deleteError} />}
 
-      {loading ? (
+      {isLoading ? (
         <LoadingSkeleton />
       ) : !recipes || recipes.length === 0 ? (
         <EmptyState />

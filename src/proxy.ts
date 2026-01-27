@@ -9,12 +9,20 @@ import {
 import { deleteAuthCookies } from "@/lib/utils/auth-cookies";
 import { logError } from "@/lib/utils/logger";
 
+// ============================================================================
+// ROUTE CHECKING UTILITIES
+// ============================================================================
+
 /**
  * Checks if a given path is a private route.
  */
 function isPrivateRoute(path: string): boolean {
   return PRIVATE_ROUTES.some((route) => path.startsWith(route));
 }
+
+// ============================================================================
+// JWT PARSING AND VALIDATION UTILITIES
+// ============================================================================
 
 /**
  * Base64 encoding uses groups of 4 characters.
@@ -95,6 +103,10 @@ function tryGetJwtPayload(token: string): FirebaseJwtPayload | null {
     return null;
   }
 }
+
+// ============================================================================
+// RESPONSE BUILDING UTILITIES
+// ============================================================================
 
 interface DebugContext {
   path: string;
@@ -185,6 +197,10 @@ function handleNormalRequest(
   }
   return withDebugHeaders(response, debugContext);
 }
+
+// ============================================================================
+// MAIN PROXY FUNCTION
+// ============================================================================
 
 /**
  * Next.js 16 Proxy - handles route protection at the edge.

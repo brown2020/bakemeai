@@ -19,7 +19,7 @@ import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { Button } from "@/components/Button";
 import { setUserAuthToken } from "@/lib/utils/auth";
 import { getSafeRedirectPath } from "@/lib/utils/navigation";
-import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
+import { logAndConvertError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 
 import { GoogleSignInButton } from "./GoogleSignInButton";
 
@@ -107,7 +107,7 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
       }
       router.push(safeRedirectTo);
     } catch (err) {
-      const errorMessage = handleError(
+      const errorMessage = logAndConvertError(
         err,
         `${isLogin ? "Sign in" : "Sign up"} failed`,
         { email },

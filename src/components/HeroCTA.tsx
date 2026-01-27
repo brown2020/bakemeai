@@ -10,10 +10,10 @@ import { useAuthStore } from "@/lib/store/auth-store";
  * Handles loading state to prevent layout shift during hydration.
  */
 export function HeroCTA() {
-  const { user, loading } = useAuthStore();
+  const { user, isLoading } = useAuthStore();
 
   // Show placeholder during hydration to prevent layout shift
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="mt-5 sm:mt-8 sm:flex sm:gap-4">
         <div className="h-12 w-32 bg-gray-200 rounded-lg animate-pulse" />

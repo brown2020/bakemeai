@@ -109,11 +109,11 @@ export async function saveRecipe({
       : extractServings(content);
     const difficulty = structuredData?.difficulty;
 
-    const recipe: Omit<Recipe, "id"> = {
+    const recipe = {
       userId,
       title,
       content,
-      createdAt: Date.now(),
+      createdAt: serverTimestamp(),
       ingredients,
       preparationTime,
       cookingTime,
@@ -122,7 +122,9 @@ export async function saveRecipe({
     };
 
     const docRef = await addDoc(collection(db, COLLECTIONS.RECIPES), recipe);
-    return { id: docRef.id, ...recipe };
+    // Note: createdAt will be a FieldValue here, but Firestore will convert it to Timestamp
+    // The return value's createdAt is not a real Timestamp until the document is read back
+    return { id: docRef.id, ...recipe } as Recipe;
   } catch (error) {
     logError("Failed to save recipe to Firestore", error, { userId });
     const message = getFirestoreErrorMessage(error, ERROR_MESSAGES.RECIPE.SAVE_FAILED);

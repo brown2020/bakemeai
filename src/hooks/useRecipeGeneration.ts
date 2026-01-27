@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, FormEvent } from "react";
 import { useRecipeStore } from "@/lib/store/recipe-store";
-import { useDebounce, AI_GENERATION_DEBOUNCE_MS } from "@/hooks/useDebounce";
+import { useDebounce } from "@/hooks/useDebounce";
 import { SerializableUserProfile } from "@/lib/schemas";
 import {
   specificRecipeInputSchema,
@@ -8,6 +8,36 @@ import {
 } from "@/lib/schemas";
 import { RECIPE_PROMPTS } from "@/app/generate/constants";
 import { generateRecipeWithStreaming } from "@/lib/services/recipe-service";
+import { UI_TIMING } from "@/lib/constants/ui";
+
+/**
+ * Checks if enough time has passed since last submission for rate limiting.
+ */
+function canSubmit(lastSubmitTime: number, debounceMs: number): boolean {
+  return Date.now() - lastSubmitTime >= debounceMs;
+}
+
+/**
+ * Validates recipe input based on mode.
+ */
+function validateInput(input: string, mode: "specific" | "ingredients"): string | null {
+  const schema = mode === "specific" 
+    ? specificRecipeInputSchema 
+    : ingredientsRecipeInputSchema;
+  
+  const validation = schema.safeParse(input);
+  return validation.success ? null : validation.error.issues[0].message;
+}
+
+/**
+ * Builds prompt from input based on mode.
+ */
+function buildPrompt(input: string, mode: "specific" | "ingredients"): string {
+  const promptFn = mode === "specific" 
+    ? RECIPE_PROMPTS.specific 
+    : RECIPE_PROMPTS.ingredients;
+  return promptFn(input);
+}
 
 export interface UseRecipeGenerationReturn {
   isGenerating: boolean;
@@ -71,42 +101,36 @@ export function useRecipeGeneration(userProfile: SerializableUserProfile | null)
       },
       [setGenerating, setStructuredRecipe, setGenerationError, resetSaveState, userProfile]
     ),
-    AI_GENERATION_DEBOUNCE_MS
+    UI_TIMING.AI_GENERATION_DEBOUNCE
   );
 
   const handleGenerate = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
       
-      // Rate limiting: prevent rapid successive generations
-      const now = Date.now();
-      if (now - lastSubmitTimeRef.current < AI_GENERATION_DEBOUNCE_MS) {
+      // Guard: mode must be set (should always be true when form is rendered)
+      if (!mode) return;
+      
+      // Rate limiting
+      if (!canSubmit(lastSubmitTimeRef.current, UI_TIMING.AI_GENERATION_DEBOUNCE)) {
         setValidationError("Please wait a moment before generating another recipe.");
         return;
       }
-      lastSubmitTimeRef.current = now;
+      lastSubmitTimeRef.current = Date.now();
 
       resetSaveState();
       setValidationError(null);
 
-      // Input validation based on mode
+      // Validate input
       const promptInput = mode === "specific" ? input : ingredients;
-      const schema = mode === "specific" 
-        ? specificRecipeInputSchema 
-        : ingredientsRecipeInputSchema;
-      
-      const validation = schema.safeParse(promptInput);
-      if (!validation.success) {
-        setValidationError(validation.error.issues[0].message);
+      const validationError = validateInput(promptInput, mode);
+      if (validationError) {
+        setValidationError(validationError);
         return;
       }
 
       // Build prompt and trigger generation
-      const promptFn = mode === "specific" 
-        ? RECIPE_PROMPTS.specific 
-        : RECIPE_PROMPTS.ingredients;
-      const prompt = promptFn(promptInput);
-
+      const prompt = buildPrompt(promptInput, mode);
       debouncedGeneration(prompt, mode === "ingredients");
     },
     [mode, input, ingredients, resetSaveState, debouncedGeneration]

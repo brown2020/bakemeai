@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requiredTimestampSchema } from "../utils/firestore";
 
 /**
  * Recipe schemas for validation and type safety.
@@ -23,7 +24,7 @@ export const recipeSchema = z.object({
   userId: z.string(),
   title: z.string().min(1, "Title is required"),
   content: z.string().min(1, "Content is required"),
-  createdAt: z.number(),
+  createdAt: requiredTimestampSchema,
   ingredients: z.array(z.string()),
   preparationTime: z.string(),
   cookingTime: z.string(),
@@ -39,9 +40,12 @@ export const recipeSchema = z.object({
 /**
  * Recipe structure schema for streaming validation.
  * 
- * All fields are optional to support progressive updates during AI streaming.
- * As the AI generates the recipe, partial objects are streamed and validated
- * against this schema. Fields populate incrementally until the full recipe is complete.
+ * STREAMING CONTRACT:
+ * - All fields are optional during streaming to support progressive updates
+ * - As the AI generates the recipe, partial objects are validated against this schema
+ * - Required for final save: title, preparationTime, cookingTime, servings, difficulty, ingredients (min 1), instructions (min 1)
+ * - Truly optional: tips, calories, macros
+ * - Use completeRecipeStructureSchema to validate before saving
  */
 export const recipeStructureSchema = z.object({
   title: z.string().optional(),

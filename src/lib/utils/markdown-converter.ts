@@ -2,22 +2,11 @@ import { RecipeStructure } from "../schemas";
 
 /**
  * Markdown conversion utilities for recipe content.
- * Converts structured recipe data to formatted markdown.
  */
 
 /**
- * Converts a structured recipe object to markdown format.
- * Used for displaying AI-generated recipes in a readable format.
- * 
- * Format includes:
- * - Title (H1)
- * - Recipe details (preparation time, cooking time, servings, difficulty, calories)
- * - Ingredients (bulleted list)
- * - Instructions (numbered list)
- * - Tips (bulleted list, optional)
- * 
- * @param recipe - Structured recipe data from AI generation
- * @returns Formatted markdown string, or empty string if recipe has no title
+ * Converts structured recipe to full markdown (title + body).
+ * @returns Empty string if recipe has no title
  */
 export function convertToMarkdown(recipe: RecipeStructure): string {
   if (!recipe.title) return "";
@@ -35,11 +24,8 @@ export function convertToMarkdown(recipe: RecipeStructure): string {
 }
 
 /**
- * Builds the markdown body (everything except title) from structured recipe data.
- * Used for display where title is shown separately.
- * 
- * @param recipe - Structured recipe data from AI generation
- * @returns Formatted markdown body without title
+ * Builds markdown body (everything except title).
+ * Used when title is rendered separately.
  */
 export function buildMarkdownBody(recipe: RecipeStructure): string {
   const sections: string[] = [];

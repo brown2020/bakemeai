@@ -9,6 +9,7 @@ import { useRecipeStore } from "@/lib/store/recipe-store";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useUserProfileStore } from "@/lib/store/user-profile-store";
 import { useRecipeGeneration } from "@/hooks/useRecipeGeneration";
+import { useRecipeSave } from "@/hooks/useRecipeSave";
 
 import { ModeSelector } from "./components/ModeSelector";
 import { RecipeForm } from "./components/RecipeForm";
@@ -26,11 +27,7 @@ export default function Generate() {
     structuredRecipe,
     convertToDisplayFormat,
     mode,
-    isSaving,
-    saveError,
-    saved,
     setMode,
-    saveRecipeToDb,
     resetRecipe,
   } = useRecipeStore();
 
@@ -46,6 +43,14 @@ export default function Generate() {
     handleGenerate,
   } = useRecipeGeneration(userProfile);
 
+  // Custom hook for save logic
+  const {
+    saveRecipe,
+    isSaving,
+    saveError,
+    saved,
+  } = useRecipeSave();
+
   // Fetch user profile when user ID changes
   useEffect(() => {
     if (userId) {
@@ -55,11 +60,11 @@ export default function Generate() {
 
   const handleSave = useCallback(async () => {
     if (userId) {
-      await saveRecipeToDb(userId);
+      await saveRecipe(userId);
       // Refresh the router cache to ensure saved recipes are updated
       router.refresh();
     }
-  }, [saveRecipeToDb, userId, router]);
+  }, [saveRecipe, userId, router]);
 
   const handleBack = useCallback(() => {
     setMode(null);

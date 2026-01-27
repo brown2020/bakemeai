@@ -16,6 +16,8 @@ export const UI_TIMING = {
   SEARCH_DEBOUNCE: 300,
   DEFAULT_TRANSITION: 200,
   LONG_TRANSITION: 500,
+  /** Minimum delay between AI generation requests (balances responsiveness with rate limits) */
+  AI_GENERATION_DEBOUNCE: 500,
 } as const;
 
 export const NUMBER_INPUT = {

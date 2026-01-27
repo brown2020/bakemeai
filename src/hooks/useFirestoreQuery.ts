@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, Dispatch, SetStateAction } from "react";
+import { useState, useEffect, useCallback, useRef, Dispatch, SetStateAction } from "react";
 import { logError } from "@/lib/utils/logger";
 
 interface UseFirestoreQueryOptions<T> {
@@ -18,7 +18,7 @@ interface UseFirestoreQueryReturn<T> {
   /** The fetched data */
   data: T | null;
   /** Loading state */
-  loading: boolean;
+  isLoading: boolean;
   /** User-facing error message */
   error: string | null;
   /** Function to manually refetch data */
@@ -38,7 +38,7 @@ interface UseFirestoreQueryReturn<T> {
  * - Better TypeScript inference
  * 
  * @example
- * const { data: recipes, loading, error, refetch } = useFirestoreQuery({
+ * const { data: recipes, isLoading, error, refetch } = useFirestoreQuery({
  *   queryFn: getUserRecipes,
  *   userId: user?.uid,
  *   errorMessage: "Failed to load recipes",
@@ -52,20 +52,27 @@ export function useFirestoreQuery<T>({
   enabled = true,
 }: UseFirestoreQueryOptions<T>): UseFirestoreQueryReturn<T> {
   const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Use ref to avoid infinite loop when queryFn is not memoized by caller
+  const queryFnRef = useRef(queryFn);
+  
+  useEffect(() => {
+    queryFnRef.current = queryFn;
+  }, [queryFn]);
 
   const fetchData = useCallback(async () => {
     if (!userId || !enabled) {
-      setLoading(false);
+      setIsLoading(false);
       return;
     }
 
     setError(null);
-    setLoading(true);
+    setIsLoading(true);
 
     try {
-      const result = await queryFn(userId);
+      const result = await queryFnRef.current(userId);
       setData(result);
     } catch (err) {
       logError(`Firestore query error: ${errorMessage}`, err, {
@@ -74,9 +81,9 @@ export function useFirestoreQuery<T>({
       });
       setError(errorMessage);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, [userId, errorMessage, enabled, queryFn]);
+  }, [userId, errorMessage, enabled]);
 
   useEffect(() => {
     fetchData();
@@ -84,7 +91,7 @@ export function useFirestoreQuery<T>({
 
   return {
     data,
-    loading,
+    isLoading,
     error,
     refetch: fetchData,
     setData,

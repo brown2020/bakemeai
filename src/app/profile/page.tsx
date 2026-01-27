@@ -20,7 +20,7 @@ import {
   CookingExperience,
 } from "@/lib/constants/domain";
 import { UI_TIMING, NUMBER_INPUT } from "@/lib/constants/ui";
-import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
+import { logAndConvertError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 
 export default function Profile() {
   const { user } = useAuthStore();
@@ -38,7 +38,7 @@ export default function Profile() {
 
   const {
     data: loadedProfile,
-    loading,
+    isLoading,
     error: loadError,
   } = useFirestoreQuery({
     queryFn: getUserProfile,
@@ -72,7 +72,7 @@ export default function Profile() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), UI_TIMING.SUCCESS_MESSAGE_DURATION);
     } catch (error) {
-      const message = handleError(
+      const message = logAndConvertError(
         error,
         "Error saving user profile",
         { userId: user?.uid },
@@ -97,7 +97,7 @@ export default function Profile() {
     });
   }, []);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <PageLayout title="Cooking Preferences">
         <div className="bg-white rounded-lg shadow-xs p-6 border border-surface-200 max-w-2xl">

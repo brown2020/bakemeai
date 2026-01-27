@@ -13,7 +13,6 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { RecipeStructure, ParsedRecipe } from "@/lib/schemas";
 import { convertToMarkdown, buildMarkdownBody } from "@/lib/utils/markdown-converter";
-import { saveRecipeToDatabase } from "@/lib/services/recipe-service";
 
 interface RecipeState {
   // Single source of truth for recipe data
@@ -44,9 +43,12 @@ interface RecipeState {
   setStructuredRecipe: (recipe: RecipeStructure | null) => void;
   setGenerating: (isGenerating: boolean) => void;
   setGenerationError: (error: string | null) => void;
-  saveRecipeToDb: (userId: string) => Promise<void>;
+  setIsSaving: (isSaving: boolean) => void;
+  setSaveError: (error: string | null) => void;
+  setSaved: (saved: boolean) => void;
   resetRecipe: () => void;
   resetSaveState: () => void;
+  clearPersistedState: () => void;
 }
 
 export const useRecipeStore = create<RecipeState>()(
@@ -106,28 +108,16 @@ export const useRecipeStore = create<RecipeState>()(
         set({ generationError: error });
       },
 
-      saveRecipeToDb: async (userId) => {
-        const { structuredRecipe } = get();
-        if (!userId) {
-          set({ saveError: "You must be logged in to save recipes" });
-          return;
-        }
+      setIsSaving: (isSaving: boolean) => {
+        set({ isSaving });
+      },
 
-        if (!structuredRecipe) {
-          set({ saveError: "No recipe to save. Please generate a recipe first." });
-          return;
-        }
+      setSaveError: (error: string | null) => {
+        set({ saveError: error });
+      },
 
-        set({ isSaving: true, saveError: null });
-
-        try {
-          await saveRecipeToDatabase(userId, structuredRecipe);
-          set({ saved: true });
-        } catch (error) {
-          set({ saveError: error instanceof Error ? error.message : "Failed to save recipe" });
-        } finally {
-          set({ isSaving: false });
-        }
+      setSaved: (saved: boolean) => {
+        set({ saved });
       },
 
       resetRecipe: () => {
@@ -141,6 +131,14 @@ export const useRecipeStore = create<RecipeState>()(
 
       resetSaveState: () => {
         set({ saved: false, saveError: null });
+      },
+
+      clearPersistedState: () => {
+        set({
+          input: "",
+          ingredients: "",
+          mode: null,
+        });
       },
     }),
     {

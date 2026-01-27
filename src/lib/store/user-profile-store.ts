@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { SerializableUserProfile } from "@/lib/schemas";
 import { getUserProfile } from "@/lib/db";
-import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
+import { logAndConvertError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 
 interface UserProfileState {
   userProfile: SerializableUserProfile | null;
@@ -32,7 +32,7 @@ export const useUserProfileStore = create<UserProfileState>((set) => ({
         set({ userProfile: null });
       }
     } catch (error) {
-      const message = handleError(
+      const message = logAndConvertError(
         error,
         "Error loading user profile from store",
         { userId },

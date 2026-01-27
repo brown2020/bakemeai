@@ -42,6 +42,17 @@ export function getFirestoreErrorMessage(
 }
 
 /**
+ * Custom Zod schema for required Firestore Timestamp.
+ * Validates that the value is a Firestore Timestamp.
+ */
+export const requiredTimestampSchema = z.custom<Timestamp>(
+  (val): val is Timestamp => val instanceof Timestamp,
+  {
+    message: "Expected Firestore Timestamp"
+  }
+);
+
+/**
  * Custom Zod schema for Firestore Timestamp that allows undefined.
  * Validates that the value is either a Firestore Timestamp or undefined.
  * Provides clear error messages for invalid timestamp values.

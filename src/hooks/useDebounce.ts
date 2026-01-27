@@ -47,6 +47,3 @@ export function useDebounce<T extends (...args: never[]) => unknown>(
     [delay]
   );
 }
-
-/** Minimum delay between AI generation requests (balances responsiveness with rate limits) */
-export const AI_GENERATION_DEBOUNCE_MS = 500;

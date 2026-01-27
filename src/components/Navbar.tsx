@@ -7,6 +7,7 @@ import { Wand2, BookMarked, Settings } from "lucide-react";
 import { NavLink } from "@/components/ui";
 import { UserMenu } from "@/components/UserMenu";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useRecipeStore } from "@/lib/store/recipe-store";
 import { auth } from "@/lib/firebase";
 import { clearAuthCookie } from "@/lib/utils/auth-cookies";
 
@@ -17,10 +18,12 @@ import { clearAuthCookie } from "@/lib/utils/auth-cookies";
  */
 export function Navbar() {
   const { user } = useAuthStore();
+  const { clearPersistedState } = useRecipeStore();
 
   const handleSignOut = async () => {
     // Clear client state/cookies immediately to ensure proxy.ts sees a signed-out request.
     clearAuthCookie();
+    clearPersistedState();
 
     try {
       await auth.signOut();

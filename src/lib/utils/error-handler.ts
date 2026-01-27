@@ -99,9 +99,3 @@ export function logAndConvertError(
   // Otherwise return the provided user message
   return userMessage;
 }
-
-/**
- * @deprecated Use logAndConvertError instead - name better reflects the dual responsibility
- */
-export const handleError = logAndConvertError;
-

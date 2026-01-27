@@ -3,18 +3,18 @@ import { User } from 'firebase/auth';
 
 interface AuthState {
   user: User | null;
-  loading: boolean;
+  isLoading: boolean;
   setUser: (user: User | null) => void;
-  setLoading: (loading: boolean) => void;
+  setLoading: (isLoading: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  loading: true,
+  isLoading: true,
   setUser: (user: User | null) => {
     set({ user });
   },
-  setLoading: (loading: boolean) => {
-    set({ loading });
+  setLoading: (isLoading: boolean) => {
+    set({ isLoading });
   },
 }));
