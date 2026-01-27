@@ -72,6 +72,34 @@ export function isAppError(error: unknown): error is AppError {
 }
 
 /**
+ * Type guard to check if an error is a ValidationError.
+ */
+export function isValidationError(error: unknown): error is ValidationError {
+  return error instanceof ValidationError;
+}
+
+/**
+ * Type guard to check if an error is an AuthenticationError.
+ */
+export function isAuthenticationError(error: unknown): error is AuthenticationError {
+  return error instanceof AuthenticationError;
+}
+
+/**
+ * Type guard to check if an error is a NetworkError.
+ */
+export function isNetworkError(error: unknown): error is NetworkError {
+  return error instanceof NetworkError;
+}
+
+/**
+ * Type guard to check if an error is a DatabaseError.
+ */
+export function isDatabaseError(error: unknown): error is DatabaseError {
+  return error instanceof DatabaseError;
+}
+
+/**
  * Union type of all possible error types for better type safety.
  */
 export type AppErrorLike = Error | AppError | { message: string }

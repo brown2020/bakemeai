@@ -5,6 +5,7 @@ import { signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { auth, googleProvider } from "@/lib/firebase";
 import { setUserAuthToken } from "@/lib/utils/auth";
+import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 
 interface UseGoogleAuthReturn {
   signInWithGoogle: () => Promise<void>;
@@ -31,9 +32,12 @@ export function useGoogleAuth(redirectTo: string = "/"): UseGoogleAuthReturn {
       await setUserAuthToken(userCredential.user);
       router.push(redirectTo);
     } catch (err) {
-      const errorMessage = err instanceof Error 
-        ? err.message 
-        : "An error occurred during Google sign-in";
+      const errorMessage = handleError(
+        err,
+        "Google sign-in failed",
+        { redirectTo },
+        ERROR_MESSAGES.AUTH.SIGN_IN_FAILED
+      );
       setError(errorMessage);
     } finally {
       setIsLoading(false);

@@ -18,6 +18,7 @@ import { Input, ErrorMessage } from "@/components/ui";
 import { Button } from "@/components/Button";
 import { setUserAuthToken } from "@/lib/utils/auth";
 import { getSafeRedirectPath } from "@/lib/utils/navigation";
+import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 
 type AuthMode = "login" | "signup";
 
@@ -83,9 +84,12 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
       }
       router.push(safeRedirectTo);
     } catch (err) {
-      const errorMessage = err instanceof Error 
-        ? err.message 
-        : "An authentication error occurred";
+      const errorMessage = handleError(
+        err,
+        `${isLogin ? "Sign in" : "Sign up"} failed`,
+        { email },
+        isLogin ? ERROR_MESSAGES.AUTH.SIGN_IN_FAILED : ERROR_MESSAGES.AUTH.GENERIC
+      );
       setError(errorMessage);
     } finally {
       setIsSubmitting(false);

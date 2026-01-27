@@ -12,6 +12,12 @@ function isPrivateRoute(path: string): boolean {
 }
 
 /**
+ * Base64 padding block size constant.
+ * Base64 strings must be multiples of 4 characters.
+ */
+const BASE64_PADDING_SIZE = 4;
+
+/**
  * Decodes a base64url-encoded string to UTF-8.
  * Handles both Edge runtime (atob) and Node runtime (Buffer).
  * @param input - The base64url-encoded string
@@ -20,11 +26,9 @@ function isPrivateRoute(path: string): boolean {
 function base64UrlToUtf8(input: string): string {
   // Convert base64url to standard base64 by replacing URL-safe characters
   const base64 = input.replace(/-/g, "+").replace(/_/g, "/");
-  // Add padding if needed (base64 strings must be multiples of 4)
-  const padded = base64.padEnd(
-    base64.length + ((4 - (base64.length % 4)) % 4),
-    "="
-  );
+  // Add padding if needed (base64 strings must be multiples of BASE64_PADDING_SIZE)
+  const paddingNeeded = (BASE64_PADDING_SIZE - (base64.length % BASE64_PADDING_SIZE)) % BASE64_PADDING_SIZE;
+  const padded = base64.padEnd(base64.length + paddingNeeded, "=");
 
   // Edge runtime: atob is available. Node: fall back to Buffer.
   if (typeof atob === "function") {

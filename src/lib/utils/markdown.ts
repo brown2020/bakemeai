@@ -1,5 +1,6 @@
 import { RecipeStructure } from "../schemas";
 import { RECIPE } from "../constants/ui";
+import { logWarning } from "./logger";
 
 /**
  * Markdown parsing and conversion utilities for recipe content.
@@ -39,7 +40,12 @@ function extractMarkdownSection<T>(
   
   try {
     return parser(match[1]);
-  } catch {
+  } catch (error) {
+    // Log parsing failures in development to help debug markdown extraction issues
+    logWarning(`Failed to parse markdown section: ${sectionName}`, {
+      error: error instanceof Error ? error.message : String(error),
+      contentPreview: match[1].substring(0, 100),
+    });
     return null;
   }
 }
