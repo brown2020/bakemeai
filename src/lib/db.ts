@@ -37,6 +37,7 @@ import {
   Recipe,
   UserProfile,
   RecipeStructure,
+  CompleteRecipeStructure,
   UserProfileInput,
   recipeSchema,
   userProfileSchema,
@@ -48,7 +49,7 @@ import {
   extractIngredients,
   extractField,
   extractServings,
-} from "./utils/markdown";
+} from "./utils/markdown-parser";
 import { serializeUserProfile, getFirestoreErrorMessage } from "./utils/firestore";
 import { handleError, ERROR_MESSAGES } from "./utils/error-handler";
 import { sanitizeUserInput } from "./utils/sanitize";
@@ -74,31 +75,35 @@ interface SaveRecipeParams {
  * @param params.structuredData - Optional structured recipe data from AI generation
  * @returns The saved recipe with generated ID
  */
+/**
+ * Checks if structured data is complete and valid.
+ */
+function hasCompleteStructuredData(data?: RecipeStructure): data is CompleteRecipeStructure {
+  if (!data) return false;
+  return completeRecipeStructureSchema.safeParse(data).success;
+}
+
 export async function saveRecipe({
   userId,
   content,
   structuredData,
 }: SaveRecipeParams): Promise<Recipe> {
   try {
-    // Validate structured data completeness before using it
-    const isCompleteStructuredData = structuredData 
-      ? completeRecipeStructureSchema.safeParse(structuredData).success
-      : false;
+    const useStructured = hasCompleteStructuredData(structuredData);
 
-    // Extract metadata: prefer complete structured data, otherwise fall back to markdown parsing
-    const title = isCompleteStructuredData && structuredData?.title !== undefined 
+    const title = useStructured 
       ? structuredData.title 
       : extractTitle(content);
-    const ingredients = isCompleteStructuredData && structuredData?.ingredients !== undefined
+    const ingredients = useStructured
       ? structuredData.ingredients
       : extractIngredients(content);
-    const preparationTime = isCompleteStructuredData && structuredData?.preparationTime !== undefined
+    const preparationTime = useStructured
       ? structuredData.preparationTime
       : extractField(content, "Preparation Time");
-    const cookingTime = isCompleteStructuredData && structuredData?.cookingTime !== undefined
+    const cookingTime = useStructured
       ? structuredData.cookingTime
       : extractField(content, "Cooking Time");
-    const servings = isCompleteStructuredData && structuredData?.servings !== undefined 
+    const servings = useStructured 
       ? structuredData.servings 
       : extractServings(content);
     const difficulty = structuredData?.difficulty;
@@ -136,13 +141,13 @@ export async function saveRecipe({
  */
 export async function getUserRecipes(userId: string): Promise<Recipe[]> {
   try {
-    const q = query(
+    const recipesQuery = query(
       collection(db, COLLECTIONS.RECIPES),
       where("userId", "==", userId),
       orderBy("createdAt", "desc")
     );
 
-    const snapshot = await getDocs(q);
+    const snapshot = await getDocs(recipesQuery);
     const rawRecipes = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),

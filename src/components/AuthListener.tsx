@@ -17,15 +17,13 @@ export function AuthListener(): null {
   const { setUser, setLoading } = useAuthStore();
 
   useEffect(() => {
-    let authEventId = 0;
-    let isMounted = true;
+    let currentController: AbortController | null = null;
 
-    // Track token lifecycle (sign-in, refresh, sign-out) so `firebaseAuth` doesn't go stale.
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
-      const currentEventId = ++authEventId;
-
-      // Early return if component unmounted during async operation
-      if (!isMounted) return;
+      // Cancel any pending token operations from previous auth events
+      currentController?.abort();
+      const controller = new AbortController();
+      currentController = controller;
 
       setUser(user);
 
@@ -37,29 +35,26 @@ export function AuthListener(): null {
 
       const uid = user.uid;
 
-      // If a newer auth event happened (e.g. sign-out) or the user changed, do nothing.
-      if (currentEventId !== authEventId) return;
-      if (auth.currentUser?.uid !== uid) return;
-      if (!isMounted) return;
-
       try {
         await setUserAuthToken(user);
         
-        // Recheck after async operation - user might have signed out during token refresh
-        if (currentEventId !== authEventId || !isMounted) return;
+        // Check if this operation was cancelled (newer auth event or unmount)
+        if (controller.signal.aborted) return;
       } catch (error) {
-        // Log token refresh errors but don't crash the auth listener
+        // Ignore abort errors - they're expected when auth state changes
+        if (controller.signal.aborted) return;
+        
         logError("Failed to set auth token", error, { uid });
-        // Continue anyway - user is still authenticated in Firebase
       } finally {
-        if (isMounted && currentEventId === authEventId) {
+        // Only update loading state if this is still the current operation
+        if (!controller.signal.aborted) {
           setLoading(false);
         }
       }
     });
 
     return () => {
-      isMounted = false;
+      currentController?.abort();
       unsubscribe();
     };
   }, [setUser, setLoading]);

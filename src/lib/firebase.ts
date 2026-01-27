@@ -4,15 +4,11 @@ import { getStorage } from "firebase/storage";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 /**
- * Validates that all required Firebase environment variables are present.
- * 
- * Approach:
- * - Development: Warns about missing vars to help catch config issues early
- * - Production: Logs structured error for monitoring, but doesn't throw
- * - Does not throw to avoid race conditions with Next.js 16 + Turbopack env loading
- * - Firebase SDK will fail gracefully with clear errors if config is actually missing
+ * Checks for missing Firebase environment variables and logs warnings.
+ * Does not throw to avoid race conditions with Next.js 16 + Turbopack env loading.
+ * Firebase SDK will fail gracefully with clear errors if config is actually missing.
  */
-function validateFirebaseConfig(): void {
+function checkFirebaseConfig(): void {
   const requiredEnvVars = [
     "NEXT_PUBLIC_FIREBASE_API_KEY",
     "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
@@ -49,8 +45,7 @@ function validateFirebaseConfig(): void {
   }
 }
 
-// Validate environment variables before initializing Firebase
-validateFirebaseConfig();
+checkFirebaseConfig();
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,

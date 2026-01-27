@@ -8,6 +8,7 @@ interface Props {
   children: ReactNode;
   featureName: string;
   fallback?: ReactNode;
+  onReset?: () => void;
 }
 
 interface State {
@@ -20,6 +21,8 @@ interface State {
  * Prevents a single feature's error from crashing the entire app.
  * Displays an inline error UI with contextual information.
  * 
+ * Automatically resets when children change (e.g., user navigates away and back).
+ * 
  * Usage:
  * <FeatureErrorBoundary featureName="Recipe Generation">
  *   <RecipeForm />
@@ -30,6 +33,7 @@ interface State {
  * - Provides contextual error messages with feature name
  * - Logs errors with feature context for debugging
  * - Allows rest of app to continue functioning
+ * - Auto-recovers when content changes
  */
 export class FeatureErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
@@ -47,6 +51,18 @@ export class FeatureErrorBoundary extends Component<Props, State> {
       componentStack: errorInfo.componentStack,
     });
   }
+
+  componentDidUpdate(prevProps: Props) {
+    // Auto-reset when children change
+    if (this.state.hasError && prevProps.children !== this.props.children) {
+      this.resetErrorBoundary();
+    }
+  }
+
+  resetErrorBoundary = () => {
+    this.props.onReset?.();
+    this.setState({ hasError: false, error: undefined });
+  };
 
   render() {
     if (this.state.hasError) {

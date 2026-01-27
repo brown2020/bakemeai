@@ -8,6 +8,18 @@ import {
 } from "@/lib/schemas";
 import { RECIPE_PROMPTS } from "@/app/generate/constants";
 
+export interface UseRecipeGenerationReturn {
+  isGenerating: boolean;
+  generationError: string | null;
+  validationError: string | null;
+  input: string;
+  ingredients: string;
+  mode: "specific" | "ingredients" | null;
+  setInput: (input: string) => void;
+  setIngredients: (ingredients: string) => void;
+  handleGenerate: (e: React.FormEvent) => Promise<void>;
+}
+
 /**
  * Custom hook for recipe generation logic.
  * Encapsulates generation flow: validation -> rate limiting -> debounced generation.
@@ -15,7 +27,7 @@ import { RECIPE_PROMPTS } from "@/app/generate/constants";
  * @param userProfile - User profile for personalized recipes
  * @returns Generation state and handler functions
  */
-export function useRecipeGeneration(userProfile: SerializableUserProfile | null) {
+export function useRecipeGeneration(userProfile: SerializableUserProfile | null): UseRecipeGenerationReturn {
   const [validationError, setValidationError] = useState<string | null>(null);
   const lastSubmitTimeRef = useRef<number>(0);
 

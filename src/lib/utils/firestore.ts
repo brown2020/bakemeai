@@ -59,25 +59,11 @@ export const firestoreTimestampSchema = z
   .optional();
 
 /**
- * Converts a Firestore Timestamp to an ISO string for serialization.
- */
-export function timestampToString(timestamp?: Timestamp | null): string | undefined {
-  if (!timestamp) return undefined;
-  return timestamp.toDate().toISOString();
-}
-
-/**
  * Serializes a user profile document from Firestore.
- * Converts the updatedAt Timestamp to an ISO string for client-side use.
+ * Returns the document as-is since Firestore Timestamps are handled by the schema.
  */
 export function serializeUserProfile<T extends Record<string, unknown>>(
   doc: T
-): T & { updatedAtString?: string } {
-  const serialized: Record<string, unknown> = { ...doc };
-  
-  if (doc.updatedAt instanceof Timestamp) {
-    serialized.updatedAtString = timestampToString(doc.updatedAt);
-  }
-  
-  return serialized as T & { updatedAtString?: string };
+): T {
+  return doc;
 }

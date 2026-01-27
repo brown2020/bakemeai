@@ -22,12 +22,10 @@ export function useDebounce<T extends (...args: never[]) => unknown>(
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const callbackRef = useRef(callback);
 
-  // Keep callback ref up to date
   useEffect(() => {
     callbackRef.current = callback;
   }, [callback]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -38,12 +36,10 @@ export function useDebounce<T extends (...args: never[]) => unknown>(
 
   return useCallback(
     (...args: Parameters<T>) => {
-      // Clear any existing timeout
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
 
-      // Set new timeout
       timeoutRef.current = setTimeout(() => {
         callbackRef.current(...args);
       }, delay);
@@ -52,8 +48,5 @@ export function useDebounce<T extends (...args: never[]) => unknown>(
   );
 }
 
-/**
- * Minimum delay between AI generation requests to prevent rate limiting.
- * Set to 500ms to balance responsiveness with API rate limits.
- */
+/** Minimum delay between AI generation requests (balances responsiveness with rate limits) */
 export const AI_GENERATION_DEBOUNCE_MS = 500;

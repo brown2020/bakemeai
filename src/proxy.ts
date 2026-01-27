@@ -16,29 +16,18 @@ function isPrivateRoute(path: string): boolean {
   return PRIVATE_ROUTES.some((route) => path.startsWith(route));
 }
 
-/**
- * Base64 padding block size constant.
- * Base64 strings must be multiples of 4 characters.
- */
 const BASE64_PADDING_SIZE = 4;
 
 /**
- * Decodes a base64url-encoded string to UTF-8.
+ * Decodes base64url JWT payload to UTF-8.
  * Handles both Edge runtime (atob) and Node runtime (Buffer).
- * @param input - The base64url-encoded string
- * @returns The decoded UTF-8 string
  */
 function base64UrlToUtf8(input: string): string {
-  // Convert base64url to standard base64 by replacing URL-safe characters
   const base64 = input.replace(/-/g, "+").replace(/_/g, "/");
-  // Add padding if needed (base64 strings must be multiples of BASE64_PADDING_SIZE)
   const paddingNeeded = (BASE64_PADDING_SIZE - (base64.length % BASE64_PADDING_SIZE)) % BASE64_PADDING_SIZE;
   const padded = base64.padEnd(base64.length + paddingNeeded, "=");
 
-  // Edge runtime: atob is available. Node: fall back to Buffer.
   if (typeof atob === "function") {
-    // Decode base64 to binary string, then convert to UTF-8
-    // This handles multi-byte UTF-8 characters correctly
     const binary = atob(padded);
     const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
     return new TextDecoder().decode(bytes);
@@ -103,22 +92,21 @@ function tryGetJwtPayload(token: string): FirebaseJwtPayload | null {
   }
 }
 
+interface DebugContext {
+  path: string;
+  cookiePresent: boolean;
+  jwtValid: boolean;
+  userId?: string | null;
+  isAuthPage?: boolean;
+}
+
 /**
  * Adds debug headers to the response in development mode.
  * Helps with debugging authentication and routing issues.
- * @param response - The NextResponse object
- * @param opts - Debug information to include in headers
- * @returns The response with debug headers added
  */
 function withDebugHeaders(
   response: NextResponse,
-  opts: {
-    path: string;
-    cookiePresent: boolean;
-    jwtValid: boolean;
-    userId?: string | null;
-    isAuthPage?: boolean;
-  }
+  opts: DebugContext
 ): NextResponse {
   if (process.env.NODE_ENV === "production") return response;
   response.headers.set("x-bakeme-path", opts.path);
@@ -141,6 +129,60 @@ function withDebugHeaders(
 }
 
 /**
+ * Handles authenticated user on auth pages - redirect to app.
+ */
+function handleAuthenticatedOnAuthPage(
+  request: NextRequest,
+  debugContext: DebugContext
+): NextResponse {
+  const url = request.nextUrl.clone();
+  url.pathname = "/generate";
+  return withDebugHeaders(NextResponse.redirect(url), debugContext);
+}
+
+/**
+ * Handles invalid cookie on auth pages - clear and stay.
+ */
+function handleInvalidCookieOnAuthPage(
+  debugContext: DebugContext
+): NextResponse {
+  const response = NextResponse.next();
+  deleteAuthCookies(response);
+  return withDebugHeaders(response, debugContext);
+}
+
+/**
+ * Handles unauthenticated user on protected routes - redirect to login.
+ */
+function handleUnauthenticatedOnPrivateRoute(
+  request: NextRequest,
+  pathname: string,
+  debugContext: DebugContext
+): NextResponse {
+  const url = request.nextUrl.clone();
+  url.pathname = "/login";
+  url.searchParams.set("redirect", pathname);
+  const response = NextResponse.redirect(url);
+  deleteAuthCookies(response);
+  return withDebugHeaders(response, debugContext);
+}
+
+/**
+ * Handles normal request flow - allow through with optional user ID header.
+ */
+function handleNormalRequest(
+  userId: string | null,
+  jwtValid: boolean,
+  debugContext: DebugContext
+): NextResponse {
+  const response = NextResponse.next();
+  if (userId && jwtValid) {
+    response.headers.set("x-user-id", userId);
+  }
+  return withDebugHeaders(response, debugContext);
+}
+
+/**
  * Next.js 16 Proxy - handles route protection at the edge.
  * 
  * Execution flow:
@@ -154,7 +196,7 @@ function withDebugHeaders(
  * - Clear control flow with early returns
  * - Clean redirects with proper error handling
  */
-export async function proxy(request: NextRequest) {
+export function proxy(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl;
 
@@ -188,35 +230,21 @@ export async function proxy(request: NextRequest) {
 
     // Auth pages with valid authentication => redirect to app
     if (isAuthPage && isAuthenticated) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/generate";
-      return withDebugHeaders(NextResponse.redirect(url), debugContext);
+      return handleAuthenticatedOnAuthPage(request, debugContext);
     }
 
     // Auth pages with invalid cookie => clear cookie and stay
     if (isAuthPage && cookiePresent && !jwtValid) {
-      const response = NextResponse.next();
-      deleteAuthCookies(response);
-      return withDebugHeaders(response, debugContext);
+      return handleInvalidCookieOnAuthPage(debugContext);
     }
 
     // Protected routes without authentication => redirect to login
     if (isPrivateRoute(pathname) && !isAuthenticated) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("redirect", pathname);
-      const response = NextResponse.redirect(url);
-      deleteAuthCookies(response);
-      return withDebugHeaders(response, debugContext);
+      return handleUnauthenticatedOnPrivateRoute(request, pathname, debugContext);
     }
 
     // All other cases => allow through
-    const response = NextResponse.next();
-    // Attach user ID header for downstream usage if authenticated
-    if (userId && jwtValid) {
-      response.headers.set("x-user-id", userId);
-    }
-    return withDebugHeaders(response, debugContext);
+    return handleNormalRequest(userId, jwtValid, debugContext);
   } catch (error) {
     const { pathname } = request.nextUrl;
     

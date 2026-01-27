@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
+import { Wand2, BookMarked, Settings } from "lucide-react";
+
+import { NavLink } from "@/components/ui";
+import { UserMenu } from "@/components/UserMenu";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { auth } from "@/lib/firebase";
 import { clearAuthCookie } from "@/lib/utils/auth-cookies";
-import Image from "next/image";
-import { Wand2, BookMarked, Settings } from "lucide-react";
-import { NavLink } from "@/components/ui";
-import { UserMenu } from "@/components/UserMenu";
 
 /**
  * Main navigation bar component.

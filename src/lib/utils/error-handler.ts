@@ -25,47 +25,7 @@ export class AppError extends Error {
 }
 
 /**
- * Validation error - thrown when user input fails validation.
- */
-export class ValidationError extends AppError {
-  constructor(message: string, context?: ErrorContext) {
-    super(message, "VALIDATION_ERROR", context);
-    this.name = "ValidationError";
-  }
-}
-
-/**
- * Authentication error - thrown when auth operations fail.
- */
-export class AuthenticationError extends AppError {
-  constructor(message: string, context?: ErrorContext) {
-    super(message, "AUTHENTICATION_ERROR", context);
-    this.name = "AuthenticationError";
-  }
-}
-
-/**
- * Network error - thrown when network operations fail.
- */
-export class NetworkError extends AppError {
-  constructor(message: string, context?: ErrorContext) {
-    super(message, "NETWORK_ERROR", context);
-    this.name = "NetworkError";
-  }
-}
-
-/**
- * Database error - thrown when Firestore operations fail.
- */
-export class DatabaseError extends AppError {
-  constructor(message: string, context?: ErrorContext) {
-    super(message, "DATABASE_ERROR", context);
-    this.name = "DatabaseError";
-  }
-}
-
-/**
- * Type guard to check if an error is an AppError or its subclass.
+ * Type guard to check if an error is an AppError.
  */
 export function isAppError(error: unknown): error is AppError {
   return error instanceof AppError;
@@ -99,12 +59,9 @@ export const ERROR_MESSAGES = {
 } as const;
 
 /**
- * Handles errors with consistent logging and user-friendly messages.
- * 
- * Purpose:
- * - Logs technical details for debugging (developer-facing)
- * - Returns user-friendly message for display (user-facing)
- * - Ensures consistent error handling across the app
+ * Logs error details and returns a user-friendly message.
+ * Centralizes error handling: logs technical details for debugging,
+ * returns safe messages for display.
  * 
  * @param error - The error (can be any type from catch blocks)
  * @param logMessage - The message to log for debugging

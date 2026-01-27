@@ -16,7 +16,7 @@ import { RecipeDisplay } from "./components/RecipeDisplay";
 import { ErrorMessage } from "./components/ErrorMessage";
 import { Mode } from "./types";
 
-export default function GeneratePage() {
+export default function Generate() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { userProfile, fetchUserProfile } = useUserProfileStore();

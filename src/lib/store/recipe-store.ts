@@ -1,22 +1,26 @@
 /**
- * Recipe generation and management store.
+ * Recipe store - manages recipe generation and saving state.
  * 
  * ARCHITECTURE:
+ * - UI state management only (business logic delegated to services)
  * - Single source of truth: structuredRecipe (all display formats derived via getters)
- * - Streaming logic lives in store (tightly coupled to UI state - each partial update triggers re-render)
- * - Computed selectors use manual memoization to avoid recalculating markdown on every render
+ * - Computed selectors transform structuredRecipe on each call (markdown conversion is cheap)
  * - Only persists user input (mode, input, ingredients), not generated recipes
  */
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { generateRecipe } from "@/lib/recipe-generation.server";
-import { readStreamableValue } from "@ai-sdk/rsc";
-import { saveRecipe } from "@/lib/db";
-import { SerializableUserProfile, RecipeStructure, ParsedRecipe, recipeStructureSchema } from "@/lib/schemas";
-import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
-import { convertToMarkdown } from "@/lib/utils/markdown";
-import { logWarning } from "@/lib/utils/logger";
+import { SerializableUserProfile, RecipeStructure, ParsedRecipe } from "@/lib/schemas";
+import { convertToMarkdown } from "@/lib/utils/markdown-converter";
+import { generateRecipeWithStreaming, saveRecipeToDatabase } from "@/lib/services/recipe-service";
+
+/**
+ * Removes the H1 title from markdown content.
+ * Used to separate title from body content for display.
+ */
+function removeTitleFromMarkdown(markdown: string): string {
+  return markdown.replace(/^# .*\n\n/, "");
+}
 
 interface RecipeState {
   // Single source of truth for recipe data
@@ -36,7 +40,7 @@ interface RecipeState {
   saveError: string | null;
   saved: boolean;
 
-  // Computed selectors (transform structuredRecipe on each call - not memoized)
+  // Computed selectors
   convertToDisplayFormat: () => ParsedRecipe;
   getMarkdown: () => string;
 
@@ -54,15 +58,9 @@ interface RecipeState {
   resetSaveState: () => void;
 }
 
-// Memoization cache for computed selectors
-let cachedStructuredRecipe: RecipeStructure | null = null;
-let cachedParsedRecipe: ParsedRecipe | null = null;
-let cachedMarkdown: string | null = null;
-
 export const useRecipeStore = create<RecipeState>()(
   persist(
     (set, get) => ({
-      // Initial State
       structuredRecipe: null,
       isGenerating: false,
       generationError: null,
@@ -73,45 +71,22 @@ export const useRecipeStore = create<RecipeState>()(
       saveError: null,
       saved: false,
 
-      // Computed selector: transforms structuredRecipe to ParsedRecipe format
-      // Memoized to avoid recalculating on every render
       convertToDisplayFormat: (): ParsedRecipe => {
         const { structuredRecipe } = get();
         
-        // Return cached result if structuredRecipe hasn't changed
-        if (structuredRecipe === cachedStructuredRecipe && cachedParsedRecipe) {
-          return cachedParsedRecipe;
-        }
-        
-        // Recalculate and cache
-        cachedStructuredRecipe = structuredRecipe;
         if (!structuredRecipe) {
-          cachedParsedRecipe = { title: "", content: "" };
-        } else {
-          const markdown = convertToMarkdown(structuredRecipe);
-          const title = structuredRecipe.title ?? "";
-          const content = markdown.replace(/^# .*\n\n/, "");
-          cachedParsedRecipe = { title, content, structuredData: structuredRecipe };
+          return { title: "", content: "" };
         }
         
-        return cachedParsedRecipe;
+        const markdown = convertToMarkdown(structuredRecipe);
+        const title = structuredRecipe.title ?? "";
+        const content = removeTitleFromMarkdown(markdown);
+        return { title, content, structuredData: structuredRecipe };
       },
 
-      // Computed selector: transforms structuredRecipe to markdown string
-      // Memoized to avoid recalculating on every render
       getMarkdown: (): string => {
         const { structuredRecipe } = get();
-        
-        // Return cached result if structuredRecipe hasn't changed
-        if (structuredRecipe === cachedStructuredRecipe && cachedMarkdown !== null) {
-          return cachedMarkdown;
-        }
-        
-        // Recalculate and cache
-        cachedStructuredRecipe = structuredRecipe;
-        cachedMarkdown = structuredRecipe ? convertToMarkdown(structuredRecipe) : "";
-        
-        return cachedMarkdown;
+        return structuredRecipe ? convertToMarkdown(structuredRecipe) : "";
       },
 
       setInput: (input: string) => {
@@ -129,10 +104,6 @@ export const useRecipeStore = create<RecipeState>()(
         });
       },
 
-      /**
-       * Generates recipe content with streaming AI updates.
-       * Validates and stores each partial update as the AI progressively builds the recipe.
-       */
       generateRecipeContent: async (prompt, isIngredientsMode, userProfile) => {
         set({
           isGenerating: true,
@@ -141,47 +112,19 @@ export const useRecipeStore = create<RecipeState>()(
           saved: false,
         });
 
-        try {
-          const result = await generateRecipe(
-            prompt,
-            isIngredientsMode,
-            userProfile
-          );
+        await generateRecipeWithStreaming(
+          prompt,
+          isIngredientsMode,
+          userProfile,
+          (recipe) => set({ structuredRecipe: recipe }),
+          (errorMessage) => set({ generationError: errorMessage })
+        );
 
-          for await (const partialObject of readStreamableValue(result)) {
-            if (partialObject != null) {
-              // The AI SDK streams partial objects that progressively build toward the schema.
-              // We validate with Zod to ensure type safety during streaming.
-              const validationResult = recipeStructureSchema.safeParse(partialObject);
-              if (!validationResult.success) {
-                // Skip invalid partial updates during streaming
-                // Log validation errors in development to help catch schema issues
-                logWarning("Invalid partial recipe data during streaming", {
-                  errors: validationResult.error.flatten(),
-                });
-                continue;
-              }
-              
-              // Single source of truth: only store structuredRecipe
-              // All display formats are derived via getters
-              set({ structuredRecipe: validationResult.data });
-            }
-          }
-        } catch (error) {
-          const message = handleError(
-            error,
-            "Error generating recipe",
-            {},
-            ERROR_MESSAGES.RECIPE.GENERATION_FAILED
-          );
-          set({ generationError: message });
-        } finally {
-          set({ isGenerating: false });
-        }
+        set({ isGenerating: false });
       },
 
       saveRecipeToDb: async (userId) => {
-        const { structuredRecipe, getMarkdown } = get();
+        const { structuredRecipe } = get();
         if (!userId) {
           set({ saveError: "You must be logged in to save recipes" });
           return;
@@ -195,20 +138,10 @@ export const useRecipeStore = create<RecipeState>()(
         set({ isSaving: true, saveError: null });
 
         try {
-          await saveRecipe({
-            userId,
-            content: getMarkdown(),
-            structuredData: structuredRecipe ?? undefined,
-          });
+          await saveRecipeToDatabase(userId, structuredRecipe);
           set({ saved: true });
         } catch (error) {
-          const message = handleError(
-            error,
-            "Error saving recipe to database",
-            { userId },
-            ERROR_MESSAGES.RECIPE.SAVE_FAILED
-          );
-          set({ saveError: message });
+          set({ saveError: error instanceof Error ? error.message : "Failed to save recipe" });
         } finally {
           set({ isSaving: false });
         }

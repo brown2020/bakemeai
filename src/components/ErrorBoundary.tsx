@@ -7,6 +7,7 @@ import { ReloadButton } from "./ReloadButton";
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  onReset?: () => void;
 }
 
 interface State {
@@ -18,6 +19,8 @@ interface State {
  * Global error boundary component for app-level error handling.
  * Catches React errors and displays a full-page fallback UI.
  * Prevents the entire app from crashing due to uncaught component errors.
+ * 
+ * Automatically resets when children change (e.g., navigation).
  * 
  * Usage: Wrap the root app component in layout.tsx
  */
@@ -36,6 +39,18 @@ export class ErrorBoundary extends Component<Props, State> {
       componentStack: errorInfo.componentStack,
     });
   }
+
+  componentDidUpdate(prevProps: Props) {
+    // Auto-reset when children change (e.g., navigation)
+    if (this.state.hasError && prevProps.children !== this.props.children) {
+      this.resetErrorBoundary();
+    }
+  }
+
+  resetErrorBoundary = () => {
+    this.props.onReset?.();
+    this.setState({ hasError: false, error: undefined });
+  };
 
   render() {
     if (this.state.hasError) {

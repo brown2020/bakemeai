@@ -1,14 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAuthStore } from "@/lib/store/auth-store";
-import { getUserProfile, saveUserProfile } from "@/lib/db";
-import { UserProfileInput } from "@/lib/schemas";
+import { useState, useEffect, useCallback } from "react";
+
+import { PageLayout } from "@/components/PageLayout";
+import { Button } from "@/components/Button";
 import { ChipSelect } from "@/components/ui/ChipSelect";
 import { TagInput } from "@/components/ui/TagInput";
 import { NumberInput } from "@/components/ui/NumberInput";
 import { PageSkeleton } from "@/components/ui/PageSkeleton";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { useFirestoreQuery } from "@/hooks/useFirestoreQuery";
+import { getUserProfile, saveUserProfile } from "@/lib/db";
+import { UserProfileInput } from "@/lib/schemas";
 import {
   DIETARY_OPTIONS,
   CUISINE_OPTIONS,
@@ -16,9 +20,6 @@ import {
   CookingExperience,
 } from "@/lib/constants/domain";
 import { UI_TIMING, NUMBER_INPUT } from "@/lib/constants/ui";
-import { PageLayout } from "@/components/PageLayout";
-import { Button } from "@/components/Button";
-import { useFirestoreQuery } from "@/hooks/useFirestoreQuery";
 import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 
 export default function Profile() {
@@ -59,7 +60,7 @@ export default function Profile() {
     }
   }, [loadedProfile]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
@@ -81,13 +82,12 @@ export default function Profile() {
     } finally {
       setSaving(false);
     }
-  };
+  }, [user, profile]);
 
-  const toggleArrayItem = (
+  const toggleArrayItem = useCallback((
     field: "dietary" | "allergies" | "dislikedIngredients" | "preferredCuisines",
     value: string
   ): void => {
-    // Functional update to ensure we're working with latest profile state
     setProfile((prev) => {
       const current = prev[field] as string[];
       const next = current.includes(value)
@@ -95,7 +95,7 @@ export default function Profile() {
         : [...current, value];
       return { ...prev, [field]: next };
     });
-  };
+  }, []);
 
   if (loading) {
     return (

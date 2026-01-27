@@ -1,22 +1,24 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { useAuthStore } from "@/lib/store/auth-store";
-import { getUserRecipes, deleteRecipe } from "@/lib/db";
-import { Recipe } from "@/lib/schemas";
+
 import { PageLayout } from "@/components/PageLayout";
+import { FeatureErrorBoundary } from "@/components/FeatureErrorBoundary";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { FeatureErrorBoundary } from "@/components/FeatureErrorBoundary";
+import { useAuthStore } from "@/lib/store/auth-store";
 import { useFirestoreQuery } from "@/hooks/useFirestoreQuery";
+import { getUserRecipes, deleteRecipe } from "@/lib/db";
+import { Recipe } from "@/lib/schemas";
 import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
+
 import { RecipeSearch } from "./components/RecipeSearch";
 import { RecipeList } from "./components/RecipeList";
 import { RecipeDetail } from "./components/RecipeDetail";
 import { EmptyState } from "./components/EmptyState";
 import { LoadingSkeleton } from "./components/LoadingSkeleton";
 
-export default function SavedRecipes() {
+export default function Saved() {
   const { user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
