@@ -1,19 +1,19 @@
 "use client";
 
-import type { ReactElement } from "react";
-
 interface GoogleSignInButtonProps {
   onClick: () => void;
   label?: string;
 }
 
 /**
- * Reusable Google sign-in button with official Google icon.
+ * Reusable Google sign-in button with official Google branding.
+ * @param onClick - Handler function for sign-in action
+ * @param label - Button text (defaults to "Sign in with Google")
  */
 export function GoogleSignInButton({
   onClick,
   label = "Sign in with Google",
-}: GoogleSignInButtonProps): ReactElement {
+}: GoogleSignInButtonProps) {
   return (
     <button
       type="button"
@@ -26,7 +26,7 @@ export function GoogleSignInButton({
   );
 }
 
-function GoogleIcon(): ReactElement {
+function GoogleIcon() {
   return (
     <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
       <path

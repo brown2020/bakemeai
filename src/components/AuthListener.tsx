@@ -6,6 +6,11 @@ import { auth } from "@/lib/firebase";
 import { clearAuthCookie, setAuthCookieToken } from "@/lib/auth-cookie";
 import { useAuthStore } from "@/lib/store/auth-store";
 
+/**
+ * Authentication listener component.
+ * Monitors Firebase auth state changes and syncs auth cookies.
+ * Must be mounted in the root layout to track auth across the entire app.
+ */
 export function AuthListener(): null {
   const { setUser, setLoading } = useAuthStore();
 

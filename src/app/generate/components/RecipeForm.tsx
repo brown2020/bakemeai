@@ -1,9 +1,12 @@
-import type { ReactElement } from "react";
 import { RecipeFormProps } from "../types";
 import { Button } from "@/components/Button";
 import { FormInput } from "./FormInput";
 import { CARD_STYLES } from "../constants";
 
+/**
+ * Recipe generation form component.
+ * Adapts input fields based on selected mode (specific dish vs ingredients).
+ */
 export function RecipeForm({
   mode,
   onBack,
@@ -13,7 +16,7 @@ export function RecipeForm({
   onInputChange,
   ingredients,
   onIngredientsChange,
-}: RecipeFormProps): ReactElement {
+}: RecipeFormProps) {
   return (
     <div className="space-y-4">
       <Button

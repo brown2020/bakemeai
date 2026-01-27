@@ -1,6 +1,5 @@
 "use client";
 
-import type { ReactElement } from "react";
 import { NUMBER_INPUT } from "@/lib/constants/ui";
 
 interface NumberInputProps {
@@ -13,7 +12,8 @@ interface NumberInputProps {
 }
 
 /**
- * A simple number input component with label.
+ * Number input component with label and min/max constraints.
+ * Automatically falls back to min value on invalid input.
  */
 export function NumberInput({
   label,
@@ -22,7 +22,7 @@ export function NumberInput({
   min = NUMBER_INPUT.DEFAULT_MIN,
   max = NUMBER_INPUT.DEFAULT_MAX,
   className = "w-32",
-}: NumberInputProps): ReactElement {
+}: NumberInputProps) {
   return (
     <div>
       <label className="block text-base sm:text-lg font-medium mb-3">

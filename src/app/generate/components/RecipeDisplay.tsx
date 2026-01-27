@@ -1,9 +1,12 @@
-import type { ReactElement } from "react";
 import { RecipeDisplayProps } from "../types";
 import { Button } from "@/components/Button";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { CARD_STYLES } from "../constants";
 
+/**
+ * Recipe display component with save functionality.
+ * Shows generated recipe content and provides save button with state feedback.
+ */
 export function RecipeDisplay({
   parsedRecipe,
   onSave,
@@ -11,7 +14,7 @@ export function RecipeDisplay({
   saved,
   isGenerating,
   saveError,
-}: RecipeDisplayProps): ReactElement {
+}: RecipeDisplayProps) {
   return (
     <div className={CARD_STYLES.container}>
       {parsedRecipe.title && (

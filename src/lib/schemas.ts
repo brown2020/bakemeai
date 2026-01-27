@@ -32,6 +32,14 @@ export const userProfileSchema = z.object({
   updatedAtString: z.string().optional(),
 });
 
+/**
+ * User profile schema without Firestore Timestamp.
+ * Used for client-side state and server action parameters.
+ */
+export const serializableUserProfileSchema = userProfileSchema.omit({
+  updatedAt: true,
+});
+
 export const recipeStructureSchema = z.object({
   title: z.string().optional(),
   preparationTime: z.string().optional(),
@@ -79,5 +87,16 @@ export const recipeInputSchema = z.object({
 // Type exports for use across the app
 export type Recipe = z.infer<typeof recipeSchema>;
 export type UserProfile = z.infer<typeof userProfileSchema>;
+export type SerializableUserProfile = z.infer<typeof serializableUserProfileSchema>;
 export type UserProfileInput = z.infer<typeof userProfileInputSchema>;
 export type RecipeStructure = z.infer<typeof recipeStructureSchema>;
+
+/**
+ * Parsed recipe data structure for display.
+ * Combines title, content, and optional structured data.
+ */
+export interface ParsedRecipe {
+  title: string;
+  content: string;
+  structuredData?: RecipeStructure;
+}

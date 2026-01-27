@@ -1,6 +1,5 @@
 "use client";
 
-import type { ReactElement } from "react";
 import { useState } from "react";
 import {
   signInWithEmailAndPassword,
@@ -29,9 +28,11 @@ interface AuthFormProps {
 
 /**
  * Shared authentication form for login and signup pages.
- * Reduces code duplication while maintaining flexibility.
+ * Handles email/password auth, Google OAuth, and remember-me functionality.
+ * @param mode - Whether this is a login or signup form
+ * @param redirectTo - Optional path to redirect to after successful auth
  */
-export function AuthForm({ mode, redirectTo }: AuthFormProps): ReactElement {
+export function AuthForm({ mode, redirectTo }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");

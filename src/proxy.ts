@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { PRIVATE_ROUTES, AUTH_COOKIE_CONFIG } from "@/lib/constants";
+import { PRIVATE_ROUTES, AUTH_PAGES, AUTH_COOKIE_CONFIG } from "@/lib/constants";
 import { FIREBASE_AUTH_COOKIE } from "@/lib/auth-constants";
 import { deleteAuthCookies } from "@/lib/utils/cookies";
 
@@ -128,10 +128,7 @@ export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Auth pages should be reachable when signed out, and should redirect away when signed in.
-    const isAuthPage =
-      pathname.startsWith("/login") ||
-      pathname.startsWith("/signup") ||
-      pathname.startsWith("/reset-password");
+    const isAuthPage = AUTH_PAGES.some((page) => pathname.startsWith(page));
 
     // Only trust BakeMe's namespaced cookie to avoid collisions on localhost.
     const authToken = request.cookies.get(FIREBASE_AUTH_COOKIE)?.value;
@@ -218,10 +215,7 @@ export async function proxy(request: NextRequest) {
   } catch {
     // Fail closed: redirect to login for protected routes
     const { pathname } = request.nextUrl;
-    const isAuthPage =
-      pathname.startsWith("/login") ||
-      pathname.startsWith("/signup") ||
-      pathname.startsWith("/reset-password");
+    const isAuthPage = AUTH_PAGES.some((page) => pathname.startsWith(page));
 
     if (isAuthPage) return NextResponse.next();
 
@@ -237,14 +231,18 @@ export async function proxy(request: NextRequest) {
 // Keep default export for compatibility; Next's proxy template prefers the named `proxy` export.
 export default proxy;
 
+/**
+ * Proxy configuration.
+ * Note: Must be static for Next.js build-time analysis.
+ * Keep in sync with PRIVATE_ROUTES and AUTH_PAGES constants.
+ */
 export const config = {
-  // Only apply middleware to these routes
   matcher: [
-    // Protected
+    // Protected routes (from PRIVATE_ROUTES)
     "/generate/:path*",
     "/profile/:path*",
     "/saved/:path*",
-    // Auth pages (so signed-in users get redirected away, and invalid cookies get cleared)
+    // Auth pages (from AUTH_PAGES - so signed-in users get redirected away, and invalid cookies get cleared)
     "/login",
     "/signup",
     "/reset-password",

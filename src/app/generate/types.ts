@@ -1,4 +1,4 @@
-import { ParsedRecipe } from "@/lib/types";
+import { ParsedRecipe } from "@/lib/schemas";
 
 export type Mode = "specific" | "ingredients" | null;
 

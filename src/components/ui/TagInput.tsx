@@ -1,7 +1,5 @@
 "use client";
 
-import type { ReactElement } from "react";
-
 interface TagInputProps {
   label: string;
   value: string[];
@@ -10,16 +8,16 @@ interface TagInputProps {
 }
 
 /**
- * A comma-separated tag input component.
- * Converts comma-separated text to/from string arrays.
+ * Comma-separated tag input component.
+ * Converts comma-separated text to/from string arrays for easy entry.
  */
 export function TagInput({
   label,
   value,
   onChange,
   placeholder = "Enter values separated by commas",
-}: TagInputProps): ReactElement {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+}: TagInputProps) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value
       .split(",")
       .map((item) => item.trim())

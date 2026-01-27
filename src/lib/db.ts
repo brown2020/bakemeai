@@ -40,6 +40,11 @@ interface SaveRecipeParams {
 /**
  * Saves a recipe to Firestore.
  * Uses structured data if available, otherwise falls back to parsing markdown.
+ * @param params - Recipe save parameters
+ * @param params.userId - The user's unique identifier
+ * @param params.content - Full markdown content of the recipe
+ * @param params.structuredData - Optional structured recipe data from AI generation
+ * @returns The saved recipe with generated ID
  */
 export async function saveRecipe({
   userId,
@@ -84,6 +89,12 @@ export async function saveRecipe({
   }
 }
 
+/**
+ * Retrieves all recipes for a specific user from Firestore.
+ * Results are ordered by creation date (newest first) and validated with Zod.
+ * @param userId - The user's unique identifier
+ * @returns Array of user's recipes
+ */
 export async function getUserRecipes(userId: string): Promise<Recipe[]> {
   try {
     const q = query(
@@ -111,6 +122,10 @@ export async function getUserRecipes(userId: string): Promise<Recipe[]> {
   }
 }
 
+/**
+ * Deletes a recipe from Firestore.
+ * @param recipeId - The recipe's unique identifier
+ */
 export async function deleteRecipe(recipeId: string): Promise<void> {
   try {
     await deleteDoc(doc(db, COLLECTIONS.RECIPES, recipeId));
@@ -125,6 +140,12 @@ export async function deleteRecipe(recipeId: string): Promise<void> {
   }
 }
 
+/**
+ * Saves or updates a user profile in Firestore.
+ * @param userId - The user's unique identifier
+ * @param profile - The profile data to save
+ * @returns The saved profile
+ */
 export async function saveUserProfile(
   userId: string,
   profile: UserProfileInput
@@ -148,6 +169,12 @@ export async function saveUserProfile(
   }
 }
 
+/**
+ * Retrieves a user profile from Firestore.
+ * Serializes Firestore Timestamps to ISO strings for client-side compatibility.
+ * @param userId - The user's unique identifier
+ * @returns The user profile or null if not found
+ */
 export async function getUserProfile(
   userId: string
 ): Promise<UserProfile | null> {

@@ -1,15 +1,18 @@
 import { Input, Textarea } from "@/components/ui";
 import { FormInputProps } from "../types";
 import { FORM_VALIDATION } from "@/lib/constants/ui";
-import type { ReactElement } from "react";
 
+/**
+ * Form input component with character counting and validation feedback.
+ * Adapts between single-line input and textarea based on context.
+ */
 export function FormInput({
   label,
   placeholder,
   value,
   onChange,
   isTextArea = false,
-}: FormInputProps): ReactElement {
+}: FormInputProps) {
   const minLength = isTextArea
     ? FORM_VALIDATION.TEXTAREA_MIN_LENGTH
     : FORM_VALIDATION.INPUT_MIN_LENGTH;

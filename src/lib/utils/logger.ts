@@ -1,6 +1,6 @@
 /**
  * Error logging utility for consistent error handling across the application.
- * In production, this can be extended to integrate with error reporting services.
+ * Set NEXT_PUBLIC_ENABLE_CONSOLE_LOGS=true to enable console logging in production.
  */
 
 interface LogContext {
@@ -8,18 +8,32 @@ interface LogContext {
 }
 
 /**
+ * Determines if console logging should be enabled.
+ * Always enabled in development, configurable in production via env var.
+ */
+const shouldLog = (): boolean => {
+  if (process.env.NODE_ENV === "development") return true;
+  return process.env.NEXT_PUBLIC_ENABLE_CONSOLE_LOGS === "true";
+};
+
+/**
  * Logs an error with optional context information.
+ * In development: logs to console with full details.
+ * In production: structured JSON logging (only if enabled via env var).
+ * @param message - Descriptive error message
+ * @param error - The error object or value
+ * @param context - Additional context for debugging
  */
 export function logError(
   message: string,
   error?: unknown,
   context?: LogContext
-): void {
+) {
+  if (!shouldLog()) return;
+
   if (process.env.NODE_ENV === "development") {
     console.error(message, error, context);
   } else {
-    // In production, this would integrate with a service like Sentry, LogRocket, etc.
-    // For now, we still log to console but in a structured format
     console.error(
       JSON.stringify({
         level: "error",
@@ -34,8 +48,12 @@ export function logError(
 
 /**
  * Logs a warning with optional context information.
+ * @param message - Warning message
+ * @param context - Additional context for debugging
  */
-export function logWarning(message: string, context?: LogContext): void {
+export function logWarning(message: string, context?: LogContext) {
+  if (!shouldLog()) return;
+
   if (process.env.NODE_ENV === "development") {
     console.warn(message, context);
   } else {
@@ -52,8 +70,12 @@ export function logWarning(message: string, context?: LogContext): void {
 
 /**
  * Logs an informational message with optional context information.
+ * @param message - Info message
+ * @param context - Additional context for debugging
  */
-export function logInfo(message: string, context?: LogContext): void {
+export function logInfo(message: string, context?: LogContext) {
+  if (!shouldLog()) return;
+
   if (process.env.NODE_ENV === "development") {
     console.info(message, context);
   } else {

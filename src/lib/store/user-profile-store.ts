@@ -1,10 +1,10 @@
 import { create } from "zustand";
-import { UserProfile } from "@/lib/types";
+import { SerializableUserProfile } from "@/lib/schemas";
 import { getUserProfile } from "@/lib/db";
 import { logError } from "@/lib/utils/logger";
 
 interface UserProfileState {
-  userProfile: UserProfile | null;
+  userProfile: SerializableUserProfile | null;
   isLoading: boolean;
   error: string | null;
   fetchUserProfile: (userId: string) => Promise<void>;
@@ -15,20 +15,19 @@ export const useUserProfileStore = create<UserProfileState>((set) => ({
   userProfile: null,
   isLoading: false,
   error: null,
+  /**
+   * Fetches user profile from Firestore.
+   * Strips Firestore Timestamps to ensure profile is serializable for server actions.
+   */
   fetchUserProfile: async (userId: string): Promise<void> => {
     set({ isLoading: true, error: null });
     try {
       const profile = await getUserProfile(userId);
       if (profile) {
-        // Strip Firestore Timestamp to keep state serializable.
-        const sanitizedProfile = {
-          ...profile,
-          updatedAt: undefined,
-          updatedAtString: profile.updatedAt
-            ? profile.updatedAt.toDate().toISOString()
-            : undefined,
-        };
-        set({ userProfile: sanitizedProfile });
+        // Strip Firestore Timestamp - it's not serializable for server actions
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { updatedAt, ...serializableProfile } = profile;
+        set({ userProfile: serializableProfile });
       } else {
         set({ userProfile: null });
       }
@@ -39,7 +38,7 @@ export const useUserProfileStore = create<UserProfileState>((set) => ({
       set({ isLoading: false });
     }
   },
-  clearUserProfile: (): void => {
+  clearUserProfile: () => {
     set({ userProfile: null, error: null, isLoading: false });
   },
 }));

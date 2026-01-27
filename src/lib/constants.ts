@@ -49,6 +49,12 @@ export type CookingExperience = (typeof EXPERIENCE_LEVELS)[number]["value"];
 export const PRIVATE_ROUTES = ["/generate", "/profile", "/saved"] as const;
 
 /**
+ * Public authentication pages.
+ * These pages should be accessible when logged out and redirect away when logged in.
+ */
+export const AUTH_PAGES = ["/login", "/signup", "/reset-password"] as const;
+
+/**
  * Authentication cookie configuration.
  */
 export const AUTH_COOKIE_CONFIG = {

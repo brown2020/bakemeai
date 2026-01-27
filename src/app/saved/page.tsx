@@ -1,10 +1,9 @@
 "use client";
 
-import type { ReactElement } from "react";
 import { useEffect, useState, useMemo } from "react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { getUserRecipes, deleteRecipe } from "@/lib/db";
-import { Recipe } from "@/lib/types";
+import { Recipe } from "@/lib/schemas";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { Trash2 } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
@@ -183,7 +182,7 @@ function RecipeCard({
   isSelected,
   onSelect,
   onDelete,
-}: RecipeCardProps): ReactElement {
+}: RecipeCardProps) {
   return (
     <div
       className={`p-3 sm:p-4 rounded-lg border cursor-pointer transition-colors ${

@@ -4,10 +4,13 @@ import { createStreamableValue } from "@ai-sdk/rsc";
 import { streamObject } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
-import { UserProfile } from "./schemas";
+import { SerializableUserProfile } from "./schemas";
 
-// Define the schema for the recipe structure
-const recipeSchema = z
+/**
+ * Schema for AI-generated recipe structure.
+ * Different from the stored recipe schema - this is specifically for OpenAI streaming responses.
+ */
+const recipeGenerationSchema = z
   .object({
   title: z.string().describe("The title of the recipe"),
   preparationTime: z.string().describe("Time needed for preparation (e.g. '15 mins')"),
@@ -38,7 +41,7 @@ const recipeSchema = z
 
 const getSystemPrompt = (
   isIngredientBased: boolean,
-  userProfile?: UserProfile | null
+  userProfile?: SerializableUserProfile | null
 ) => {
   // Build dietary restrictions and preferences
   const dietaryInfo = userProfile?.dietary?.length
@@ -85,14 +88,21 @@ Generate the response as a structured JSON object matching the schema.
 If a numeric or nutrition field is unknown, set it to null (do not omit keys).`;
 };
 
+/**
+ * Generates a recipe using AI based on user input and preferences.
+ * @param prompt - The user's recipe request
+ * @param isIngredientBased - Whether the request is ingredient-based or specific dish
+ * @param userProfile - Optional user profile with dietary restrictions and preferences (must be serializable)
+ * @returns Streamable value containing the generated recipe
+ */
 export async function generateRecipe(
   prompt: string,
   isIngredientBased: boolean,
-  userProfile?: UserProfile | null
+  userProfile?: SerializableUserProfile | null
 ) {
   const result = streamObject({
     model: openai("gpt-5.1-chat-latest"),
-    schema: recipeSchema,
+    schema: recipeGenerationSchema,
     system: getSystemPrompt(isIngredientBased, userProfile),
     prompt: prompt,
     temperature: 0,

@@ -13,7 +13,7 @@ import {
  * Clears both current and legacy cookie names.
  * @param response - The NextResponse object to modify
  */
-export function deleteAuthCookies(response: NextResponse): void {
+export function deleteAuthCookies(response: NextResponse) {
   response.cookies.delete(FIREBASE_AUTH_COOKIE);
   response.cookies.delete(LEGACY_FIREBASE_AUTH_COOKIE);
 }

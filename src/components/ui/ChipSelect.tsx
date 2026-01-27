@@ -1,7 +1,5 @@
 "use client";
 
-import type { ReactElement } from "react";
-
 interface ChipSelectProps {
   label: string;
   options: string[];
@@ -11,8 +9,13 @@ interface ChipSelectProps {
 }
 
 /**
- * A multi-select chip/pill component for selecting multiple options.
- * Used for dietary preferences, cuisines, etc.
+ * Multi-select chip/pill component for selecting multiple options.
+ * Supports toggle behavior and visual variants.
+ * @param label - Label text displayed above the chips
+ * @param options - Array of selectable options
+ * @param selected - Array of currently selected option values
+ * @param onChange - Handler called when an option is toggled
+ * @param variant - Visual style: "pill" (fully rounded) or "rounded" (slightly rounded)
  */
 export function ChipSelect({
   label,
@@ -20,7 +23,7 @@ export function ChipSelect({
   selected,
   onChange,
   variant = "pill",
-}: ChipSelectProps): ReactElement {
+}: ChipSelectProps) {
   const baseClasses = "px-3 py-1.5 text-sm transition-colors";
   const variantClasses = variant === "pill" ? "rounded-full" : "rounded-lg";
 

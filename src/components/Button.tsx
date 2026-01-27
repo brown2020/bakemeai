@@ -1,4 +1,3 @@
-import type { ReactElement } from "react";
 import { ButtonHTMLAttributes } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
@@ -32,6 +31,10 @@ interface ButtonProps
   isLoading?: boolean;
 }
 
+/**
+ * Reusable button component with multiple variants and loading state.
+ * Uses class-variance-authority for consistent styling variants.
+ */
 export function Button({
   className,
   variant,
@@ -39,7 +42,7 @@ export function Button({
   isLoading,
   children,
   ...props
-}: ButtonProps): ReactElement {
+}: ButtonProps) {
   return (
     <button
       className={buttonVariants({ variant, size, className })}

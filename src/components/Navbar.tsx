@@ -9,6 +9,11 @@ import Image from "next/image";
 import { Wand2, BookMarked, Settings } from "lucide-react";
 import { NavLink } from "@/components/ui";
 
+/**
+ * Main navigation bar component.
+ * Shows authenticated navigation with user menu or login/signup buttons.
+ * Fixed positioning with responsive design.
+ */
 export default function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);

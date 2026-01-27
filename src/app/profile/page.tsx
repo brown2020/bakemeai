@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { getUserProfile, saveUserProfile } from "@/lib/db";
-import { UserProfileInput } from "@/lib/types";
+import { UserProfileInput } from "@/lib/schemas";
 import {
   ChipSelect,
   TagInput,

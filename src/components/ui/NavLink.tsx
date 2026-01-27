@@ -1,6 +1,5 @@
 "use client";
 
-import type { ReactElement } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -18,7 +17,7 @@ interface NavLinkProps {
 
 /**
  * Navigation link component with active state styling.
- * Shows text on desktop and icon on mobile.
+ * Responsive design: shows icon only on mobile, text on desktop.
  */
 export function NavLink({
   href,
@@ -26,7 +25,7 @@ export function NavLink({
   icon,
   className = "",
   prefetch = false,
-}: NavLinkProps): ReactElement {
+}: NavLinkProps) {
   const pathname = usePathname();
   const isActive = pathname === href;
 

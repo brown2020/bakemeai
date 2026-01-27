@@ -1,17 +1,16 @@
-import type { ReactElement } from "react";
-
 interface LoadingSpinnerProps {
   size?: "sm" | "md" | "lg";
   className?: string;
 }
 
 /**
- * Reusable loading spinner component with consistent styling.
+ * Loading spinner component with size variants.
+ * Provides visual feedback during async operations.
  */
 export function LoadingSpinner({
   size = "md",
   className = "",
-}: LoadingSpinnerProps): ReactElement {
+}: LoadingSpinnerProps) {
   const sizeClasses = {
     sm: "h-4 w-4 border-2",
     md: "h-8 w-8 border-2",

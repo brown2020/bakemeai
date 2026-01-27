@@ -1,6 +1,5 @@
 "use client";
 
-import type { ReactElement } from "react";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/Button";
 
@@ -17,7 +16,8 @@ interface ConfirmDialogProps {
 
 /**
  * Accessible confirmation dialog component.
- * Replaces window.confirm with a proper WCAG-compliant modal.
+ * WCAG-compliant modal with keyboard navigation, focus management, and escape handling.
+ * Replaces native window.confirm with better UX.
  */
 export function ConfirmDialog({
   isOpen,
@@ -28,7 +28,7 @@ export function ConfirmDialog({
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   variant = "primary",
-}: ConfirmDialogProps): ReactElement | null {
+}: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -41,7 +41,7 @@ export function ConfirmDialog({
 
   // Close on Escape key
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent): void => {
+    const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
         onClose();
       }
@@ -55,7 +55,7 @@ export function ConfirmDialog({
 
   if (!isOpen) return null;
 
-  const handleConfirm = (): void => {
+  const handleConfirm = () => {
     onConfirm();
     onClose();
   };

@@ -3,8 +3,7 @@ import { persist } from "zustand/middleware";
 import { generateRecipe } from "@/lib/actions";
 import { readStreamableValue } from "@ai-sdk/rsc";
 import { saveRecipe } from "@/lib/db";
-import { UserProfile, RecipeStructure, recipeStructureSchema } from "@/lib/schemas";
-import { ParsedRecipe } from "@/lib/types";
+import { SerializableUserProfile, RecipeStructure, ParsedRecipe, recipeStructureSchema } from "@/lib/schemas";
 import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 
 interface RecipeState {
@@ -32,7 +31,7 @@ interface RecipeState {
   generateRecipeContent: (
     prompt: string,
     isIngredientsMode: boolean,
-    userProfile: UserProfile | null
+    userProfile: SerializableUserProfile | null
   ) => Promise<void>;
   saveRecipeToDb: (userId: string) => Promise<void>;
   resetRecipe: () => void;
@@ -96,13 +95,13 @@ export const useRecipeStore = create<RecipeState>()(
       saveError: null,
       saved: false,
 
-      setInput: (input: string): void => {
+      setInput: (input: string) => {
         set({ input });
       },
-      setIngredients: (ingredients: string): void => {
+      setIngredients: (ingredients: string) => {
         set({ ingredients });
       },
-      setMode: (mode: "specific" | "ingredients" | null): void => {
+      setMode: (mode: "specific" | "ingredients" | null) => {
         set({
           mode,
           recipe: "",
@@ -203,7 +202,7 @@ export const useRecipeStore = create<RecipeState>()(
         }
       },
 
-      resetRecipe: (): void => {
+      resetRecipe: () => {
         set({
           recipe: "",
           parsedRecipe: { title: "", content: "" },
@@ -214,7 +213,7 @@ export const useRecipeStore = create<RecipeState>()(
         });
       },
 
-      resetSaveState: (): void => {
+      resetSaveState: () => {
         set({ saved: false, saveError: null });
       },
     }),

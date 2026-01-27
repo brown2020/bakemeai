@@ -1,8 +1,7 @@
-import type { ReactElement } from "react";
 import { ModeSelectorProps, ModeCardProps } from "../types";
 import { CARD_STYLES } from "../constants";
 
-const ModeCard = ({ title, description, onClick }: ModeCardProps): ReactElement => (
+const ModeCard = ({ title, description, onClick }: ModeCardProps) => (
   <div
     className={`${CARD_STYLES.container} ${CARD_STYLES.hoverEffect}`}
     onClick={onClick}
@@ -12,7 +11,11 @@ const ModeCard = ({ title, description, onClick }: ModeCardProps): ReactElement 
   </div>
 );
 
-export function ModeSelector({ onSelectMode }: ModeSelectorProps): ReactElement {
+/**
+ * Mode selector component for recipe generation.
+ * Allows users to choose between specific recipe request or ingredient-based generation.
+ */
+export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <ModeCard
