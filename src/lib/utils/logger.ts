@@ -17,6 +17,20 @@ const shouldLog = (): boolean => {
 };
 
 /**
+ * Formats an error for logging.
+ * Handles Error objects, error-like objects, and primitives.
+ */
+function formatError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (error && typeof error === "object" && "message" in error) {
+    return String(error.message);
+  }
+  return String(error);
+}
+
+/**
  * Logs an error with optional context information.
  * In development: logs to console with full details.
  * In production: structured JSON logging (only if enabled via env var).
@@ -28,7 +42,7 @@ export function logError(
   message: string,
   error?: unknown,
   context?: LogContext
-) {
+): void {
   if (!shouldLog()) return;
 
   if (process.env.NODE_ENV === "development") {
@@ -38,7 +52,8 @@ export function logError(
       JSON.stringify({
         level: "error",
         message,
-        error: error instanceof Error ? error.message : String(error),
+        error: formatError(error),
+        stack: error instanceof Error ? error.stack : undefined,
         context,
         timestamp: new Date().toISOString(),
       })
@@ -51,7 +66,7 @@ export function logError(
  * @param message - Warning message
  * @param context - Additional context for debugging
  */
-export function logWarning(message: string, context?: LogContext) {
+export function logWarning(message: string, context?: LogContext): void {
   if (!shouldLog()) return;
 
   if (process.env.NODE_ENV === "development") {
@@ -73,7 +88,7 @@ export function logWarning(message: string, context?: LogContext) {
  * @param message - Info message
  * @param context - Additional context for debugging
  */
-export function logInfo(message: string, context?: LogContext) {
+export function logInfo(message: string, context?: LogContext): void {
   if (!shouldLog()) return;
 
   if (process.env.NODE_ENV === "development") {

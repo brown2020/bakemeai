@@ -10,7 +10,7 @@ export interface ErrorContext {
 }
 
 /**
- * Custom application error type with optional error code and context.
+ * Base application error type with optional error code and context.
  * Provides richer error information for debugging and handling.
  */
 export class AppError extends Error {
@@ -23,6 +23,58 @@ export class AppError extends Error {
     this.name = "AppError";
   }
 }
+
+/**
+ * Validation error - thrown when user input fails validation.
+ */
+export class ValidationError extends AppError {
+  constructor(message: string, context?: ErrorContext) {
+    super(message, "VALIDATION_ERROR", context);
+    this.name = "ValidationError";
+  }
+}
+
+/**
+ * Authentication error - thrown when auth operations fail.
+ */
+export class AuthenticationError extends AppError {
+  constructor(message: string, context?: ErrorContext) {
+    super(message, "AUTHENTICATION_ERROR", context);
+    this.name = "AuthenticationError";
+  }
+}
+
+/**
+ * Network error - thrown when network operations fail.
+ */
+export class NetworkError extends AppError {
+  constructor(message: string, context?: ErrorContext) {
+    super(message, "NETWORK_ERROR", context);
+    this.name = "NetworkError";
+  }
+}
+
+/**
+ * Database error - thrown when Firestore operations fail.
+ */
+export class DatabaseError extends AppError {
+  constructor(message: string, context?: ErrorContext) {
+    super(message, "DATABASE_ERROR", context);
+    this.name = "DatabaseError";
+  }
+}
+
+/**
+ * Type guard to check if an error is an AppError or its subclass.
+ */
+export function isAppError(error: unknown): error is AppError {
+  return error instanceof AppError;
+}
+
+/**
+ * Union type of all possible error types for better type safety.
+ */
+export type AppErrorLike = Error | AppError | { message: string }
 
 /**
  * Standard error messages for common operations.
@@ -55,6 +107,19 @@ export const ERROR_MESSAGES = {
 } as const;
 
 /**
+ * Type guard to check if an unknown error can be treated as AppErrorLike.
+ */
+function asAppErrorLike(error: unknown): AppErrorLike {
+  if (error instanceof Error) {
+    return error;
+  }
+  if (error && typeof error === "object" && "message" in error) {
+    return error as { message: string };
+  }
+  return new Error(String(error));
+}
+
+/**
  * Handles errors with consistent logging and user-friendly messages.
  * 
  * Purpose:
@@ -62,7 +127,7 @@ export const ERROR_MESSAGES = {
  * - Returns user-friendly message for display (user-facing)
  * - Ensures consistent error handling across the app
  * 
- * @param error - The error object (can be Error, AppError, or unknown)
+ * @param error - The error (can be any type from catch blocks)
  * @param logMessage - The message to log for debugging
  * @param context - Additional context for debugging (e.g., userId, recipeId)
  * @param userMessage - The message to show to the user
@@ -74,9 +139,18 @@ export function handleError(
   context: ErrorContext,
   userMessage: string
 ): string {
+  // Convert unknown error to AppErrorLike for type safety
+  const typedError = asAppErrorLike(error);
+  
   // Log with full technical details for developers
-  logError(logMessage, error, context);
-  // Return simplified message for end users
+  logError(logMessage, typedError, context);
+  
+  // If it's an AppError with a user-friendly message, prefer that
+  if (isAppError(typedError) && typedError.message) {
+    return typedError.message;
+  }
+  
+  // Otherwise return the provided user message
   return userMessage;
 }
 

@@ -64,35 +64,46 @@ const DANGEROUS_ATTRIBUTES = new Set([
 ]);
 
 /**
+ * Safe URL protocols that are allowed in href/src attributes.
+ */
+const SAFE_PROTOCOLS = ["http://", "https://", "mailto:"] as const;
+
+/**
+ * Dangerous URL protocols that should be blocked.
+ */
+const DANGEROUS_PROTOCOLS = ["javascript:", "data:", "vbscript:"] as const;
+
+/**
  * Validates that a URL is safe for use in href/src attributes.
- * Only allows http, https, and mailto protocols.
+ * Only allows http, https, mailto protocols, and relative URLs.
+ * 
+ * Security considerations:
+ * - Blocks javascript:, data:, and vbscript: protocols
+ * - Blocks protocol-relative URLs (//evil.com)
+ * - Allows relative paths (/path/to/resource)
  * 
  * @param url - The URL to validate
- * @returns True if the URL is safe
+ * @returns True if the URL is safe to use
  */
 export function isSafeUrl(url: string): boolean {
   if (!url) return false;
 
   try {
-    // Remove whitespace
+    // Remove whitespace and normalize
     const trimmed = url.trim().toLowerCase();
 
-    // Block javascript: and data: URLs
-    if (
-      trimmed.startsWith("javascript:") ||
-      trimmed.startsWith("data:") ||
-      trimmed.startsWith("vbscript:")
-    ) {
+    // Block dangerous protocols
+    if (DANGEROUS_PROTOCOLS.some(protocol => trimmed.startsWith(protocol))) {
       return false;
     }
 
-    // Allow relative URLs, http, https, and mailto
-    if (
-      trimmed.startsWith("/") ||
-      trimmed.startsWith("http://") ||
-      trimmed.startsWith("https://") ||
-      trimmed.startsWith("mailto:")
-    ) {
+    // Allow relative URLs (but not protocol-relative)
+    if (trimmed.startsWith("/") && !trimmed.startsWith("//")) {
+      return true;
+    }
+
+    // Allow safe protocols
+    if (SAFE_PROTOCOLS.some(protocol => trimmed.startsWith(protocol))) {
       return true;
     }
 

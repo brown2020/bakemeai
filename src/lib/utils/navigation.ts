@@ -6,23 +6,38 @@
 /**
  * Validates that a redirect path is safe (prevents open redirect vulnerabilities).
  * 
- * Security rules:
- * - Must be a string
- * - Must start with "/" (relative path)
+ * Security rules enforced:
+ * - Must be a non-empty string
+ * - Must start with "/" (relative path only)
  * - Must NOT start with "//" (prevents protocol-relative URLs like //evil.com)
  * 
+ * This prevents attackers from crafting URLs that redirect users to external malicious sites.
+ * 
  * @param path - The path to validate
- * @returns True if the path is safe to redirect to
+ * @returns Type predicate indicating if the path is a safe string
+ * 
+ * @example
+ * isSafeRedirectPath("/dashboard")    // true
+ * isSafeRedirectPath("//evil.com")    // false
+ * isSafeRedirectPath("https://x.com") // false
+ * isSafeRedirectPath(null)            // false
  */
 export function isSafeRedirectPath(path: string | null | undefined): path is string {
-  return typeof path === "string" && path.startsWith("/") && !path.startsWith("//");
+  return typeof path === "string" && path.length > 0 && path.startsWith("/") && !path.startsWith("//");
 }
 
 /**
  * Gets a safe redirect path or falls back to default.
- * @param path - The requested redirect path
- * @param defaultPath - The fallback path (defaults to "/")
- * @returns A validated safe path
+ * Ensures that only validated, safe paths are used for redirects.
+ * 
+ * @param path - The requested redirect path (may be untrusted user input)
+ * @param defaultPath - The fallback path to use if validation fails (defaults to "/")
+ * @returns A validated safe path guaranteed to be a relative URL
+ * 
+ * @example
+ * getSafeRedirectPath("/profile")        // "/profile"
+ * getSafeRedirectPath("//evil.com")      // "/"
+ * getSafeRedirectPath(null, "/login")    // "/login"
  */
 export function getSafeRedirectPath(
   path: string | null | undefined,

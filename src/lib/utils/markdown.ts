@@ -8,10 +8,19 @@ import { RECIPE } from "../constants/ui";
 /**
  * Generic markdown section extractor.
  * Eliminates duplication by providing a flexible extraction pattern.
+ * 
+ * @template T - The type of data to extract from the section
  * @param content - The markdown content to parse
  * @param sectionName - The heading name (e.g., "Ingredients", "Instructions")
  * @param parser - Function to parse the extracted section content
- * @returns Parsed section data
+ * @returns Parsed section data or null if section not found or parsing fails
+ * 
+ * @example
+ * const ingredients = extractMarkdownSection(
+ *   markdown,
+ *   "Ingredients",
+ *   (text) => text.split("\n").filter(line => line.startsWith("-"))
+ * );
  */
 function extractMarkdownSection<T>(
   content: string,
@@ -38,44 +47,72 @@ function extractMarkdownSection<T>(
 /**
  * Converts a structured recipe object to markdown format.
  * Used for displaying AI-generated recipes in a readable format.
+ * 
+ * Format includes:
+ * - Title (H1)
+ * - Recipe details (preparation time, cooking time, servings, difficulty, calories)
+ * - Ingredients (bulleted list)
+ * - Instructions (numbered list)
+ * - Tips (bulleted list, optional)
+ * 
  * @param recipe - Structured recipe data from AI generation
- * @returns Formatted markdown string
+ * @returns Formatted markdown string, or empty string if recipe has no title
  */
 export function convertToMarkdown(recipe: RecipeStructure): string {
   if (!recipe.title) return "";
 
-  let markdown = `# ${recipe.title}\n\n`;
+  const sections: string[] = [];
+  
+  // Title
+  sections.push(`# ${recipe.title}\n`);
 
-  markdown += `# Recipe Details\n`;
-  if (recipe.preparationTime)
-    markdown += `- Preparation Time: ${recipe.preparationTime}\n`;
-  if (recipe.cookingTime) markdown += `- Cooking Time: ${recipe.cookingTime}\n`;
-  if (recipe.servings) markdown += `- Servings: ${recipe.servings}\n`;
-  if (recipe.difficulty) markdown += `- Difficulty: ${recipe.difficulty}\n`;
-  if (recipe.calories != null) markdown += `- Calories: ${recipe.calories} kcal\n`;
+  // Recipe Details
+  const details: string[] = [];
+  if (recipe.preparationTime) {
+    details.push(`- Preparation Time: ${recipe.preparationTime}`);
+  }
+  if (recipe.cookingTime) {
+    details.push(`- Cooking Time: ${recipe.cookingTime}`);
+  }
+  if (recipe.servings) {
+    details.push(`- Servings: ${recipe.servings}`);
+  }
+  if (recipe.difficulty) {
+    details.push(`- Difficulty: ${recipe.difficulty}`);
+  }
+  if (recipe.calories != null) {
+    details.push(`- Calories: ${recipe.calories} kcal`);
+  }
+  
+  if (details.length > 0) {
+    sections.push(`# Recipe Details\n${details.join("\n")}\n`);
+  }
 
+  // Ingredients
   if (recipe.ingredients && recipe.ingredients.length > 0) {
-    markdown += `\n## Ingredients\n`;
-    recipe.ingredients.forEach((ing) => {
-      markdown += `- ${ing}\n`;
-    });
+    const ingredientsList = recipe.ingredients
+      .map((ing) => `- ${ing}`)
+      .join("\n");
+    sections.push(`\n## Ingredients\n${ingredientsList}\n`);
   }
 
+  // Instructions
   if (recipe.instructions && recipe.instructions.length > 0) {
-    markdown += `\n## Instructions\n`;
-    recipe.instructions.forEach((step, index) => {
-      markdown += `${index + 1}. ${step}\n`;
-    });
+    const instructionsList = recipe.instructions
+      .map((step, index) => `${index + 1}. ${step}`)
+      .join("\n");
+    sections.push(`\n## Instructions\n${instructionsList}\n`);
   }
 
+  // Tips (optional)
   if (recipe.tips && recipe.tips.length > 0) {
-    markdown += `\n## Tips\n`;
-    recipe.tips.forEach((tip) => {
-      markdown += `- ${tip}\n`;
-    });
+    const tipsList = recipe.tips
+      .map((tip) => `- ${tip}`)
+      .join("\n");
+    sections.push(`\n## Tips\n${tipsList}\n`);
   }
 
-  return markdown;
+  return sections.join("");
 }
 
 /**

@@ -31,11 +31,10 @@ export function useGoogleAuth(redirectTo: string = "/"): UseGoogleAuthReturn {
       await setUserAuthToken(userCredential.user);
       router.push(redirectTo);
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An error occurred during Google sign-in");
-      }
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : "An error occurred during Google sign-in";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

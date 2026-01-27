@@ -1,6 +1,16 @@
 import { ParsedRecipe } from "@/lib/schemas";
 
-export type Mode = "specific" | "ingredients" | null;
+/**
+ * Recipe generation modes.
+ * Using const assertion for type safety while maintaining string literal types.
+ */
+export const GENERATION_MODE = {
+  SPECIFIC: "specific",
+  INGREDIENTS: "ingredients",
+} as const;
+
+export type GenerationMode = typeof GENERATION_MODE[keyof typeof GENERATION_MODE];
+export type Mode = GenerationMode | null;
 
 export interface FormInputProps {
   label: string;

@@ -131,10 +131,21 @@ function withDebugHeaders(
 }
 
 /**
+ * Available route actions for proxy decision-making.
+ * Using enum for type safety and better IDE support.
+ */
+export enum RouteAction {
+  ALLOW = "allow",
+  REDIRECT = "redirect",
+  CLEAR_AND_ALLOW = "clear-and-allow",
+  CLEAR_AND_REDIRECT = "clear-and-redirect",
+}
+
+/**
  * Route decision result for cleaner proxy logic.
  */
 interface RouteDecision {
-  action: "allow" | "redirect" | "clear-and-allow" | "clear-and-redirect";
+  action: RouteAction;
   redirectTo?: string;
   includeRedirectParam?: boolean;
 }
@@ -152,21 +163,25 @@ function determineRouteAction(
 ): RouteDecision {
   // Auth pages with valid authentication => redirect to app
   if (isAuthPage && isAuthenticated) {
-    return { action: "redirect", redirectTo: "/generate" };
+    return { action: RouteAction.REDIRECT, redirectTo: "/generate" };
   }
 
   // Auth pages with invalid cookie => clear cookie and stay
   if (isAuthPage && cookiePresent && !jwtValid) {
-    return { action: "clear-and-allow" };
+    return { action: RouteAction.CLEAR_AND_ALLOW };
   }
 
   // Protected routes without authentication => redirect to login
   if (isPrivateRoute(pathname) && !isAuthenticated) {
-    return { action: "clear-and-redirect", redirectTo: "/login", includeRedirectParam: true };
+    return { 
+      action: RouteAction.CLEAR_AND_REDIRECT, 
+      redirectTo: "/login", 
+      includeRedirectParam: true 
+    };
   }
 
   // All other cases => allow through
-  return { action: "allow" };
+  return { action: RouteAction.ALLOW };
 }
 
 /**
@@ -186,19 +201,19 @@ function executeRouteDecision(
   const { pathname } = request.nextUrl;
 
   switch (decision.action) {
-    case "redirect": {
+    case RouteAction.REDIRECT: {
       const url = request.nextUrl.clone();
       url.pathname = decision.redirectTo!;
       return withDebugHeaders(NextResponse.redirect(url), debugContext);
     }
 
-    case "clear-and-allow": {
+    case RouteAction.CLEAR_AND_ALLOW: {
       const response = NextResponse.next();
       deleteAuthCookies(response);
       return withDebugHeaders(response, debugContext);
     }
 
-    case "clear-and-redirect": {
+    case RouteAction.CLEAR_AND_REDIRECT: {
       const url = request.nextUrl.clone();
       url.pathname = decision.redirectTo!;
       if (decision.includeRedirectParam) {
@@ -209,7 +224,7 @@ function executeRouteDecision(
       return withDebugHeaders(response, debugContext);
     }
 
-    case "allow": {
+    case RouteAction.ALLOW: {
       const response = NextResponse.next();
       // Attach user ID header for downstream usage if authenticated
       if (debugContext.userId && debugContext.jwtValid) {

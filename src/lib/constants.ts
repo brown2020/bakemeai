@@ -1,12 +1,21 @@
 /**
  * Centralized constants for the application.
  * Keeps all configuration in one place for easier maintenance.
+ * 
+ * Organization:
+ * - UI constants: Timing, layout, validation rules
+ * - Database: Firestore collection names
+ * - Auth: Routes, cookies, JWT configuration
+ * - Domain: Dietary options, cuisines, experience levels
  */
 
 // Re-export UI constants for convenience
 export * from "./constants/ui";
 
-// Firestore collection names
+/**
+ * Firestore collection names.
+ * Using const assertion for type safety and immutability.
+ */
 export const COLLECTIONS = {
   RECIPES: "recipes",
   USER_PROFILES: "userProfiles",

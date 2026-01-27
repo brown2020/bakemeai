@@ -83,11 +83,10 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
       }
       router.push(safeRedirectTo);
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An error occurred");
-      }
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : "An authentication error occurred";
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
