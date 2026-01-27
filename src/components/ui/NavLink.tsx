@@ -1,12 +1,13 @@
 "use client";
 
+import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 interface NavLinkProps {
   href: string;
-  children: React.ReactNode;
-  icon?: React.ReactNode;
+  children: ReactNode;
+  icon?: ReactNode;
   className?: string;
   /**
    * Disable prefetch for protected routes so navigation always hits the server

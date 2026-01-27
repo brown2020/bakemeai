@@ -5,17 +5,16 @@ import { useAuthStore } from "@/lib/store/auth-store";
 import { getUserRecipes, deleteRecipe } from "@/lib/db";
 import { Recipe } from "@/lib/schemas";
 import { PageLayout } from "@/components/PageLayout";
-import { ErrorMessage, ConfirmDialog } from "@/components/ui";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FeatureErrorBoundary } from "@/components/FeatureErrorBoundary";
 import { useFirestoreQuery } from "@/hooks/useFirestoreQuery";
 import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
-import {
-  RecipeSearch,
-  RecipeList,
-  RecipeDetail,
-  EmptyState,
-  LoadingSkeleton,
-} from "./components";
+import { RecipeSearch } from "./components/RecipeSearch";
+import { RecipeList } from "./components/RecipeList";
+import { RecipeDetail } from "./components/RecipeDetail";
+import { EmptyState } from "./components/EmptyState";
+import { LoadingSkeleton } from "./components/LoadingSkeleton";
 
 export default function SavedRecipes() {
   const { user } = useAuthStore();

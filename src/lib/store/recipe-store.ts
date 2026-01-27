@@ -91,6 +91,14 @@ export const useRecipeStore = create<RecipeState>()(
         });
       },
 
+      /**
+       * Generates recipe content with streaming AI updates.
+       * 
+       * Architecture note: Streaming logic lives here rather than in a service layer
+       * because it's tightly coupled to UI state management - each partial update
+       * triggers a re-render. The store's responsibility is managing async state
+       * during streaming, not just storing the final result.
+       */
       generateRecipeContent: async (prompt, isIngredientsMode, userProfile) => {
         set({
           isGenerating: true,

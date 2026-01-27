@@ -30,7 +30,7 @@ import {
   extractField,
   extractServings,
 } from "./utils/markdown";
-import { serializeFirestoreDoc, getFirestoreErrorMessage } from "./utils/firestore";
+import { serializeUserProfile, getFirestoreErrorMessage } from "./utils/firestore";
 import { handleError, ERROR_MESSAGES } from "./utils/error-handler";
 import { sanitizeUserInput } from "./utils/sanitize";
 
@@ -198,7 +198,7 @@ export async function getUserProfile(
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-      const rawProfile = serializeFirestoreDoc({
+      const rawProfile = serializeUserProfile({
         id: docSnap.id,
         ...docSnap.data(),
       });

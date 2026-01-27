@@ -10,12 +10,10 @@ import { useAuthStore } from "@/lib/store/auth-store";
 import { useUserProfileStore } from "@/lib/store/user-profile-store";
 import { useRecipeGeneration } from "@/hooks/useRecipeGeneration";
 
-import {
-  ModeSelector,
-  RecipeForm,
-  RecipeDisplay,
-  ErrorMessage,
-} from "./components";
+import { ModeSelector } from "./components/ModeSelector";
+import { RecipeForm } from "./components/RecipeForm";
+import { RecipeDisplay } from "./components/RecipeDisplay";
+import { ErrorMessage } from "./components/ErrorMessage";
 import { Mode } from "./types";
 
 // Main component

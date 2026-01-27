@@ -14,7 +14,8 @@ import Link from "next/link";
 
 import { auth } from "@/lib/firebase";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
-import { Input, ErrorMessage } from "@/components/ui";
+import { Input } from "@/components/ui/Input";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { Button } from "@/components/Button";
 import { setUserAuthToken } from "@/lib/utils/auth";
 import { getSafeRedirectPath } from "@/lib/utils/navigation";

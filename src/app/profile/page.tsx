@@ -4,13 +4,11 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { getUserProfile, saveUserProfile } from "@/lib/db";
 import { UserProfileInput } from "@/lib/schemas";
-import {
-  ChipSelect,
-  TagInput,
-  NumberInput,
-  PageSkeleton,
-  ErrorMessage,
-} from "@/components/ui";
+import { ChipSelect } from "@/components/ui/ChipSelect";
+import { TagInput } from "@/components/ui/TagInput";
+import { NumberInput } from "@/components/ui/NumberInput";
+import { PageSkeleton } from "@/components/ui/PageSkeleton";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import {
   DIETARY_OPTIONS,
   CUISINE_OPTIONS,
@@ -85,15 +83,14 @@ export default function Profile() {
     }
   };
 
-  type ProfileArrayField =
-    | "dietary"
-    | "allergies"
-    | "dislikedIngredients"
-    | "preferredCuisines";
+  // Type-safe helper for array field names in UserProfileInput
+  type ProfileArrayField = {
+    [K in keyof UserProfileInput]: UserProfileInput[K] extends string[] ? K : never;
+  }[keyof UserProfileInput];
 
-  const toggleArrayItem = (field: ProfileArrayField, value: string) => {
+  const toggleArrayItem = (field: ProfileArrayField, value: string): void => {
     setProfile((prev) => {
-      const current = prev[field];
+      const current = prev[field] as string[];
       const next = current.includes(value)
         ? current.filter((item) => item !== value)
         : [...current, value];

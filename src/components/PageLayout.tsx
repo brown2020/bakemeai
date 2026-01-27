@@ -1,5 +1,7 @@
+import { ReactNode } from "react";
+
 interface PageLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
   title?: string;
   subtitle?: string;
 }

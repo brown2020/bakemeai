@@ -65,10 +65,10 @@ export function timestampToString(timestamp?: Timestamp | null): string | undefi
 }
 
 /**
- * Serializes a Firestore document that may contain Timestamps.
- * Converts Timestamp fields to ISO strings for client-side use.
+ * Serializes a user profile document from Firestore.
+ * Converts the updatedAt Timestamp to an ISO string for client-side use.
  */
-export function serializeFirestoreDoc<T extends Record<string, unknown>>(
+export function serializeUserProfile<T extends Record<string, unknown>>(
   doc: T
 ): T & { updatedAtString?: string } {
   const serialized: Record<string, unknown> = { ...doc };

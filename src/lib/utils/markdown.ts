@@ -80,24 +80,14 @@ export function convertToMarkdown(recipe: RecipeStructure): string {
 /**
  * Extracts the title from markdown content.
  * Fallback function used when structured data is unavailable.
- * Handles multiple heading formats and edge cases.
+ * In practice, structured data is always available from AI generation.
  */
 export function extractTitle(content: string): string {
   if (!content) return RECIPE.DEFAULT_TITLE;
   
-  // Try H1 markdown syntax first (# Title)
+  // Extract H1 markdown syntax (# Title)
   const h1Match = content.match(/^#\s+(.+?)$/m);
-  if (h1Match && h1Match[1]) {
-    return h1Match[1].trim();
-  }
-  
-  // Fallback: try to find any heading-like text at the start
-  const firstLine = content.split("\n")[0]?.trim();
-  if (firstLine && firstLine.length > 0 && firstLine.length < RECIPE.MAX_TITLE_LENGTH) {
-    return firstLine.replace(/^#+\s*/, "").trim() || RECIPE.DEFAULT_TITLE;
-  }
-  
-  return RECIPE.DEFAULT_TITLE;
+  return h1Match?.[1]?.trim() ?? RECIPE.DEFAULT_TITLE;
 }
 
 /**
@@ -148,18 +138,16 @@ export function extractField(content: string, fieldName: string): string {
 /**
  * Extracts the servings number from markdown content.
  * Fallback function used when structured data is unavailable.
- * Uses robust parsing with validation and default fallback.
- * Returns 4 as default when extraction fails (consistent with extractTitle returning fallback).
+ * In practice, structured data is always available from AI generation.
  */
 export function extractServings(content: string): number {
   const DEFAULT_SERVINGS = 4;
   if (!content) return DEFAULT_SERVINGS;
   
-  // Case-insensitive match with flexible spacing
+  // Extract servings from markdown metadata line
   const match = content.match(/[-*]\s*Servings?\s*:\s*(\d+)/i);
-  if (!match || !match[1]) return DEFAULT_SERVINGS;
+  const servings = match?.[1] ? parseInt(match[1], 10) : DEFAULT_SERVINGS;
   
-  const servings = parseInt(match[1], 10);
-  // Validate reasonable serving size range
+  // Validate reasonable range
   return servings > 0 && servings <= RECIPE.MAX_SERVINGS ? servings : DEFAULT_SERVINGS;
 }

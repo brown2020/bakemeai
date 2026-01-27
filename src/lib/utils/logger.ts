@@ -8,13 +8,10 @@ interface LogContext {
 }
 
 /**
- * Determines if console logging should be enabled.
- * Always enabled in development, configurable in production via env var.
+ * Environment flags computed once at module load.
  */
-const shouldLog = (): boolean => {
-  if (process.env.NODE_ENV === "development") return true;
-  return process.env.NEXT_PUBLIC_ENABLE_CONSOLE_LOGS === "true";
-};
+const IS_DEVELOPMENT = process.env.NODE_ENV === "development";
+const IS_LOGGING_ENABLED = IS_DEVELOPMENT || process.env.NEXT_PUBLIC_ENABLE_CONSOLE_LOGS === "true";
 
 /**
  * Formats an error for logging.
@@ -43,9 +40,9 @@ export function logError(
   error?: unknown,
   context?: LogContext
 ): void {
-  if (!shouldLog()) return;
+  if (!IS_LOGGING_ENABLED) return;
 
-  if (process.env.NODE_ENV === "development") {
+  if (IS_DEVELOPMENT) {
     console.error(message, error, context);
   } else {
     console.error(
@@ -67,9 +64,9 @@ export function logError(
  * @param context - Additional context for debugging
  */
 export function logWarning(message: string, context?: LogContext): void {
-  if (!shouldLog()) return;
+  if (!IS_LOGGING_ENABLED) return;
 
-  if (process.env.NODE_ENV === "development") {
+  if (IS_DEVELOPMENT) {
     console.warn(message, context);
   } else {
     console.warn(
@@ -89,9 +86,9 @@ export function logWarning(message: string, context?: LogContext): void {
  * @param context - Additional context for debugging
  */
 export function logInfo(message: string, context?: LogContext): void {
-  if (!shouldLog()) return;
+  if (!IS_LOGGING_ENABLED) return;
 
-  if (process.env.NODE_ENV === "development") {
+  if (IS_DEVELOPMENT) {
     console.info(message, context);
   } else {
     console.info(
