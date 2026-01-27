@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Dispatch, SetStateAction } from "react";
 import { logError } from "@/lib/utils/logger";
 
 interface UseFirestoreQueryOptions<T> {
@@ -23,8 +23,8 @@ interface UseFirestoreQueryReturn<T> {
   error: string | null;
   /** Function to manually refetch data */
   refetch: () => Promise<void>;
-  /** Function to set data directly (useful for optimistic updates) */
-  setData: (data: T | null) => void;
+  /** Function to set data directly (useful for optimistic updates) - supports functional updates */
+  setData: Dispatch<SetStateAction<T | null>>;
 }
 
 /**

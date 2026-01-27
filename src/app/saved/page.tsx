@@ -29,6 +29,7 @@ export default function SavedRecipes() {
     loading,
     error: loadError,
     setData: setRecipes,
+    refetch,
   } = useFirestoreQuery({
     queryFn: getUserRecipes,
     userId: user?.uid,
@@ -53,26 +54,36 @@ export default function SavedRecipes() {
   }, []);
 
   const handleDeleteConfirm = useCallback(async (): Promise<void> => {
-    if (!recipeToDelete || !recipes) return;
+    if (!recipeToDelete) return;
 
     const recipeId = recipeToDelete.id;
     setDeleteError(null);
 
-    // Optimistic update: remove recipe from local state immediately
-    const updatedRecipes = recipes.filter((r) => r.id !== recipeId);
-    setRecipes(updatedRecipes);
-    setSelectedRecipe((prev) => (prev?.id === recipeId ? null : prev));
+    // Close dialog first
     setRecipeToDelete(null);
+
+    // Optimistic update: remove recipe from local state immediately
+    // IMPORTANT: Use functional setState to avoid stale closure over recipes array.
+    // This ensures the UI updates immediately when user deletes a recipe.
+    setRecipes((currentRecipes) => {
+      if (!currentRecipes) return currentRecipes;
+      const updatedRecipes = currentRecipes.filter((r) => r.id !== recipeId);
+      
+      // Clear selected recipe if it was the one being deleted
+      setSelectedRecipe((prev) => (prev?.id === recipeId ? null : prev));
+      
+      return updatedRecipes;
+    });
 
     try {
       await deleteRecipe(recipeId);
     } catch (error) {
       logError("Error deleting recipe", error, { recipeId });
       setDeleteError("Failed to delete recipe. Please try again.");
-      // Revert optimistic update on error
-      setRecipes(recipes);
+      // On error, refetch from server to restore actual state
+      await refetch();
     }
-  }, [recipeToDelete, recipes, setRecipes]);
+  }, [recipeToDelete, setRecipes, refetch]);
 
   if (!user) {
     return (
