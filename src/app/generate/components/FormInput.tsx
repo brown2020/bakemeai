@@ -1,5 +1,7 @@
 import { Input, Textarea } from "@/components/ui";
 import { FormInputProps } from "../types";
+import { FORM_VALIDATION } from "@/lib/constants/ui";
+import type { ReactElement } from "react";
 
 export function FormInput({
   label,
@@ -7,12 +9,17 @@ export function FormInput({
   value,
   onChange,
   isTextArea = false,
-}: FormInputProps) {
-  const minLength = isTextArea ? 3 : 3;
-  const maxLength = isTextArea ? 1000 : 500;
+}: FormInputProps): ReactElement {
+  const minLength = isTextArea
+    ? FORM_VALIDATION.TEXTAREA_MIN_LENGTH
+    : FORM_VALIDATION.INPUT_MIN_LENGTH;
+  const maxLength = isTextArea
+    ? FORM_VALIDATION.TEXTAREA_MAX_LENGTH
+    : FORM_VALIDATION.INPUT_MAX_LENGTH;
   const showCharCount = value.length > 0;
   const isValid = value.length >= minLength && value.length <= maxLength;
-  const isApproachingLimit = value.length > maxLength * 0.8;
+  const isApproachingLimit =
+    value.length > maxLength * FORM_VALIDATION.CHAR_LIMIT_WARNING_THRESHOLD;
 
   if (isTextArea) {
     return (

@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { PRIVATE_ROUTES, AUTH_COOKIE_CONFIG } from "@/lib/constants";
-import {
-  FIREBASE_AUTH_COOKIE,
-  LEGACY_FIREBASE_AUTH_COOKIE,
-} from "@/lib/auth-constants";
+import { FIREBASE_AUTH_COOKIE } from "@/lib/auth-constants";
+import { deleteAuthCookies } from "@/lib/utils/cookies";
 
 /**
  * Checks if a given path is a private route.
@@ -13,6 +11,12 @@ function isPrivateRoute(path: string): boolean {
   return PRIVATE_ROUTES.some((route) => path.startsWith(route));
 }
 
+/**
+ * Decodes a base64url-encoded string to UTF-8.
+ * Handles both Edge runtime (atob) and Node runtime (Buffer).
+ * @param input - The base64url-encoded string
+ * @returns The decoded UTF-8 string
+ */
 function base64UrlToUtf8(input: string): string {
   const base64 = input.replace(/-/g, "+").replace(/_/g, "/");
   const padded = base64.padEnd(
@@ -34,6 +38,12 @@ function base64UrlToUtf8(input: string): string {
   throw new Error("No base64 decoder available");
 }
 
+/**
+ * Validates that a JWT token has not expired.
+ * Includes a small leeway for clock skew.
+ * @param token - The JWT token to validate
+ * @returns True if the token is valid and not expired
+ */
 function isUnexpiredJwt(token: string): boolean {
   // Firebase ID token is a JWT. We do a lightweight expiry check here.
   // (Signature verification would require Admin SDK and is out of scope for this app's current model.)
@@ -51,6 +61,11 @@ function isUnexpiredJwt(token: string): boolean {
   }
 }
 
+/**
+ * Attempts to extract and parse the payload from a JWT token.
+ * @param token - The JWT token
+ * @returns The parsed payload or null if invalid
+ */
 function tryGetJwtPayload(
   token: string
 ): { exp?: number; sub?: string; user_id?: string } | null {
@@ -67,6 +82,13 @@ function tryGetJwtPayload(
   }
 }
 
+/**
+ * Adds debug headers to the response in development mode.
+ * Helps with debugging authentication and routing issues.
+ * @param response - The NextResponse object
+ * @param opts - Debug information to include in headers
+ * @returns The response with debug headers added
+ */
 function withDebugHeaders(
   response: NextResponse,
   opts: {
@@ -76,7 +98,7 @@ function withDebugHeaders(
     userId?: string | null;
     isAuthPage?: boolean;
   }
-) {
+): NextResponse {
   if (process.env.NODE_ENV === "production") return response;
   response.headers.set("x-bakeme-path", opts.path);
   response.headers.set(
@@ -136,8 +158,7 @@ export async function proxy(request: NextRequest) {
     // Auth page + cookie present but invalid => clear it and allow staying on auth page
     if (isAuthPage && cookiePresent && !jwtValid) {
       const response = NextResponse.next();
-      response.cookies.delete(FIREBASE_AUTH_COOKIE);
-      response.cookies.delete(LEGACY_FIREBASE_AUTH_COOKIE);
+      deleteAuthCookies(response);
       return withDebugHeaders(response, {
         path: pathname,
         cookiePresent,
@@ -154,8 +175,7 @@ export async function proxy(request: NextRequest) {
       url.searchParams.set("redirect", pathname);
 
       const response = NextResponse.redirect(url);
-      response.cookies.delete(FIREBASE_AUTH_COOKIE);
-      response.cookies.delete(LEGACY_FIREBASE_AUTH_COOKIE);
+      deleteAuthCookies(response);
 
       return withDebugHeaders(response, {
         path: pathname,
@@ -173,8 +193,7 @@ export async function proxy(request: NextRequest) {
       url.searchParams.set("redirect", pathname);
 
       const response = NextResponse.redirect(url);
-      response.cookies.delete(FIREBASE_AUTH_COOKIE);
-      response.cookies.delete(LEGACY_FIREBASE_AUTH_COOKIE);
+      deleteAuthCookies(response);
 
       return withDebugHeaders(response, {
         path: pathname,
@@ -210,8 +229,7 @@ export async function proxy(request: NextRequest) {
     url.pathname = "/login";
     url.searchParams.set("redirect", pathname);
     const response = NextResponse.redirect(url);
-    response.cookies.delete(FIREBASE_AUTH_COOKIE);
-    response.cookies.delete(LEGACY_FIREBASE_AUTH_COOKIE);
+    deleteAuthCookies(response);
     return response;
   }
 }

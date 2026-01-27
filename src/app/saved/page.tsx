@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { useEffect, useState, useMemo } from "react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { getUserRecipes, deleteRecipe } from "@/lib/db";
@@ -7,7 +8,7 @@ import { Recipe } from "@/lib/types";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { Trash2 } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
-import { Input, CardSkeleton, ErrorMessage } from "@/components/ui";
+import { Input, CardSkeleton, ErrorMessage, ConfirmDialog } from "@/components/ui";
 import { logError } from "@/lib/utils/logger";
 
 export default function SavedRecipes() {
@@ -18,6 +19,7 @@ export default function SavedRecipes() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [recipeToDelete, setRecipeToDelete] = useState<Recipe | null>(null);
 
   useEffect(() => {
     async function loadRecipes() {
@@ -38,7 +40,7 @@ export default function SavedRecipes() {
   }, [user]);
 
   // Memoize filtered recipes for performance
-  const filteredRecipes = useMemo(() => {
+  const filteredRecipes = useMemo((): Recipe[] => {
     const searchLower = searchTerm.toLowerCase();
     return recipes.filter(
       (recipe) =>
@@ -49,14 +51,20 @@ export default function SavedRecipes() {
     );
   }, [recipes, searchTerm]);
 
-  const handleDelete = async (recipeId: string) => {
-    if (!confirm("Are you sure you want to delete this recipe?")) return;
+  const handleDeleteClick = (recipe: Recipe): void => {
+    setRecipeToDelete(recipe);
+  };
 
+  const handleDeleteConfirm = async (): Promise<void> => {
+    if (!recipeToDelete) return;
+
+    const recipeId = recipeToDelete.id;
     setDeleteError(null);
     try {
       await deleteRecipe(recipeId);
       setRecipes((prev) => prev.filter((r) => r.id !== recipeId));
       setSelectedRecipe((prev) => (prev?.id === recipeId ? null : prev));
+      setRecipeToDelete(null);
     } catch (error) {
       logError("Error deleting recipe", error, { recipeId });
       setDeleteError("Failed to delete recipe. Please try again.");
@@ -125,7 +133,7 @@ export default function SavedRecipes() {
                   recipe={recipe}
                   isSelected={selectedRecipe?.id === recipe.id}
                   onSelect={() => setSelectedRecipe(recipe)}
-                  onDelete={() => handleDelete(recipe.id)}
+                  onDelete={() => handleDeleteClick(recipe)}
                 />
               ))
             )}
@@ -148,6 +156,17 @@ export default function SavedRecipes() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={recipeToDelete !== null}
+        onClose={() => setRecipeToDelete(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Recipe"
+        message={`Are you sure you want to delete "${recipeToDelete?.title}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+      />
     </PageLayout>
   );
 }
@@ -164,7 +183,7 @@ function RecipeCard({
   isSelected,
   onSelect,
   onDelete,
-}: RecipeCardProps) {
+}: RecipeCardProps): ReactElement {
   return (
     <div
       className={`p-3 sm:p-4 rounded-lg border cursor-pointer transition-colors ${

@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { RecipeDisplayProps } from "../types";
 import { Button } from "@/components/Button";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
@@ -10,7 +11,7 @@ export function RecipeDisplay({
   saved,
   isGenerating,
   saveError,
-}: RecipeDisplayProps) {
+}: RecipeDisplayProps): ReactElement {
   return (
     <div className={CARD_STYLES.container}>
       {parsedRecipe.title && (

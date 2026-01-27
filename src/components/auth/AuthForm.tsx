@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { useState } from "react";
 import {
   signInWithEmailAndPassword,
@@ -17,6 +18,7 @@ import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { Input, ErrorMessage } from "@/components/ui";
 import { Button } from "@/components/Button";
 import { setAuthCookieToken } from "@/lib/auth-cookie";
+import { getSafeRedirectPath } from "@/lib/utils/navigation";
 
 type AuthMode = "login" | "signup";
 
@@ -25,15 +27,11 @@ interface AuthFormProps {
   redirectTo?: string;
 }
 
-function isSafeRedirectPath(path: string): boolean {
-  return path.startsWith("/") && !path.startsWith("//");
-}
-
 /**
  * Shared authentication form for login and signup pages.
  * Reduces code duplication while maintaining flexibility.
  */
-export function AuthForm({ mode, redirectTo }: AuthFormProps) {
+export function AuthForm({ mode, redirectTo }: AuthFormProps): ReactElement {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -42,8 +40,7 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
-  const safeRedirectTo =
-    redirectTo && isSafeRedirectPath(redirectTo) ? redirectTo : "/";
+  const safeRedirectTo = getSafeRedirectPath(redirectTo);
 
   const { signInWithGoogle, error: googleError } = useGoogleAuth(safeRedirectTo);
 

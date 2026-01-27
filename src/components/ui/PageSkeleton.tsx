@@ -1,3 +1,5 @@
+import type { ReactElement } from "react";
+
 interface PageSkeletonProps {
   /** Number of skeleton rows to show */
   rows?: number;
@@ -14,7 +16,7 @@ export function PageSkeleton({
   rows = 3,
   showTitle = true,
   className = "",
-}: PageSkeletonProps) {
+}: PageSkeletonProps): ReactElement {
   return (
     <div className={`animate-pulse space-y-6 ${className}`}>
       {showTitle && <div className="h-8 bg-gray-200 rounded-lg w-1/3" />}
@@ -31,7 +33,7 @@ export function PageSkeleton({
 /**
  * Card-style skeleton for list items.
  */
-export function CardSkeleton({ count = 3 }: { count?: number }) {
+export function CardSkeleton({ count = 3 }: { count?: number }): ReactElement {
   return (
     <div className="space-y-4">
       {Array.from({ length: count }).map((_, i) => (

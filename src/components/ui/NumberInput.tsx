@@ -1,5 +1,8 @@
 "use client";
 
+import type { ReactElement } from "react";
+import { NUMBER_INPUT } from "@/lib/constants/ui";
+
 interface NumberInputProps {
   label: string;
   value: number;
@@ -16,10 +19,10 @@ export function NumberInput({
   label,
   value,
   onChange,
-  min = 1,
-  max = 100,
+  min = NUMBER_INPUT.DEFAULT_MIN,
+  max = NUMBER_INPUT.DEFAULT_MAX,
   className = "w-32",
-}: NumberInputProps) {
+}: NumberInputProps): ReactElement {
   return (
     <div>
       <label className="block text-base sm:text-lg font-medium mb-3">

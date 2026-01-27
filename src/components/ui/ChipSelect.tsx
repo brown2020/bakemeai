@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactElement } from "react";
+
 interface ChipSelectProps {
   label: string;
   options: string[];
@@ -18,7 +20,7 @@ export function ChipSelect({
   selected,
   onChange,
   variant = "pill",
-}: ChipSelectProps) {
+}: ChipSelectProps): ReactElement {
   const baseClasses = "px-3 py-1.5 text-sm transition-colors";
   const variantClasses = variant === "pill" ? "rounded-full" : "rounded-lg";
 

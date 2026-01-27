@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { RecipeFormProps } from "../types";
 import { Button } from "@/components/Button";
 import { FormInput } from "./FormInput";
@@ -12,7 +13,7 @@ export function RecipeForm({
   onInputChange,
   ingredients,
   onIngredientsChange,
-}: RecipeFormProps) {
+}: RecipeFormProps): ReactElement {
   return (
     <div className="space-y-4">
       <Button

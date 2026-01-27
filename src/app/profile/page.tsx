@@ -17,6 +17,7 @@ import {
   EXPERIENCE_LEVELS,
   CookingExperience,
 } from "@/lib/constants";
+import { UI_TIMING, NUMBER_INPUT } from "@/lib/constants/ui";
 import PageLayout from "@/components/PageLayout";
 import { Button } from "@/components/Button";
 import { logError } from "@/lib/utils/logger";
@@ -33,7 +34,7 @@ export default function Profile() {
     allergies: [],
     dislikedIngredients: [],
     cookingExperience: "beginner",
-    servingSize: 2,
+    servingSize: NUMBER_INPUT.SERVING_SIZE_DEFAULT,
     preferredCuisines: [],
   });
 
@@ -73,7 +74,7 @@ export default function Profile() {
     try {
       await saveUserProfile(user.uid, profile);
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000); // Clear success message after 3s
+      setTimeout(() => setSaveSuccess(false), UI_TIMING.SUCCESS_MESSAGE_DURATION);
     } catch (error) {
       logError("Error saving user profile", error, { userId: user?.uid });
       setSaveError("Failed to save preferences. Please try again.");
@@ -177,12 +178,12 @@ export default function Profile() {
 
           <NumberInput
             label="Default Serving Size"
-            value={profile.servingSize || 2}
+            value={profile.servingSize || NUMBER_INPUT.SERVING_SIZE_DEFAULT}
             onChange={(servingSize) =>
               setProfile((prev) => ({ ...prev, servingSize }))
             }
-            min={1}
-            max={12}
+            min={NUMBER_INPUT.SERVING_SIZE_MIN}
+            max={NUMBER_INPUT.SERVING_SIZE_MAX}
           />
 
           <Button type="submit" isLoading={saving} className="w-full">

@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactElement } from "react";
+
 interface GoogleSignInButtonProps {
   onClick: () => void;
   label?: string;
@@ -11,7 +13,7 @@ interface GoogleSignInButtonProps {
 export function GoogleSignInButton({
   onClick,
   label = "Sign in with Google",
-}: GoogleSignInButtonProps) {
+}: GoogleSignInButtonProps): ReactElement {
   return (
     <button
       type="button"
@@ -24,7 +26,7 @@ export function GoogleSignInButton({
   );
 }
 
-function GoogleIcon() {
+function GoogleIcon(): ReactElement {
   return (
     <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
       <path

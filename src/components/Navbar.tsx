@@ -87,6 +87,7 @@ export default function Navbar() {
                     className="flex items-center p-1 sm:p-2 rounded-full hover:bg-gray-100 transition-colors"
                     aria-expanded={isProfileOpen}
                     aria-haspopup="true"
+                    aria-label="User menu"
                   >
                     <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
                       <span className="text-blue-600 font-medium">

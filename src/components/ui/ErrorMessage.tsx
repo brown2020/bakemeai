@@ -1,3 +1,5 @@
+import type { ReactElement } from "react";
+
 interface ErrorMessageProps {
   message: string;
   className?: string;
@@ -6,7 +8,7 @@ interface ErrorMessageProps {
 /**
  * Shared error message component with consistent styling.
  */
-export function ErrorMessage({ message, className = "" }: ErrorMessageProps) {
+export function ErrorMessage({ message, className = "" }: ErrorMessageProps): ReactElement | null {
   if (!message) return null;
 
   return (

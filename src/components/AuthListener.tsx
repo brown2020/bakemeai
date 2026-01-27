@@ -6,7 +6,7 @@ import { auth } from "@/lib/firebase";
 import { clearAuthCookie, setAuthCookieToken } from "@/lib/auth-cookie";
 import { useAuthStore } from "@/lib/store/auth-store";
 
-export function AuthListener() {
+export function AuthListener(): null {
   const { setUser, setLoading } = useAuthStore();
 
   useEffect(() => {

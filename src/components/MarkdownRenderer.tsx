@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import ReactMarkdown from "react-markdown";
 
 interface MarkdownRendererProps {
@@ -12,7 +13,7 @@ interface MarkdownRendererProps {
 export function MarkdownRenderer({
   content,
   className = "prose prose-sm sm:prose-base max-w-none",
-}: MarkdownRendererProps) {
+}: MarkdownRendererProps): ReactElement {
   return (
     <div className={className}>
       <ReactMarkdown components={markdownComponents}>{content}</ReactMarkdown>

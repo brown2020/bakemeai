@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import Link from "next/link";
 import { Button } from "@/components/Button";
 import { useAuthStore } from "@/lib/store/auth-store";
@@ -8,7 +9,7 @@ import { useAuthStore } from "@/lib/store/auth-store";
  * Client component for auth-aware hero CTA buttons.
  * Keeps the home page mostly server-rendered while handling auth state.
  */
-export function HeroCTA() {
+export function HeroCTA(): ReactElement {
   const { user, loading } = useAuthStore();
 
   // Show placeholder during hydration to prevent layout shift

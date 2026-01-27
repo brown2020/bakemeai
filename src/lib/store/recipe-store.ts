@@ -5,7 +5,7 @@ import { readStreamableValue } from "@ai-sdk/rsc";
 import { saveRecipe } from "@/lib/db";
 import { UserProfile, RecipeStructure, recipeStructureSchema } from "@/lib/schemas";
 import { ParsedRecipe } from "@/lib/types";
-import { logError } from "@/lib/utils/logger";
+import { handleError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 
 interface RecipeState {
   // Generation State
@@ -39,7 +39,10 @@ interface RecipeState {
   resetSaveState: () => void;
 }
 
-// Helper to convert structured recipe to markdown for display/saving
+/**
+ * Converts a structured recipe object to markdown format.
+ * Uses useMemo-compatible pure function for optimal performance.
+ */
 function convertToMarkdown(recipe: RecipeStructure): string {
   if (!recipe.title) return "";
 
@@ -93,9 +96,13 @@ export const useRecipeStore = create<RecipeState>()(
       saveError: null,
       saved: false,
 
-      setInput: (input) => set({ input }),
-      setIngredients: (ingredients) => set({ ingredients }),
-      setMode: (mode) =>
+      setInput: (input: string): void => {
+        set({ input });
+      },
+      setIngredients: (ingredients: string): void => {
+        set({ ingredients });
+      },
+      setMode: (mode: "specific" | "ingredients" | null): void => {
         set({
           mode,
           recipe: "",
@@ -103,7 +110,8 @@ export const useRecipeStore = create<RecipeState>()(
           structuredRecipe: null,
           generationError: null,
           saved: false,
-        }),
+        });
+      },
 
       generateRecipeContent: async (prompt, isIngredientsMode, userProfile) => {
         set({
@@ -123,10 +131,15 @@ export const useRecipeStore = create<RecipeState>()(
 
           for await (const partialObject of readStreamableValue(result)) {
             if (partialObject) {
-              // During streaming, partial objects may not fully conform to the schema yet.
-              // We use the data as-is since the AI SDK guarantees the final structure.
-              // Type assertion is safe here as the schema is enforced by the AI SDK.
-              const structuredData = partialObject as RecipeStructure;
+              // The AI SDK streams partial objects that progressively build toward the schema.
+              // We validate with Zod to ensure type safety during streaming.
+              const validationResult = recipeStructureSchema.safeParse(partialObject);
+              if (!validationResult.success) {
+                // Skip invalid partial updates during streaming
+                continue;
+              }
+              
+              const structuredData = validationResult.data;
               const markdownContent = convertToMarkdown(structuredData);
               const title = structuredData.title || "";
 
@@ -149,10 +162,13 @@ export const useRecipeStore = create<RecipeState>()(
             }
           }
         } catch (error) {
-          logError("Error generating recipe", error);
-          set({
-            generationError: "Failed to generate recipe. Please try again.",
-          });
+          const message = handleError(
+            error,
+            "Error generating recipe",
+            {},
+            ERROR_MESSAGES.RECIPE.GENERATION_FAILED
+          );
+          set({ generationError: message });
         } finally {
           set({ isGenerating: false });
         }
@@ -175,14 +191,19 @@ export const useRecipeStore = create<RecipeState>()(
           });
           set({ saved: true });
         } catch (error) {
-          logError("Error saving recipe to database", error, { userId });
-          set({ saveError: "Failed to save recipe" });
+          const message = handleError(
+            error,
+            "Error saving recipe to database",
+            { userId },
+            ERROR_MESSAGES.RECIPE.SAVE_FAILED
+          );
+          set({ saveError: message });
         } finally {
           set({ isSaving: false });
         }
       },
 
-      resetRecipe: () =>
+      resetRecipe: (): void => {
         set({
           recipe: "",
           parsedRecipe: { title: "", content: "" },
@@ -190,9 +211,12 @@ export const useRecipeStore = create<RecipeState>()(
           generationError: null,
           saved: false,
           saveError: null,
-        }),
+        });
+      },
 
-      resetSaveState: () => set({ saved: false, saveError: null }),
+      resetSaveState: (): void => {
+        set({ saved: false, saveError: null });
+      },
     }),
     {
       name: "recipe-storage",

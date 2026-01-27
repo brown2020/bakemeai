@@ -15,7 +15,7 @@ export const useUserProfileStore = create<UserProfileState>((set) => ({
   userProfile: null,
   isLoading: false,
   error: null,
-  fetchUserProfile: async (userId: string) => {
+  fetchUserProfile: async (userId: string): Promise<void> => {
     set({ isLoading: true, error: null });
     try {
       const profile = await getUserProfile(userId);
@@ -39,7 +39,8 @@ export const useUserProfileStore = create<UserProfileState>((set) => ({
       set({ isLoading: false });
     }
   },
-  clearUserProfile: () =>
-    set({ userProfile: null, error: null, isLoading: false }),
+  clearUserProfile: (): void => {
+    set({ userProfile: null, error: null, isLoading: false });
+  },
 }));
 

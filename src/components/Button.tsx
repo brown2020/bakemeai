@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { ButtonHTMLAttributes } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
@@ -38,7 +39,7 @@ export function Button({
   isLoading,
   children,
   ...props
-}: ButtonProps) {
+}: ButtonProps): ReactElement {
   return (
     <button
       className={buttonVariants({ variant, size, className })}

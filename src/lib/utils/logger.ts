@@ -3,8 +3,6 @@
  * In production, this can be extended to integrate with error reporting services.
  */
 
-type LogLevel = "error" | "warn" | "info";
-
 interface LogContext {
   [key: string]: unknown;
 }

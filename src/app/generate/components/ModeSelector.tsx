@@ -1,7 +1,8 @@
+import type { ReactElement } from "react";
 import { ModeSelectorProps, ModeCardProps } from "../types";
 import { CARD_STYLES } from "../constants";
 
-const ModeCard = ({ title, description, onClick }: ModeCardProps) => (
+const ModeCard = ({ title, description, onClick }: ModeCardProps): ReactElement => (
   <div
     className={`${CARD_STYLES.container} ${CARD_STYLES.hoverEffect}`}
     onClick={onClick}
@@ -11,7 +12,7 @@ const ModeCard = ({ title, description, onClick }: ModeCardProps) => (
   </div>
 );
 
-export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
+export function ModeSelector({ onSelectMode }: ModeSelectorProps): ReactElement {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <ModeCard

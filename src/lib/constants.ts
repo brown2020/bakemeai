@@ -3,6 +3,9 @@
  * Keeps all configuration in one place for easier maintenance.
  */
 
+// Re-export UI constants for convenience
+export * from "./constants/ui";
+
 // Firestore collection names
 export const COLLECTIONS = {
   RECIPES: "recipes",

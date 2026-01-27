@@ -22,7 +22,6 @@ import {
 } from "./schemas";
 import { COLLECTIONS } from "./constants";
 import { z } from "zod";
-import { logError } from "./utils/logger";
 import {
   extractTitle,
   extractIngredients,
@@ -30,6 +29,7 @@ import {
   extractServings,
 } from "./utils/markdown";
 import { serializeFirestoreDoc } from "./utils/firestore";
+import { handleError, ERROR_MESSAGES } from "./utils/error-handler";
 
 interface SaveRecipeParams {
   userId: string;
@@ -74,8 +74,13 @@ export async function saveRecipe({
     const docRef = await addDoc(collection(db, COLLECTIONS.RECIPES), recipe);
     return { id: docRef.id, ...recipe };
   } catch (error) {
-    logError("Failed to save recipe to Firestore", error, { userId });
-    throw new Error("Unable to save recipe. Please try again.");
+    const message = handleError(
+      error,
+      "Failed to save recipe to Firestore",
+      { userId },
+      ERROR_MESSAGES.RECIPE.SAVE_FAILED
+    );
+    throw new Error(message);
   }
 }
 
@@ -96,8 +101,13 @@ export async function getUserRecipes(userId: string): Promise<Recipe[]> {
     // Validate data with Zod schema
     return z.array(recipeSchema).parse(rawRecipes);
   } catch (error) {
-    logError("Failed to fetch user recipes from Firestore", error, { userId });
-    throw new Error("Unable to load recipes. Please try again.");
+    const message = handleError(
+      error,
+      "Failed to fetch user recipes from Firestore",
+      { userId },
+      ERROR_MESSAGES.RECIPE.LOAD_FAILED
+    );
+    throw new Error(message);
   }
 }
 
@@ -105,8 +115,13 @@ export async function deleteRecipe(recipeId: string): Promise<void> {
   try {
     await deleteDoc(doc(db, COLLECTIONS.RECIPES, recipeId));
   } catch (error) {
-    logError("Failed to delete recipe from Firestore", error, { recipeId });
-    throw new Error("Unable to delete recipe. Please try again.");
+    const message = handleError(
+      error,
+      "Failed to delete recipe from Firestore",
+      { recipeId },
+      ERROR_MESSAGES.RECIPE.DELETE_FAILED
+    );
+    throw new Error(message);
   }
 }
 
@@ -123,8 +138,13 @@ export async function saveUserProfile(
     await setDoc(doc(db, COLLECTIONS.USER_PROFILES, userId), profileData);
     return { id: userId, ...profile };
   } catch (error) {
-    logError("Failed to save user profile to Firestore", error, { userId });
-    throw new Error("Unable to save profile. Please try again.");
+    const message = handleError(
+      error,
+      "Failed to save user profile to Firestore",
+      { userId },
+      ERROR_MESSAGES.PROFILE.SAVE_FAILED
+    );
+    throw new Error(message);
   }
 }
 
@@ -146,7 +166,12 @@ export async function getUserProfile(
     }
     return null;
   } catch (error) {
-    logError("Failed to fetch user profile from Firestore", error, { userId });
-    throw new Error("Unable to load profile. Please try again.");
+    const message = handleError(
+      error,
+      "Failed to fetch user profile from Firestore",
+      { userId },
+      ERROR_MESSAGES.PROFILE.LOAD_FAILED
+    );
+    throw new Error(message);
   }
 }

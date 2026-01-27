@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactElement } from "react";
+
 interface TagInputProps {
   label: string;
   value: string[];
@@ -16,8 +18,8 @@ export function TagInput({
   value,
   onChange,
   placeholder = "Enter values separated by commas",
-}: TagInputProps) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+}: TagInputProps): ReactElement {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const newValue = e.target.value
       .split(",")
       .map((item) => item.trim())
