@@ -30,6 +30,7 @@ import {
 } from "./utils/markdown";
 import { serializeFirestoreDoc } from "./utils/firestore";
 import { handleError, ERROR_MESSAGES } from "./utils/error-handler";
+import { sanitizeUserInput } from "./utils/sanitize";
 
 interface SaveRecipeParams {
   userId: string;
@@ -161,12 +162,15 @@ export async function saveUserProfile(
   profile: UserProfileInput
 ): Promise<UserProfile> {
   try {
-    const profileData = {
+    // Sanitize user-input arrays to prevent HTML injection in stored data
+    const sanitizedProfile = {
       ...profile,
+      allergies: profile.allergies.map(sanitizeUserInput),
+      dislikedIngredients: profile.dislikedIngredients.map(sanitizeUserInput),
       updatedAt: serverTimestamp(),
     };
 
-    await setDoc(doc(db, COLLECTIONS.USER_PROFILES, userId), profileData);
+    await setDoc(doc(db, COLLECTIONS.USER_PROFILES, userId), sanitizedProfile);
     return { id: userId, ...profile };
   } catch (error) {
     const message = handleError(

@@ -50,40 +50,76 @@ export function convertToMarkdown(recipe: RecipeStructure): string {
 /**
  * Extracts the title from markdown content.
  * Fallback function used when structured data is unavailable.
+ * Handles multiple heading formats and edge cases.
  */
 export function extractTitle(content: string): string {
-  const match = content.match(/^# (.*)$/m);
-  return match ? match[1].trim() : "New Recipe";
+  if (!content) return "New Recipe";
+  
+  // Try H1 markdown syntax first (# Title)
+  const h1Match = content.match(/^#\s+(.+?)$/m);
+  if (h1Match && h1Match[1]) {
+    return h1Match[1].trim();
+  }
+  
+  // Fallback: try to find any heading-like text at the start
+  const firstLine = content.split("\n")[0]?.trim();
+  if (firstLine && firstLine.length > 0 && firstLine.length < 100) {
+    return firstLine.replace(/^#+\s*/, "").trim() || "New Recipe";
+  }
+  
+  return "New Recipe";
 }
 
 /**
  * Extracts ingredients list from markdown content.
  * Fallback function used when structured data is unavailable.
+ * Handles variations in heading format (##, ##Ingredients, ## Ingredients, etc.)
  */
 export function extractIngredients(content: string): string[] {
-  const match = content.match(/## Ingredients\n([\s\S]*?)(?=##|$)/);
-  if (!match) return [];
+  if (!content) return [];
   
-  return match[1]
+  // More flexible regex: matches "Ingredients" heading with varying spacing/casing
+  const match = content.match(/##\s*Ingredients\s*\n([\s\S]*?)(?=\n##|\n#|$)/i);
+  if (!match || !match[1]) return [];
+  
+  // Extract list items, supporting both "- " and "* " markdown list syntax
+  const ingredients = match[1]
     .split("\n")
-    .filter((line) => line.trim().startsWith("-"))
-    .map((line) => line.trim().replace(/^- /, ""));
+    .map(line => line.trim())
+    .filter((line) => line.startsWith("-") || line.startsWith("*"))
+    .map((line) => line.replace(/^[-*]\s*/, "").trim())
+    .filter(item => item.length > 0);
+  
+  return ingredients;
 }
 
 /**
  * Extracts a specific field value from markdown content.
  * Fallback function used when structured data is unavailable.
+ * Uses case-insensitive matching and handles variations in spacing.
  */
 export function extractField(content: string, fieldName: string): string {
-  const match = content.match(new RegExp(`- ${fieldName}: (.*)`));
-  return match?.[1] || "";
+  if (!content || !fieldName) return "";
+  
+  // Escape special regex characters in fieldName and use case-insensitive matching
+  const escapedFieldName = fieldName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = content.match(new RegExp(`[-*]\\s*${escapedFieldName}\\s*:\\s*(.+?)$`, "im"));
+  return match?.[1]?.trim() || "";
 }
 
 /**
  * Extracts the servings number from markdown content.
  * Fallback function used when structured data is unavailable.
+ * Uses robust parsing with validation and default fallback.
  */
 export function extractServings(content: string): number {
-  const match = content.match(/- Servings: (\d+)/);
-  return match ? parseInt(match[1], 10) : 0;
+  if (!content) return 0;
+  
+  // Case-insensitive match with flexible spacing
+  const match = content.match(/[-*]\s*Servings?\s*:\s*(\d+)/i);
+  if (!match || !match[1]) return 0;
+  
+  const servings = parseInt(match[1], 10);
+  // Validate reasonable serving size range (1-100)
+  return servings > 0 && servings <= 100 ? servings : 0;
 }

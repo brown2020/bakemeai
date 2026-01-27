@@ -17,10 +17,14 @@ export function AuthListener(): null {
 
   useEffect(() => {
     let authEventId = 0;
+    let isMounted = true;
 
     // Track token lifecycle (sign-in, refresh, sign-out) so `firebaseAuth` doesn't go stale.
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
       const currentEventId = ++authEventId;
+
+      // Early return if component unmounted during async operation
+      if (!isMounted) return;
 
       setUser(user);
 
@@ -35,12 +39,18 @@ export function AuthListener(): null {
       // If a newer auth event happened (e.g. sign-out) or the user changed, do nothing.
       if (currentEventId !== authEventId) return;
       if (auth.currentUser?.uid !== uid) return;
+      if (!isMounted) return;
 
       await setUserAuthToken(user);
-      setLoading(false);
+      if (isMounted) {
+        setLoading(false);
+      }
     });
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, [setUser, setLoading]);
 
   return null;

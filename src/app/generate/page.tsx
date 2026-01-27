@@ -23,6 +23,9 @@ import {
 } from "@/lib/schemas";
 import { useDebounce, AI_GENERATION_DEBOUNCE_MS } from "@/hooks/useDebounce";
 
+// Rate limiting: Minimum time between recipe generation submissions (milliseconds)
+const MIN_SUBMISSION_INTERVAL_MS = AI_GENERATION_DEBOUNCE_MS;
+
 // Main component
 export default function GeneratePage() {
   return (
@@ -87,7 +90,7 @@ function GenerateContent() {
       
       // Rate limiting: prevent rapid consecutive submissions
       const now = Date.now();
-      if (now - lastSubmitTimeRef.current < AI_GENERATION_DEBOUNCE_MS) {
+      if (now - lastSubmitTimeRef.current < MIN_SUBMISSION_INTERVAL_MS) {
         setValidationError("Please wait a moment before generating another recipe.");
         return;
       }

@@ -1,6 +1,7 @@
 "use client";
 
 import { InputHTMLAttributes, TextareaHTMLAttributes, forwardRef } from "react";
+import clsx from "clsx";
 
 type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   label?: string;
@@ -32,9 +33,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           id={inputId}
-          className={`${inputBaseClasses} ${
-            error ? "border-red-500" : ""
-          } ${className}`}
+          className={clsx(inputBaseClasses, error && "border-red-500", className)}
           {...props}
         />
         {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
@@ -62,9 +61,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         <textarea
           ref={ref}
           id={inputId}
-          className={`${inputBaseClasses} ${
-            error ? "border-red-500" : ""
-          } ${className}`}
+          className={clsx(inputBaseClasses, error && "border-red-500", className)}
           {...props}
         />
         {error && <p className="mt-1 text-sm text-red-600">{error}</p>}

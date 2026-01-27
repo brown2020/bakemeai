@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { Trash2 } from "lucide-react";
+import clsx from "clsx";
 import { Recipe } from "@/lib/schemas";
 
 interface RecipeCardProps {
@@ -22,11 +23,12 @@ export const RecipeCard = memo(function RecipeCard({
 }: RecipeCardProps) {
   return (
     <div
-      className={`p-3 sm:p-4 rounded-lg border cursor-pointer transition-colors ${
+      className={clsx(
+        "p-3 sm:p-4 rounded-lg border cursor-pointer transition-colors",
         isSelected
           ? "border-blue-500 bg-blue-50"
           : "border-gray-200 hover:border-blue-300 bg-white"
-      }`}
+      )}
       onClick={onSelect}
     >
       <div className="flex justify-between items-start gap-2">

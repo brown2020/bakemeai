@@ -96,7 +96,7 @@ export default function Navbar() {
                   >
                     <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
                       <span className="text-blue-600 font-medium">
-                        {user.email?.[0].toUpperCase()}
+                        {user.email?.[0]?.toUpperCase() || "?"}
                       </span>
                     </div>
                   </button>
