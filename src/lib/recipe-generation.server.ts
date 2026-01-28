@@ -5,7 +5,8 @@ import { streamObject } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 
-import { SerializableUserProfile, aiRecipeFields } from "./schemas";
+import { SerializableUserProfile } from "./schemas/user";
+import { aiRecipeFields } from "./schemas/recipe";
 import { getRecipeSystemPrompt } from "./prompts";
 
 /**

@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Wand2, BookMarked, Settings } from "lucide-react";
 
-import { NavLink } from "@/components/ui";
+import { NavLink } from "@/components/ui/NavLink";
 import { UserMenu } from "@/components/UserMenu";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useRecipeStore } from "@/lib/store/recipe-store";

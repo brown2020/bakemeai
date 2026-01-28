@@ -5,11 +5,27 @@ import { requiredTimestampSchema } from "../utils/firestore";
  * Recipe schemas for validation and type safety.
  * 
  * Organization:
+ * - DOMAIN TYPES: Core domain types (RecipeMode)
  * - BASE SCHEMAS: Core recipe data structures
  * - DERIVED SCHEMAS: Variations for specific use cases (streaming, validation)
  * - AI SCHEMAS: Annotated schemas for AI generation
  * - TYPE EXPORTS: TypeScript types derived from schemas
  */
+
+// ============================================================================
+// DOMAIN TYPES
+// ============================================================================
+
+/**
+ * Recipe generation mode type.
+ * Single source of truth for mode values across the application.
+ */
+export type RecipeMode = "specific" | "ingredients";
+
+/**
+ * Recipe mode with nullable option for UI state.
+ */
+export type RecipeModeNullable = RecipeMode | null;
 
 // ============================================================================
 // BASE SCHEMAS
@@ -18,6 +34,10 @@ import { requiredTimestampSchema } from "../utils/firestore";
 /**
  * Base recipe schema - represents a saved recipe in Firestore.
  * Includes database fields (id, userId, createdAt) plus recipe content.
+ * 
+ * BACKWARDS COMPATIBILITY:
+ * - All metadata fields are optional to support recipes created before structured data
+ * - UI components should handle undefined gracefully
  */
 export const recipeSchema = z.object({
   id: z.string(),
@@ -25,10 +45,10 @@ export const recipeSchema = z.object({
   title: z.string().min(1, "Title is required"),
   content: z.string().min(1, "Content is required"),
   createdAt: requiredTimestampSchema,
-  ingredients: z.array(z.string()),
-  preparationTime: z.string(),
-  cookingTime: z.string(),
-  servings: z.number().int().positive(),
+  ingredients: z.array(z.string()).optional(),
+  preparationTime: z.string().optional(),
+  cookingTime: z.string().optional(),
+  servings: z.number().int().positive().optional(),
   cuisine: z.string().optional(),
   difficulty: z.string().optional(),
 });
@@ -67,6 +87,11 @@ export const recipeStructureSchema = z.object({
 /**
  * Complete recipe schema for final validation before saving.
  * Ensures all essential fields are present for a valid recipe.
+ * 
+ * DESIGN DECISION: Separate schema instead of .required() transformation
+ * - Clearly documents what constitutes a "complete" recipe vs "partial" (streaming)
+ * - Used as type guard for runtime validation before save
+ * - Makes streaming contract explicit: optional during generation, required for persistence
  */
 export const completeRecipeStructureSchema = z.object({
   title: z.string(),
@@ -92,6 +117,13 @@ export const completeRecipeStructureSchema = z.object({
 /**
  * Recipe fields for AI generation with describe() annotations.
  * Used by OpenAI structured output to understand field purpose.
+ * 
+ * DESIGN NOTE: `as const` usage
+ * - This is an object of Zod schemas (not a Zod schema itself)
+ * - Used in recipe-generation.server.ts: z.object(aiRecipeFields).strict()
+ * - `as const` prevents TypeScript from widening field types
+ * - Other schemas don't need `as const` because they're already Zod schemas
+ * - This pattern allows field reuse while maintaining strict typing
  */
 export const aiRecipeFields = {
   title: z.string().describe("The title of the recipe"),

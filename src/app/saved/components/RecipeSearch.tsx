@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Input } from "@/components/ui";
+import { Input } from "@/components/ui/Input";
 
 interface RecipeSearchProps {
   searchTerm: string;

@@ -6,9 +6,10 @@
 import { generateRecipe } from "@/lib/recipe-generation.server";
 import { readStreamableValue } from "@ai-sdk/rsc";
 import { saveRecipe as saveRecipeToDb } from "@/lib/db";
-import { SerializableUserProfile, RecipeStructure, recipeStructureSchema } from "@/lib/schemas";
+import { SerializableUserProfile } from "@/lib/schemas/user";
+import { RecipeStructure, recipeStructureSchema } from "@/lib/schemas/recipe";
 import { AppError, ERROR_MESSAGES, logAndConvertError } from "@/lib/utils/error-handler";
-import { convertToMarkdown } from "@/lib/utils/markdown-converter";
+import { convertToMarkdown } from "@/lib/utils/markdown";
 import { logWarning } from "@/lib/utils/logger";
 
 /**

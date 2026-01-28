@@ -1,2 +1,2 @@
 // Re-export from shared UI components for backwards compatibility
-export { ErrorMessage } from "@/components/ui";
+export { ErrorMessage } from "@/components/ui/ErrorMessage";

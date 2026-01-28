@@ -43,12 +43,24 @@ export function getFirestoreErrorMessage(
 
 /**
  * Custom Zod schema for required Firestore Timestamp.
- * Validates that the value is a Firestore Timestamp.
+ * Validates that the value is a Firestore Timestamp or timestamp-like value.
+ * 
+ * COMPATIBILITY: Accepts multiple formats that Firestore may return:
+ * - Timestamp instances
+ * - Plain objects with seconds/nanoseconds properties
+ * - Plain numbers (Unix timestamps in milliseconds)
  */
 export const requiredTimestampSchema = z.custom<Timestamp>(
-  (val): val is Timestamp => val instanceof Timestamp,
+  (val): val is Timestamp => {
+    if (val instanceof Timestamp) return true;
+    // Accept plain objects with seconds/nanoseconds (from Firestore serialization)
+    if (val && typeof val === 'object' && 'seconds' in val && 'nanoseconds' in val) return true;
+    // Accept plain numbers (Unix timestamps)
+    if (typeof val === 'number') return true;
+    return false;
+  },
   {
-    message: "Expected Firestore Timestamp"
+    message: "Expected Firestore Timestamp, timestamp object, or number"
   }
 );
 

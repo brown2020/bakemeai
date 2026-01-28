@@ -1,6 +1,12 @@
 /**
  * Firestore database operations for recipes and user profiles.
  * 
+ * NAMING CONVENTIONS:
+ * - get*: Synchronous or async read operations (getUserRecipes, getUserProfile)
+ * - save*: Create or update operations (saveRecipe, saveUserProfile)
+ * - delete*: Deletion operations (deleteRecipe)
+ * - fetch*: Reserved for client-side data fetching hooks
+ * 
  * ERROR HANDLING CONTRACT:
  * - All functions throw errors on failure (never return error objects)
  * - Callers MUST use try-catch blocks
@@ -35,21 +41,23 @@ import { z } from "zod";
 import { db } from "./firebase";
 import {
   Recipe,
-  UserProfile,
   RecipeStructure,
   CompleteRecipeStructure,
-  UserProfileInput,
   recipeSchema,
-  userProfileSchema,
   completeRecipeStructureSchema,
-} from "./schemas";
+} from "./schemas/recipe";
+import {
+  UserProfile,
+  UserProfileInput,
+  userProfileSchema,
+} from "./schemas/user";
 import { COLLECTIONS } from "./constants/domain";
 import {
   extractTitle,
   extractIngredients,
   extractField,
   extractServings,
-} from "./utils/markdown-parser";
+} from "./utils/markdown";
 import { getFirestoreErrorMessage } from "./utils/firestore";
 import { AppError, ERROR_MESSAGES } from "./utils/error-handler";
 import { sanitizeUserInput } from "./utils/sanitize";
@@ -155,6 +163,10 @@ export async function getUserRecipes(userId: string): Promise<Recipe[]> {
     // Validate data with Zod schema
     const result = z.array(recipeSchema).safeParse(rawRecipes);
     if (!result.success) {
+      logError("Recipe validation failed", new Error("Zod validation error"), {
+        userId,
+        validationErrors: result.error.flatten(),
+      });
       throw new AppError("Invalid recipe data from Firestore", "INVALID_RECIPE_DATA");
     }
     return result.data;

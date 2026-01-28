@@ -5,7 +5,8 @@ import { auth } from "@/lib/firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { PageLayout } from "@/components/PageLayout";
 import { Button } from "@/components/Button";
-import { Input, ErrorMessage } from "@/components/ui";
+import { Input } from "@/components/ui/Input";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { FirebaseError } from "firebase/app";
 
 export default function ResetPassword() {

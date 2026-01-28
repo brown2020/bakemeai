@@ -1,17 +1,11 @@
 import { FormEvent } from "react";
-import { ParsedRecipe } from "@/lib/schemas";
+import { ParsedRecipe, RecipeModeNullable } from "@/lib/schemas/recipe";
 
 /**
- * Recipe generation modes.
- * Using const assertion for type safety while maintaining string literal types.
+ * Type aliases for backwards compatibility with local naming conventions.
+ * The canonical types are defined in @/lib/schemas/recipe.
  */
-export const GENERATION_MODE = {
-  SPECIFIC: "specific",
-  INGREDIENTS: "ingredients",
-} as const;
-
-export type GenerationMode = typeof GENERATION_MODE[keyof typeof GENERATION_MODE];
-export type Mode = GenerationMode | null;
+export type Mode = RecipeModeNullable;
 
 export interface FormInputProps {
   label: string;

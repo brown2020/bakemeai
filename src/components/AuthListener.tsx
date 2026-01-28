@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { onIdTokenChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { clearAuthCookie } from "@/lib/utils/auth-cookies";
@@ -14,14 +14,18 @@ import { logError } from "@/lib/utils/logger";
  * Monitors Firebase auth state changes and syncs auth cookies.
  * Must be mounted in the root layout to track auth across the entire app.
  */
-export function AuthListener(): null {
+export function AuthListener(): React.ReactElement | null {
   const { setUser, setLoading } = useAuthStore();
   const { clearPersistedState } = useRecipeStore();
   const controllerRef = useRef<AbortController | null>(null);
   const versionRef = useRef(0);
+  const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onIdTokenChanged(auth, async (user) => {
+    let unsubscribe: (() => void) | undefined;
+    
+    try {
+      unsubscribe = onIdTokenChanged(auth, async (user) => {
       // Increment version to invalidate previous operations
       const currentVersion = ++versionRef.current;
       
@@ -60,12 +64,37 @@ export function AuthListener(): null {
         }
       }
     });
+    } catch (error) {
+      logError("Firebase authentication initialization failed", error);
+      setInitError("Authentication system unavailable. Please refresh the page.");
+      setLoading(false);
+    }
 
     return () => {
       controllerRef.current?.abort();
-      unsubscribe();
+      unsubscribe?.();
     };
   }, [setUser, setLoading, clearPersistedState]);
+
+  if (initError) {
+    return (
+      <div className="fixed top-16 left-0 right-0 z-40 mx-auto max-w-2xl px-4">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <div className="flex">
+            <div className="shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Authentication Error</h3>
+              <div className="mt-1 text-sm text-red-700">{initError}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return null;
 }

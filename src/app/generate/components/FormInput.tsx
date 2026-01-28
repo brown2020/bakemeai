@@ -1,4 +1,4 @@
-import { Input, Textarea } from "@/components/ui";
+import { Input, Textarea } from "@/components/ui/Input";
 import { FormInputProps } from "../types";
 import { FORM_VALIDATION } from "@/lib/constants/ui";
 

@@ -3,16 +3,23 @@
  * 
  * ARCHITECTURE:
  * - Pure UI state management (no business logic or orchestration)
- * - Single source of truth: structuredRecipe (all display formats derived via getters)
- * - Computed selectors transform structuredRecipe on each call (markdown conversion is cheap)
+ * - Single source of truth: structuredRecipe (all display formats derived via selectors)
+ * - Computed values: Use selector functions from recipe-selectors.ts (not store methods)
  * - Only persists user input (mode, input, ingredients), not generated recipes
  * - Orchestration logic lives in hooks/components, not in store
+ * 
+ * SELECTORS:
+ * For derived data, use selector functions instead of store methods:
+ * - selectDisplayRecipe(structuredRecipe) - converts to display format
+ * - selectMarkdown(structuredRecipe) - converts to markdown
+ * 
+ * See: recipe-selectors.ts for pure selector functions
  */
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { RecipeStructure, ParsedRecipe } from "@/lib/schemas";
-import { convertToMarkdown, buildMarkdownBody } from "@/lib/utils/markdown-converter";
+import { RecipeStructure, ParsedRecipe, RecipeModeNullable } from "@/lib/schemas/recipe";
+import { convertToMarkdown, buildMarkdownBody } from "@/lib/utils/markdown";
 
 interface RecipeState {
   // Single source of truth for recipe data
@@ -25,21 +32,17 @@ interface RecipeState {
   // Input State (persisted)
   input: string;
   ingredients: string;
-  mode: "specific" | "ingredients" | null;
+  mode: RecipeModeNullable;
 
   // Saving State
   isSaving: boolean;
   saveError: string | null;
   saved: boolean;
 
-  // Computed selectors
-  convertToDisplayFormat: () => ParsedRecipe;
-  getMarkdown: () => string;
-
   // State setters (pure state management, no orchestration)
   setInput: (input: string) => void;
   setIngredients: (ingredients: string) => void;
-  setMode: (mode: "specific" | "ingredients" | null) => void;
+  setMode: (mode: RecipeModeNullable) => void;
   setStructuredRecipe: (recipe: RecipeStructure | null) => void;
   setGenerating: (isGenerating: boolean) => void;
   setGenerationError: (error: string | null) => void;
@@ -64,30 +67,13 @@ export const useRecipeStore = create<RecipeState>()(
       saveError: null,
       saved: false,
 
-      convertToDisplayFormat: (): ParsedRecipe => {
-        const { structuredRecipe } = get();
-        
-        if (!structuredRecipe) {
-          return { title: "", content: "" };
-        }
-        
-        const title = structuredRecipe.title ?? "";
-        const content = buildMarkdownBody(structuredRecipe);
-        return { title, content, structuredData: structuredRecipe };
-      },
-
-      getMarkdown: (): string => {
-        const { structuredRecipe } = get();
-        return structuredRecipe ? convertToMarkdown(structuredRecipe) : "";
-      },
-
       setInput: (input: string) => {
         set({ input });
       },
       setIngredients: (ingredients: string) => {
         set({ ingredients });
       },
-      setMode: (mode: "specific" | "ingredients" | null) => {
+      setMode: (mode: RecipeModeNullable) => {
         set({
           mode,
           structuredRecipe: null,

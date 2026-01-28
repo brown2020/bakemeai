@@ -57,27 +57,29 @@ function base64UrlToUtf8(input: string): string {
  * 
  * SECURITY NOTE: This only validates the expiry claim, NOT the signature.
  * Signature verification requires Firebase Admin SDK server-side.
- * This is sufficient for client-side route protection, as malicious tokens
- * will fail when used against Firebase services.
+ * 
+ * RISK ACCEPTANCE: Unsigned validation is intentional for this use case.
+ * - Proxy runs on Edge runtime where Firebase Admin SDK is unavailable
+ * - Primary purpose: prevent flash of protected content and improve UX
+ * - Security boundary: All API calls verify tokens server-side via Firebase
+ * - Mitigation: Malicious tokens cannot access actual data (Firestore rules + server validation)
+ * - Impact: Attacker could briefly see protected UI shells, but no sensitive data
+ * 
+ * For applications requiring stricter edge protection, consider:
+ * - Moving to Node.js runtime with Firebase Admin SDK
+ * - Using Next.js middleware with session tokens instead of Firebase JWTs
+ * - Implementing API-based auth checks before rendering
  * 
  * @param token - The JWT token to check
  * @returns True if the token has a valid, unexpired exp claim
  */
 function hasUnexpiredJwtClaim(token: string): boolean {
-  // JWT structure: header.payload.signature (3 parts separated by dots)
-  const jwtParts = token.split(".");
-  if (jwtParts.length !== 3) return false;
-
-  try {
-    const payload = JSON.parse(base64UrlToUtf8(jwtParts[1])) as FirebaseJwtPayload;
-    if (!payload?.exp) return false;
-    
-    const nowSeconds = Math.floor(Date.now() / 1000);
-    // Add leeway to account for small time differences between servers
-    return payload.exp > nowSeconds - JWT_VALIDATION_CONFIG.EXPIRY_LEEWAY_SECONDS;
-  } catch {
-    return false;
-  }
+  const payload = parseJwtPayload(token);
+  if (!payload?.exp) return false;
+  
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  // Add leeway to account for small time differences between servers
+  return payload.exp > nowSeconds - JWT_VALIDATION_CONFIG.EXPIRY_LEEWAY_SECONDS;
 }
 
 /**
@@ -90,13 +92,17 @@ interface FirebaseJwtPayload {
 }
 
 /**
- * Attempts to extract and parse the payload from a JWT token.
- * @param token - The JWT token
+ * Parses a JWT token and extracts its payload.
+ * Returns null if the token is malformed or cannot be parsed.
+ * Does not validate signature or expiry—use hasUnexpiredJwtClaim for expiry validation.
+ * 
+ * @param token - The JWT token string
  * @returns The parsed payload or null if invalid
  */
-function tryGetJwtPayload(token: string): FirebaseJwtPayload | null {
+function parseJwtPayload(token: string): FirebaseJwtPayload | null {
   const jwtParts = token.split(".");
   if (jwtParts.length !== 3) return null;
+  
   try {
     return JSON.parse(base64UrlToUtf8(jwtParts[1])) as FirebaseJwtPayload;
   } catch {
@@ -226,7 +232,7 @@ export function proxy(request: NextRequest) {
     // Extract and validate auth token
     const authToken = request.cookies.get(FIREBASE_AUTH_COOKIE)?.value;
     const cookiePresent = authToken != null;
-    const payload = authToken != null ? tryGetJwtPayload(authToken) : null;
+    const payload = authToken != null ? parseJwtPayload(authToken) : null;
     const jwtValid = authToken != null && payload != null && hasUnexpiredJwtClaim(authToken);
     const userId = payload?.user_id ?? payload?.sub ?? null;
     const isAuthenticated = cookiePresent && jwtValid;

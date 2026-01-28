@@ -11,18 +11,34 @@
  */
 
 /**
- * Current authentication cookie name.
+ * Authentication cookie names.
  * 
- * IMPORTANT: Namespaced to avoid collisions across multiple apps on `localhost`.
+ * TEMPORAL RELATIONSHIP:
+ * - CURRENT: The active cookie name used for new sessions (namespaced)
+ * - LEGACY: Previous cookie name from older versions (global, not namespaced)
+ * 
+ * Both are cleared during logout to prevent stale auth from old sessions.
+ */
+
+/**
+ * Current authentication cookie name (active).
+ * 
+ * Value: "bakemeai_firebaseAuth"
+ * Namespaced to avoid collisions across multiple apps on localhost.
  * Format: {appname}_firebaseAuth
+ * 
+ * Use this for all new authentication operations.
  */
 export const FIREBASE_AUTH_COOKIE = "bakemeai_firebaseAuth" as const;
 
 /**
- * Legacy authentication cookie name.
+ * Legacy authentication cookie name (deprecated, cleanup only).
  * 
- * Used in previous versions of the app. We continue to clear this cookie
- * during logout to prevent stale authentication from old sessions.
+ * Value: "firebaseAuth"  
+ * Used in previous versions before namespacing was added.
+ * Not namespaced - can conflict with other apps on localhost.
+ * 
+ * Do NOT use for new operations. Only cleared during logout for cleanup.
  */
 export const LEGACY_FIREBASE_AUTH_COOKIE = "firebaseAuth" as const;
 

@@ -1,4 +1,4 @@
-import { CardSkeleton } from "@/components/ui";
+import { CardSkeleton } from "@/components/ui/PageSkeleton";
 
 /**
  * Loading skeleton for the saved recipes page.

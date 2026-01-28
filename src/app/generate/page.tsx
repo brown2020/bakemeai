@@ -4,8 +4,9 @@ import { useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { PageLayout } from "@/components/PageLayout";
-import { FeatureErrorBoundary } from "@/components/FeatureErrorBoundary";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useRecipeStore } from "@/lib/store/recipe-store";
+import { selectDisplayRecipe } from "@/lib/store/recipe-selectors";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useUserProfileStore } from "@/lib/store/user-profile-store";
 import { useRecipeGeneration } from "@/hooks/useRecipeGeneration";
@@ -25,7 +26,6 @@ export default function Generate() {
 
   const {
     structuredRecipe,
-    convertToDisplayFormat,
     mode,
     setMode,
     resetRecipe,
@@ -75,12 +75,12 @@ export default function Generate() {
     <PageLayout title="Generate Recipe">
       <div className="space-y-6">
         {!mode ? (
-          <FeatureErrorBoundary featureName="Mode Selection">
+          <ErrorBoundary variant="feature" featureName="Mode Selection">
             <ModeSelector onSelectMode={setMode} />
-          </FeatureErrorBoundary>
+          </ErrorBoundary>
         ) : (
           <>
-            <FeatureErrorBoundary featureName="Recipe Form">
+            <ErrorBoundary variant="feature" featureName="Recipe Form">
               <RecipeForm
                 mode={mode}
                 onBack={handleBack}
@@ -91,22 +91,22 @@ export default function Generate() {
                 ingredients={ingredients}
                 onIngredientsChange={setIngredients}
               />
-            </FeatureErrorBoundary>
+            </ErrorBoundary>
 
             {validationError && <ErrorMessage message={validationError} />}
             {generationError && <ErrorMessage message={generationError} />}
 
             {structuredRecipe && (
-              <FeatureErrorBoundary featureName="Recipe Display">
+              <ErrorBoundary variant="feature" featureName="Recipe Display">
                 <RecipeDisplay
-                  parsedRecipe={convertToDisplayFormat()}
+                  parsedRecipe={selectDisplayRecipe(structuredRecipe)!}
                   onSave={handleSave}
                   isSaving={isSaving}
                   saved={saved}
                   isGenerating={isGenerating}
                   saveError={saveError || ""}
                 />
-              </FeatureErrorBoundary>
+              </ErrorBoundary>
             )}
           </>
         )}

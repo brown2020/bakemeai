@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useRecipeStore } from "@/lib/store/recipe-store";
 import { saveRecipeToDatabase } from "@/lib/services/recipe-service";
+import { ERROR_MESSAGES } from "@/lib/utils/error-handler";
 
 /**
  * Custom hook for saving recipes to the database.
@@ -22,12 +23,12 @@ export function useRecipeSave() {
   const saveRecipe = useCallback(
     async (userId: string) => {
       if (!userId) {
-        setSaveError("You must be logged in to save recipes");
+        setSaveError(ERROR_MESSAGES.AUTH.LOGIN_REQUIRED);
         return;
       }
 
       if (!structuredRecipe) {
-        setSaveError("No recipe to save. Please generate a recipe first.");
+        setSaveError(ERROR_MESSAGES.RECIPE.NO_RECIPE_TO_SAVE);
         return;
       }
 
@@ -38,7 +39,7 @@ export function useRecipeSave() {
         await saveRecipeToDatabase(userId, structuredRecipe);
         setSaved(true);
       } catch (error) {
-        setSaveError(error instanceof Error ? error.message : "Failed to save recipe");
+        setSaveError(error instanceof Error ? error.message : ERROR_MESSAGES.RECIPE.SAVE_FAILED);
       } finally {
         setIsSaving(false);
       }

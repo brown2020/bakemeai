@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Recipe } from "@/lib/schemas";
+import { Recipe } from "@/lib/schemas/recipe";
 import { RecipeCard } from "@/components/RecipeCard";
 
 interface RecipeListProps {

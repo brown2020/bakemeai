@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { SerializableUserProfile } from "@/lib/schemas";
+import { SerializableUserProfile } from "@/lib/schemas/user";
 import { getUserProfile } from "@/lib/db";
 import { logAndConvertError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 

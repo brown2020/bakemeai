@@ -12,7 +12,7 @@ import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useFirestoreQuery } from "@/hooks/useFirestoreQuery";
 import { getUserProfile, saveUserProfile } from "@/lib/db";
-import { UserProfileInput } from "@/lib/schemas";
+import { UserProfileInput } from "@/lib/schemas/user";
 import {
   DIETARY_OPTIONS,
   CUISINE_OPTIONS,

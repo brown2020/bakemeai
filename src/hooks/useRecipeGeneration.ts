@@ -1,14 +1,16 @@
 import { useCallback, useRef, useState, FormEvent } from "react";
 import { useRecipeStore } from "@/lib/store/recipe-store";
 import { useDebounce } from "@/hooks/useDebounce";
-import { SerializableUserProfile } from "@/lib/schemas";
+import { SerializableUserProfile } from "@/lib/schemas/user";
+import { RecipeMode, RecipeModeNullable } from "@/lib/schemas/recipe";
 import {
   specificRecipeInputSchema,
   ingredientsRecipeInputSchema,
-} from "@/lib/schemas";
+} from "@/lib/schemas/validation";
 import { RECIPE_PROMPTS } from "@/app/generate/constants";
 import { generateRecipeWithStreaming } from "@/lib/services/recipe-service";
 import { UI_TIMING } from "@/lib/constants/ui";
+import { ERROR_MESSAGES } from "@/lib/utils/error-handler";
 
 /**
  * Checks if enough time has passed since last submission for rate limiting.
@@ -20,7 +22,7 @@ function canSubmit(lastSubmitTime: number, debounceMs: number): boolean {
 /**
  * Validates recipe input based on mode.
  */
-function validateInput(input: string, mode: "specific" | "ingredients"): string | null {
+function validateInput(input: string, mode: RecipeMode): string | null {
   const schema = mode === "specific" 
     ? specificRecipeInputSchema 
     : ingredientsRecipeInputSchema;
@@ -32,7 +34,7 @@ function validateInput(input: string, mode: "specific" | "ingredients"): string 
 /**
  * Builds prompt from input based on mode.
  */
-function buildPrompt(input: string, mode: "specific" | "ingredients"): string {
+function buildPrompt(input: string, mode: RecipeMode): string {
   const promptFn = mode === "specific" 
     ? RECIPE_PROMPTS.specific 
     : RECIPE_PROMPTS.ingredients;
@@ -45,7 +47,7 @@ export interface UseRecipeGenerationReturn {
   validationError: string | null;
   input: string;
   ingredients: string;
-  mode: "specific" | "ingredients" | null;
+  mode: RecipeModeNullable;
   setInput: (input: string) => void;
   setIngredients: (ingredients: string) => void;
   handleGenerate: (e: FormEvent) => Promise<void>;
@@ -58,6 +60,11 @@ export interface UseRecipeGenerationReturn {
  * - Coordinate recipe generation flow (validation -> generation -> state updates)
  * - Manage validation and rate limiting
  * - Provide clean interface for components
+ * 
+ * RETURN PATTERN:
+ * - Returns object with named properties (standard for hooks with 3+ return values)
+ * - Allows destructuring: const { isGenerating, handleGenerate } = useRecipeGeneration()
+ * - Avoids array returns which require remembering positional order
  * 
  * @param userProfile - User profile for personalized recipes
  * @returns Generation state and handler functions
@@ -113,7 +120,7 @@ export function useRecipeGeneration(userProfile: SerializableUserProfile | null)
       
       // Rate limiting
       if (!canSubmit(lastSubmitTimeRef.current, UI_TIMING.AI_GENERATION_DEBOUNCE)) {
-        setValidationError("Please wait a moment before generating another recipe.");
+        setValidationError(ERROR_MESSAGES.RECIPE.RATE_LIMIT);
         return;
       }
       lastSubmitTimeRef.current = Date.now();

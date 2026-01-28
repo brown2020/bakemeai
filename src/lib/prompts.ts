@@ -1,4 +1,4 @@
-import { SerializableUserProfile } from "./schemas";
+import { SerializableUserProfile } from "./schemas/user";
 
 /**
  * AI prompt construction utilities.

@@ -3,13 +3,13 @@
 import { useState, useMemo, useCallback } from "react";
 
 import { PageLayout } from "@/components/PageLayout";
-import { FeatureErrorBoundary } from "@/components/FeatureErrorBoundary";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useFirestoreQuery } from "@/hooks/useFirestoreQuery";
 import { getUserRecipes, deleteRecipe } from "@/lib/db";
-import { Recipe } from "@/lib/schemas";
+import { Recipe } from "@/lib/schemas/recipe";
 import { logAndConvertError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 
 import { RecipeSearch } from "./components/RecipeSearch";
@@ -44,9 +44,9 @@ export default function Saved() {
     return recipes.filter(
       (recipe) =>
         recipe.title.toLowerCase().includes(searchLower) ||
-        recipe.ingredients.some((ingredient) =>
+        (recipe.ingredients?.some((ingredient) =>
           ingredient.toLowerCase().includes(searchLower)
-        )
+        ) ?? false)
     );
   }, [recipes, searchTerm]);
 
@@ -117,27 +117,27 @@ export default function Saved() {
         <EmptyState />
       ) : (
         <>
-          <FeatureErrorBoundary featureName="Recipe Search">
+          <ErrorBoundary variant="feature" featureName="Recipe Search">
             <RecipeSearch
               searchTerm={searchTerm}
               onSearchChange={setSearchTerm}
             />
-          </FeatureErrorBoundary>
+          </ErrorBoundary>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <FeatureErrorBoundary featureName="Recipe List">
+            <ErrorBoundary variant="feature" featureName="Recipe List">
               <RecipeList
                 recipes={filteredRecipes}
                 selectedRecipeId={selectedRecipe?.id ?? null}
                 onSelectRecipe={setSelectedRecipe}
                 onDeleteRecipe={handleDeleteClick}
               />
-            </FeatureErrorBoundary>
+            </ErrorBoundary>
 
             <div className="lg:col-span-2 min-h-[50vh] lg:min-h-[calc(100vh-16rem)]">
-              <FeatureErrorBoundary featureName="Recipe Detail">
+              <ErrorBoundary variant="feature" featureName="Recipe Detail">
                 <RecipeDetail recipe={selectedRecipe} />
-              </FeatureErrorBoundary>
+              </ErrorBoundary>
             </div>
           </div>
         </>

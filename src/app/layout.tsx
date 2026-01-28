@@ -34,7 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ErrorBoundary>
+        <ErrorBoundary variant="global">
           <AuthListener />
           <Navbar />
           <main className="pt-16">{children}</main>
