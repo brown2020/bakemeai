@@ -93,6 +93,377 @@ Component → Hook → Service → Database
 7. Component displays recipe
 ```
 
+## Code Style Conventions
+
+### Import Ordering
+
+**Standard**: Organize imports in a consistent order for readability and minimal git diffs.
+
+**Order**:
+1. External packages (react, next, firebase, etc.)
+2. Next.js framework imports (next/*, @next/*)
+3. Absolute imports from project (@/*)
+4. Relative imports (./, ../)
+5. Type-only imports (grouped with their category)
+
+**Example**:
+```typescript
+// 1. External packages
+import { useState, useCallback } from "react";
+import { z } from "zod";
+
+// 2. Next.js framework
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+
+// 3. Absolute imports
+import { useAuthStore } from "@/lib/store/auth-store";
+import { saveRecipe } from "@/lib/db";
+import type { Recipe } from "@/lib/schemas/recipe";
+
+// 4. Relative imports
+import { RecipeCard } from "./RecipeCard";
+import type { Props } from "./types";
+```
+
+**Rationale**: Consistent ordering reduces cognitive load when scanning imports and minimizes merge conflicts.
+
+### JSDoc Documentation
+
+**Standard**: All exported functions must have JSDoc comments with parameter descriptions and return values.
+
+**Required elements**:
+- One-line description of what the function does
+- `@param` tags for all parameters with type and description
+- `@returns` tag describing the return value
+- `@throws` tag if the function can throw errors
+- `@example` (optional but encouraged) showing common usage
+
+**Example**:
+```typescript
+/**
+ * Saves a recipe to the database.
+ * Validates recipe completeness before saving.
+ * 
+ * @param userId - The user's unique identifier
+ * @param structuredRecipe - Recipe data to save
+ * @returns Promise that resolves when save completes
+ * @throws AppError if recipe validation fails or save operation fails
+ * 
+ * @example
+ * await saveRecipeToDatabase("user123", recipe);
+ */
+export async function saveRecipeToDatabase(
+  userId: string,
+  structuredRecipe: RecipeStructure
+): Promise<void> {
+  // ...
+}
+```
+
+**Rationale**: JSDoc provides inline documentation for IDE intellisense and serves as API documentation for function consumers.
+
+### Comment Style
+
+**Standard**: Use different comment styles for different purposes to improve code readability.
+
+**JSDoc comments (`/** */`)**: For exported functions, classes, and types
+```typescript
+/**
+ * Saves a recipe to the database.
+ * @param userId - The user's unique identifier
+ * @returns Promise that resolves when save completes
+ */
+export function saveRecipe(userId: string): Promise<void> {
+  // ...
+}
+```
+
+**Single-line comments (`//`)**: For inline explanations and brief clarifications
+```typescript
+// Guard: Check if user is authenticated before proceeding
+if (!user) return;
+
+// Optimistic update: remove from UI immediately
+setRecipes(recipes.filter(r => r.id !== id));
+```
+
+**Multi-line comments (`/* */`)**: For internal implementation notes and explanations
+```typescript
+/*
+ * Race condition handling strategy:
+ * 1. Increment version on each auth event
+ * 2. Cancel pending operations via AbortController
+ * 3. Double-check version before state updates
+ */
+```
+
+**Section separators**: Use banner comments for major file sections
+```typescript
+// ============================================================================
+// VALIDATION UTILITIES
+// ============================================================================
+```
+
+**Rationale**: Consistent comment styles make it easier to distinguish between API documentation, inline explanations, and implementation notes.
+
+### Error Handling
+
+**Standard**: Consistent error handling strategy across all layers.
+
+**Pattern**:
+1. **Services throw AppError** - Business logic layer throws typed errors
+2. **Hooks catch and log** - Orchestration layer catches, logs, and converts to user messages
+3. **Components display** - UI layer displays error messages to users
+
+**Service layer** (db/, services/):
+```typescript
+// GOOD: Throw AppError with user-friendly message
+export async function saveRecipe(params: SaveRecipeParams): Promise<Recipe> {
+  try {
+    // ... operation
+  } catch (error) {
+    logError("Failed to save recipe", error, { userId });
+    throw new AppError("Unable to save recipe. Please try again.", "RECIPE_SAVE_FAILED");
+  }
+}
+```
+
+**Hook layer** (hooks/):
+```typescript
+// GOOD: Catch, log, convert to user message, update state
+export function useRecipeSave() {
+  const saveRecipe = async (userId: string) => {
+    try {
+      await saveRecipeToDatabase(userId, recipe);
+    } catch (error) {
+      const message = convertErrorToMessage(error, ERROR_MESSAGES.RECIPE.SAVE_FAILED);
+      setSaveError(message);
+    }
+  };
+}
+```
+
+**Component layer** (components/, app/):
+```typescript
+// GOOD: Display error from state
+{saveError && <ErrorMessage message={saveError} />}
+```
+
+**Anti-pattern**: Mixing responsibilities
+```typescript
+// BAD: Component catching and logging
+const Component = () => {
+  try {
+    await saveRecipe();
+  } catch (error) {
+    logError("Save failed", error); // Logging should be in service
+    setError("Failed"); // Non-user-friendly message
+  }
+};
+```
+
+**Rationale**: Clear separation ensures errors are logged once (in services), converted once (in hooks), and displayed consistently (in components).
+
+### Export Conventions
+
+**Standard**: Use default exports for page components, named exports for reusable components and utilities.
+
+**Default exports** (pages, route handlers):
+```typescript
+// app/profile/page.tsx
+export default function Profile() {
+  return <div>Profile Page</div>;
+}
+
+// app/api/recipes/route.ts
+export async function GET() {
+  return Response.json({ recipes: [] });
+}
+```
+
+**Named exports** (reusable components, utilities, services):
+```typescript
+// components/RecipeCard.tsx
+export function RecipeCard({ recipe }: Props) {
+  return <div>{recipe.title}</div>;
+}
+
+// lib/db/recipes.ts
+export async function saveRecipe(params: SaveRecipeParams): Promise<Recipe> {
+  // ...
+}
+```
+
+**Rationale**:
+- Next.js requires default exports for page components and route handlers
+- Named exports make refactoring easier (rename refactoring works)
+- Named exports prevent import name mismatches
+- Named exports allow multiple exports from single file
+
+### Naming Conventions
+
+**Standard**: Consistent function naming across the codebase based on purpose.
+
+**Database operations** (lib/db/):
+- `get*` - Read operations (getUserRecipes, getUserProfile)
+- `save*` - Create or update operations (saveRecipe, saveUserProfile)
+- `delete*` - Deletion operations (deleteRecipe)
+
+**Service layer** (lib/services/):
+- Descriptive verb + noun (generateRecipeWithStreaming, saveRecipeToDatabase)
+- Use full names, avoid abbreviations
+
+**Hooks** (hooks/):
+- `use*` - All custom hooks (useRecipeGeneration, useDebounce)
+- Return objects with descriptive property names, not positional arrays
+
+**Utilities** (lib/utils/):
+- `get*` - Retrieve or compute values (getFirestoreErrorMessage, getSafeRedirectPath)
+- `convert*` - Transform data (convertToMarkdown, convertErrorToMessage)
+- `is*` - Boolean checks (isSafeRedirectPath)
+- Action verbs for operations (sanitizeMarkdown, formatRecipeBodyAsMarkdown)
+
+**Reserved prefixes**:
+- `fetch*` - Reserved for client-side data fetching (avoid in services/db)
+- `handle*` - Reserved for event handlers in components
+- `on*` - Reserved for callback props
+
+**Example audit**:
+```typescript
+// GOOD: Clear, follows convention
+export async function getUserRecipes(userId: string): Promise<Recipe[]>
+export function useRecipeGeneration(): UseRecipeGenerationReturn
+export function convertToMarkdown(recipe: RecipeStructure): string
+
+// BAD: Inconsistent or unclear
+export async function fetchUserRecipes() // Use get* in db layer
+export function recipeGeneration() // Missing use prefix for hook
+export function toMarkdown() // Missing convert prefix
+```
+
+### Type vs Interface
+
+**Standard**: Use `type` for primitives/unions/Zod infers, `interface` for object shapes that describe data structures or component props.
+
+**Use `type` for**:
+- Union types: `type RecipeMode = "specific" | "ingredients"`
+- Primitive aliases: `type UserId = string`
+- Zod schema infers: `type Recipe = z.infer<typeof recipeSchema>`
+- Intersection types: `type Props = BaseProps & { extra: string }`
+- Mapped types: `type Readonly<T> = { readonly [P in keyof T]: T[P] }`
+
+**Use `interface` for**:
+- Object shapes: `interface UserProfile { name: string; email: string }`
+- Component props: `interface ButtonProps { label: string; onClick: () => void }`
+- Store state: `interface RecipeState { recipes: Recipe[]; isLoading: boolean }`
+- API contracts: `interface ApiResponse { data: T; error?: string }`
+
+**Rationale**:
+- `type` is more flexible for complex type operations (unions, intersections, mapped types)
+- `interface` is clearer for object shapes and can be extended via declaration merging
+- `interface` provides better IDE autocomplete and error messages for object properties
+- Consistency: Zod uses types, so inferred schemas should too
+
+**Example**:
+```typescript
+// GOOD
+export type RecipeMode = "specific" | "ingredients"; // Union type
+export type Recipe = z.infer<typeof recipeSchema>; // Zod infer
+export interface RecipeCardProps { // Object shape for props
+  recipe: Recipe;
+  onSelect: () => void;
+}
+
+// AVOID
+export interface RecipeMode { // Can't use interface for union
+  // ...
+}
+export type RecipeCardProps = { // Less clear for component props
+  recipe: Recipe;
+  onSelect: () => void;
+}
+```
+
+### Type File Organization
+
+**Standard**: Only create dedicated type files when they serve multiple components or provide shared domain types.
+
+**Create a types.ts file when**:
+- Multiple components in a directory share the same prop types
+- The types are specific to that feature/page (not globally used)
+- There are 3+ type definitions for the same domain
+
+**Inline types when**:
+- The type is only used in a single component
+- The type is simple (1-2 properties)
+- It's a callback or event handler type
+
+**Use schema files when**:
+- Types are derived from Zod schemas (keep types near schemas)
+- Types represent data models (Recipe, UserProfile)
+- Types are used across multiple features
+
+**Example structure**:
+```
+app/generate/
+  ├── types.ts              // Shared types for generate feature
+  │   ├── FormInputProps    // Used by multiple components
+  │   ├── RecipeDisplayProps
+  │   └── Mode              // Feature-specific type alias
+  ├── components/
+  │   ├── FormInput.tsx     // Imports from ../types
+  │   └── RecipeDisplay.tsx // Imports from ../types
+  └── page.tsx              // Imports from ./types
+```
+
+**Anti-pattern**: Creating a types.ts file with a single type export
+```typescript
+// BAD: types.ts with one export
+export type Mode = RecipeMode | null;
+
+// GOOD: Inline the type or move to constants
+// In component:
+const [mode, setMode] = useState<RecipeMode | null>(null);
+```
+
+### Function Declarations
+
+**Standard**: Use `function` keyword for top-level functions, arrow functions for callbacks and inline functions.
+
+**Top-level functions** (exported functions, service functions, utility functions):
+```typescript
+// GOOD: function declaration
+export function saveRecipe(params: SaveRecipeParams): Promise<Recipe> {
+  // ...
+}
+
+// GOOD: Named function for hooks
+export function useRecipeGeneration() {
+  // ...
+}
+```
+
+**Callbacks and inline functions** (event handlers, array methods, inline logic):
+```typescript
+// GOOD: arrow function for callbacks
+const handleSubmit = async (e: FormEvent) => {
+  // ...
+};
+
+// GOOD: arrow function in array methods
+const filtered = recipes.filter((recipe) => recipe.title.includes(search));
+
+// GOOD: arrow function for inline React components
+const Button = ({ children }: Props) => <button>{children}</button>;
+```
+
+**Rationale**:
+- `function` declarations are hoisted, making them available throughout the module
+- `function` keyword is more explicit for primary module exports
+- Arrow functions bind `this` lexically, making them ideal for callbacks
+- Arrow functions are more concise for short inline operations
+
 ## Architectural Principles
 
 ### Separation of Concerns

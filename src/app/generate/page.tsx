@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { PageLayout } from "@/components/PageLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { useRecipeStore } from "@/lib/store/recipe-store";
-import { selectDisplayRecipe } from "@/lib/store/recipe-selectors";
+import { useRecipeStore, selectDisplayRecipe } from "@/lib/store/recipe-store";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useRecipeGeneration } from "@/hooks/useRecipeGeneration";

@@ -1,5 +1,7 @@
 "use client";
 
+import { FORM_VALIDATION, RECIPE } from "@/lib/constants/ui";
+
 interface TagInputProps {
   label: string;
   value: string[];
@@ -24,8 +26,8 @@ export function TagInput({
   value,
   onChange,
   placeholder = "Enter values separated by commas",
-  maxLength = 1000,
-  maxItemLength = 100,
+  maxLength = FORM_VALIDATION.TEXTAREA_MAX_LENGTH,
+  maxItemLength = RECIPE.MAX_TITLE_LENGTH,
 }: TagInputProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value;

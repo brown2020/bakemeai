@@ -73,6 +73,12 @@ function base64UrlToUtf8(input: string): string {
 }
 
 /**
+ * Milliseconds per second conversion constant.
+ * Used for converting JavaScript timestamps (milliseconds) to Unix timestamps (seconds).
+ */
+const MILLISECONDS_PER_SECOND = 1000;
+
+/**
  * Checks if a JWT token's expiry claim is still valid (unsigned validation).
  * Does NOT verify signature - see proxy.ts header for security model.
  * 
@@ -83,7 +89,7 @@ function hasUnexpiredJwtClaimUnsigned(token: string): boolean {
   const payload = parseJwtPayload(token);
   if (!payload?.exp) return false;
   
-  const nowSeconds = Math.floor(Date.now() / 1000);
+  const nowSeconds = Math.floor(Date.now() / MILLISECONDS_PER_SECOND);
   // Add leeway to account for small time differences between servers
   return payload.exp > nowSeconds - JWT_VALIDATION_CONFIG.EXPIRY_LEEWAY_SECONDS;
 }

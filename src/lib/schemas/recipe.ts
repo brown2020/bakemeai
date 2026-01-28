@@ -1,14 +1,15 @@
 import { z } from "zod";
 import { requiredTimestampSchema } from "../utils/firestore";
+import { FORM_VALIDATION } from "../constants/ui";
 
 /**
  * Recipe schemas for validation and type safety.
  * 
  * Organization:
  * - DOMAIN TYPES: Core domain types (RecipeMode)
+ * - INPUT VALIDATION: User input validation for recipe generation
  * - BASE SCHEMAS: Core recipe data structures
  * - DERIVED SCHEMAS: Variations for specific use cases (streaming, validation)
- * - AI SCHEMAS: Annotated schemas for AI generation
  * - TYPE EXPORTS: TypeScript types derived from schemas
  */
 
@@ -23,6 +24,42 @@ import { requiredTimestampSchema } from "../utils/firestore";
 export type RecipeMode = "specific" | "ingredients";
 
 // ============================================================================
+// INPUT VALIDATION
+// ============================================================================
+
+/**
+ * Validation schema for specific recipe requests.
+ * Used when user describes what they want to make.
+ */
+export const specificRecipeInputSchema = z
+  .string()
+  .trim()
+  .min(
+    FORM_VALIDATION.INPUT_MIN_LENGTH,
+    `Please describe what you'd like to make (at least ${FORM_VALIDATION.INPUT_MIN_LENGTH} characters)`
+  )
+  .max(
+    FORM_VALIDATION.INPUT_MAX_LENGTH,
+    `Description is too long (max ${FORM_VALIDATION.INPUT_MAX_LENGTH} characters)`
+  );
+
+/**
+ * Validation schema for ingredient-based recipe requests.
+ * Used when user lists ingredients they have available.
+ */
+export const ingredientsRecipeInputSchema = z
+  .string()
+  .trim()
+  .min(
+    FORM_VALIDATION.TEXTAREA_MIN_LENGTH,
+    `Please list at least one ingredient (at least ${FORM_VALIDATION.TEXTAREA_MIN_LENGTH} characters)`
+  )
+  .max(
+    FORM_VALIDATION.TEXTAREA_MAX_LENGTH,
+    `Ingredients list is too long (max ${FORM_VALIDATION.TEXTAREA_MAX_LENGTH} characters)`
+  );
+
+// ============================================================================
 // BASE SCHEMAS
 // ============================================================================
 
@@ -33,6 +70,7 @@ export type RecipeMode = "specific" | "ingredients";
  * BACKWARDS COMPATIBILITY:
  * - All metadata fields are optional to support recipes created before structured data
  * - UI components should handle undefined gracefully
+ * - Uses passthrough() to allow legacy fields that may exist in old recipes
  */
 export const recipeSchema = z.object({
   id: z.string(),
@@ -46,7 +84,7 @@ export const recipeSchema = z.object({
   servings: z.number().int().positive().optional(),
   cuisine: z.string().optional(),
   difficulty: z.string().optional(),
-});
+}).passthrough();
 
 // ============================================================================
 // DERIVED SCHEMAS

@@ -8,7 +8,7 @@ import { readStreamableValue } from "@ai-sdk/rsc";
 import { saveRecipe as saveRecipeToDb } from "@/lib/db";
 import type { SerializableUserProfile } from "@/lib/schemas/user";
 import type { RecipeStructure } from "@/lib/schemas/recipe";
-import { recipeStructureSchema } from "@/lib/schemas/recipe";
+import { recipeStructureSchema, completeRecipeStructureSchema } from "@/lib/schemas/recipe";
 import { AppError, ERROR_MESSAGES, convertErrorToMessage } from "@/lib/utils/error-handler";
 import { convertToMarkdown } from "@/lib/utils/markdown";
 import { logError, logWarning } from "@/lib/utils/logger";
@@ -54,14 +54,30 @@ export async function generateRecipeWithStreaming(
 
 /**
  * Saves a recipe to the database.
+ * Validates recipe completeness before saving to prevent malformed AI output from being persisted.
  * @param userId - User ID
  * @param structuredRecipe - Recipe data to save
  * @returns Promise that resolves when save completes
+ * @throws AppError if recipe validation fails or save operation fails
  */
 export async function saveRecipeToDatabase(
   userId: string,
   structuredRecipe: RecipeStructure
 ): Promise<void> {
+  // Validate that recipe has all required fields before saving
+  const validationResult = completeRecipeStructureSchema.safeParse(structuredRecipe);
+  if (!validationResult.success) {
+    logError("Recipe validation failed before save", new Error("Incomplete recipe data"), {
+      userId,
+      validationErrors: validationResult.error.flatten(),
+    });
+    throw new AppError(
+      "Recipe is incomplete and cannot be saved. Please regenerate the recipe.",
+      "RECIPE_VALIDATION_FAILED",
+      { userId }
+    );
+  }
+
   const markdown = convertToMarkdown(structuredRecipe);
   
   try {

@@ -3,9 +3,6 @@ import type { RecipeStructure } from "../schemas/recipe";
 /**
  * Markdown utilities for recipe content.
  * Converts structured recipe data to markdown format for display.
- * 
- * Note: Markdown parsing (markdown → structured) has been moved to
- * markdown-parsing-legacy.ts as it's only used for fallback scenarios.
  */
 
 // ============================================================================

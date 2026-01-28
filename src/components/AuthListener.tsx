@@ -63,14 +63,35 @@ export function AuthListener(): React.ReactElement | null {
   const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
+    /*
+     * Initialize unsubscribe as no-op function to ensure cleanup always works.
+     * 
+     * Why: If onIdTokenChanged throws during initialization, cleanup would fail
+     * without this because unsubscribe would be undefined.
+     */
+    let unsubscribe: (() => void) = () => {};
     
     try {
       unsubscribe = onIdTokenChanged(auth, async (user) => {
-        // Increment version to invalidate previous operations
+        /*
+         * Increment version to invalidate previous operations.
+         * 
+         * Failure scenario prevented:
+         * 1. User signs in → version becomes 1, starts token fetch
+         * 2. User immediately signs out → version becomes 2
+         * 3. Old token fetch (version 1) completes
+         * 4. Without version check: stale token would be set, user stays "logged in"
+         * 5. With version check: stale operation detects version mismatch and aborts
+         */
         const currentVersion = ++versionRef.current;
         
-        // Cancel any pending token operations from previous auth events
+        /*
+         * Cancel any pending token operations from previous auth events.
+         * 
+         * Why AbortController: Provides a standard way to cancel async operations
+         * like fetch() calls. When aborted, any in-flight getIdToken() requests
+         * will be cancelled, preventing unnecessary work.
+         */
         controllerRef.current?.abort();
         const controller = new AbortController();
         controllerRef.current = controller;
@@ -78,23 +99,38 @@ export function AuthListener(): React.ReactElement | null {
         setUser(user);
 
         if (!user) {
+          // User signed out: clear all auth state immediately
           clearAuthCookie();
           clearPersistedState();
           setLoading(false);
           return;
         }
 
+        /*
+         * User signed in: fetch and store auth token.
+         * 
+         * This is async, so we pass version and controller to detect if this
+         * operation becomes stale before it completes (see syncAuthToken guards).
+         */
         await syncAuthToken(user, currentVersion, versionRef, controller, setLoading);
       });
     } catch (error) {
+      /*
+       * Initialization failure handling.
+       * 
+       * This catch block handles Firebase SDK initialization errors, not runtime
+       * auth state changes. If we reach here, the entire auth system is broken
+       * (e.g., invalid Firebase config, network unreachable).
+       */
       logError("Firebase authentication initialization failed", error);
       setInitError("Authentication system unavailable. Please refresh the page.");
       setLoading(false);
     }
 
     return () => {
+      // Cleanup: cancel in-flight operations and unsubscribe from auth changes
       controllerRef.current?.abort();
-      unsubscribe?.();
+      unsubscribe();
     };
   }, [setUser, setLoading, clearPersistedState]);
 

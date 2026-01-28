@@ -7,7 +7,7 @@ import type { RecipeMode } from "@/lib/schemas/recipe";
 import {
   specificRecipeInputSchema,
   ingredientsRecipeInputSchema,
-} from "@/lib/schemas/validation";
+} from "@/lib/schemas/recipe";
 import { RECIPE_PROMPTS } from "@/app/generate/constants";
 import { generateRecipeWithStreaming } from "@/lib/services/recipe-service";
 import { UI_TIMING } from "@/lib/constants/ui";
