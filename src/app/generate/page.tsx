@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 import { PageLayout } from "@/components/PageLayout";
@@ -8,7 +8,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useRecipeStore } from "@/lib/store/recipe-store";
 import { selectDisplayRecipe } from "@/lib/store/recipe-selectors";
 import { useAuthStore } from "@/lib/store/auth-store";
-import { useUserProfileStore } from "@/lib/store/user-profile-store";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { useRecipeGeneration } from "@/hooks/useRecipeGeneration";
 import { useRecipeSave } from "@/hooks/useRecipeSave";
 
@@ -21,8 +21,10 @@ import { Mode } from "./types";
 export default function Generate() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { userProfile, fetchUserProfile } = useUserProfileStore();
   const userId = user?.uid;
+
+  // Custom hook for user profile (handles fetching automatically)
+  const { userProfile } = useUserProfile(userId);
 
   const {
     structuredRecipe,
@@ -51,13 +53,6 @@ export default function Generate() {
     saved,
   } = useRecipeSave();
 
-  // Fetch user profile when user ID changes
-  useEffect(() => {
-    if (userId) {
-      fetchUserProfile(userId);
-    }
-  }, [userId, fetchUserProfile]);
-
   const handleSave = useCallback(async () => {
     if (userId) {
       await saveRecipe(userId);
@@ -70,6 +65,9 @@ export default function Generate() {
     setMode(null);
     resetRecipe();
   }, [setMode, resetRecipe]);
+
+  // Compute display recipe once to avoid repeated selector calls
+  const displayRecipe = structuredRecipe ? selectDisplayRecipe(structuredRecipe) : null;
 
   return (
     <PageLayout title="Generate Recipe">
@@ -96,10 +94,10 @@ export default function Generate() {
             {validationError && <ErrorMessage message={validationError} />}
             {generationError && <ErrorMessage message={generationError} />}
 
-            {structuredRecipe && (
+            {displayRecipe && (
               <ErrorBoundary variant="feature" featureName="Recipe Display">
                 <RecipeDisplay
-                  parsedRecipe={selectDisplayRecipe(structuredRecipe)!}
+                  parsedRecipe={displayRecipe}
                   onSave={handleSave}
                   isSaving={isSaving}
                   saved={saved}

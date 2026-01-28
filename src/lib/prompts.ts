@@ -1,4 +1,4 @@
-import { SerializableUserProfile } from "./schemas/user";
+import type { SerializableUserProfile } from "./schemas/user";
 
 /**
  * AI prompt construction utilities.
@@ -15,30 +15,47 @@ export function getRecipeSystemPrompt(
   isIngredientBased: boolean,
   userProfile?: SerializableUserProfile | null
 ): string {
+  const sections: string[] = [];
+
+  // 1. Role and objective
+  sections.push("You are a professional chef and recipe expert. Create a delicious recipe based on the user's request.");
+
+  // 2. User preferences (if any)
   const preferences = buildUserPreferencesLines(userProfile);
-  const modeInstructions = isIngredientBased
-    ? "The user will provide a list of ingredients they have. Suggest a recipe that uses these ingredients, adding only common pantry staples if necessary."
-    : "The user will describe what they want to eat.";
+  if (preferences.length > 0) {
+    sections.push("");
+    sections.push("Consider the following user preferences:");
+    sections.push(...preferences);
+  } else {
+    sections.push("");
+    sections.push("No specific user preferences provided.");
+  }
 
-  const preferencesSection = preferences.length > 0
-    ? `Consider the following user preferences:\n${preferences.join("\n")}`
-    : "No specific user preferences provided.";
+  // 3. Experience-based complexity
+  sections.push("");
+  sections.push("Adjust recipe complexity based on cooking experience.");
 
-  return `You are a professional chef and recipe expert. Create a delicious recipe based on the user's request.
-  
-${preferencesSection}
+  // 4. Allergen handling rules
+  sections.push("");
+  sections.push("Allergen handling rules:");
+  sections.push("- Only avoid allergens that are explicitly listed under \"Allergies (MUST AVOID)\" above.");
+  sections.push("- Do not proactively remove/replace common allergens (e.g. peanuts, dairy, gluten) unless they appear in the user's listed allergies.");
+  sections.push("- If the user explicitly asks for an ingredient that is a common allergen (e.g. \"peanut butter\"), include it as requested unless it conflicts with the user's listed allergies.");
 
-Adjust recipe complexity based on cooking experience.
+  // 5. Mode-specific instructions
+  sections.push("");
+  if (isIngredientBased) {
+    sections.push("The user will provide a list of ingredients they have. Suggest a recipe that uses these ingredients, adding only common pantry staples if necessary.");
+  } else {
+    sections.push("The user will describe what they want to eat.");
+  }
 
-Allergen handling rules:
-- Only avoid allergens that are explicitly listed under "Allergies (MUST AVOID)" above.
-- Do not proactively remove/replace common allergens (e.g. peanuts, dairy, gluten) unless they appear in the user's listed allergies.
-- If the user explicitly asks for an ingredient that is a common allergen (e.g. "peanut butter"), include it as requested unless it conflicts with the user's listed allergies.
+  // 6. Output format instructions
+  sections.push("");
+  sections.push("Generate the response as a structured JSON object matching the schema.");
+  sections.push("If a numeric or nutrition field is unknown, set it to null (do not omit keys).");
 
-${modeInstructions}
-
-Generate the response as a structured JSON object matching the schema.
-If a numeric or nutrition field is unknown, set it to null (do not omit keys).`;
+  return sections.join("\n");
 }
 
 /**

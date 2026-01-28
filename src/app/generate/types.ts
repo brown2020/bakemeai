@@ -1,11 +1,11 @@
-import { FormEvent } from "react";
-import { ParsedRecipe, RecipeModeNullable } from "@/lib/schemas/recipe";
+import type { FormEvent } from "react";
+import type { ParsedRecipe, RecipeMode } from "@/lib/schemas/recipe";
 
 /**
  * Type aliases for backwards compatibility with local naming conventions.
  * The canonical types are defined in @/lib/schemas/recipe.
  */
-export type Mode = RecipeModeNullable;
+export type Mode = RecipeMode | null;
 
 export interface FormInputProps {
   label: string;

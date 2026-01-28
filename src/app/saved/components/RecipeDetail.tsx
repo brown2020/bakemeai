@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Recipe } from "@/lib/schemas/recipe";
+import type { Recipe } from "@/lib/schemas/recipe";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
 interface RecipeDetailProps {

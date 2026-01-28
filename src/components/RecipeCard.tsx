@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { Trash2 } from "lucide-react";
 import clsx from "clsx";
-import { Recipe } from "@/lib/schemas/recipe";
+import type { Recipe } from "@/lib/schemas/recipe";
 import { RECIPE } from "@/lib/constants/ui";
 
 interface RecipeCardProps {

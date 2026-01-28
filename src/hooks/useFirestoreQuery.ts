@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef, Dispatch, SetStateAction } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { logError } from "@/lib/utils/logger";
 
 interface UseFirestoreQueryOptions<T> {
@@ -31,11 +32,8 @@ interface UseFirestoreQueryReturn<T> {
  * Generic hook for querying Firestore with consistent error handling and loading states.
  * Provides a clean abstraction over Firestore operations.
  * 
- * Benefits over useLoadData:
- * - More descriptive naming (queryFn vs loadFn)
- * - Supports optimistic updates via setData
- * - Optional enabled flag for conditional queries
- * - Better TypeScript inference
+ * Handles unstable queryFn and logContext references automatically using refs
+ * to prevent infinite re-fetching loops.
  * 
  * @example
  * const { data: recipes, isLoading, error, refetch } = useFirestoreQuery({
@@ -54,13 +52,16 @@ export function useFirestoreQuery<T>({
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Use ref to avoid infinite loop when queryFn is not memoized by caller
+
+  // Use refs to avoid infinite loops from unstable function/object references
   const queryFnRef = useRef(queryFn);
-  
+  const logContextRef = useRef(logContext);
+
+  // Update refs when values change
   useEffect(() => {
     queryFnRef.current = queryFn;
-  }, [queryFn]);
+    logContextRef.current = logContext;
+  }, [queryFn, logContext]);
 
   const fetchData = useCallback(async () => {
     if (!userId || !enabled) {
@@ -77,7 +78,7 @@ export function useFirestoreQuery<T>({
     } catch (err) {
       logError(`Firestore query error: ${errorMessage}`, err, {
         userId,
-        ...logContext,
+        ...logContextRef.current,
       });
       setError(errorMessage);
     } finally {

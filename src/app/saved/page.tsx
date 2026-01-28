@@ -9,8 +9,9 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useFirestoreQuery } from "@/hooks/useFirestoreQuery";
 import { getUserRecipes, deleteRecipe } from "@/lib/db";
-import { Recipe } from "@/lib/schemas/recipe";
-import { logAndConvertError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
+import type { Recipe } from "@/lib/schemas/recipe";
+import { convertErrorToMessage, ERROR_MESSAGES } from "@/lib/utils/error-handler";
+import { logError } from "@/lib/utils/logger";
 
 import { RecipeSearch } from "./components/RecipeSearch";
 import { RecipeList } from "./components/RecipeList";
@@ -64,11 +65,9 @@ export default function Saved() {
     setRecipeToDelete(null);
 
     // Clear selected recipe if it's the one being deleted
-    // Functional update prevents stale closure over selectedRecipe
     setSelectedRecipe((prev) => (prev?.id === recipeId ? null : prev));
 
     // Optimistic update: remove recipe from local state immediately
-    // Functional update prevents stale closure over recipes array - critical for callbacks
     setRecipes((currentRecipes) => {
       if (!currentRecipes) return currentRecipes;
       return currentRecipes.filter((r) => r.id !== recipeId);
@@ -77,12 +76,8 @@ export default function Saved() {
     try {
       await deleteRecipe(recipeId);
     } catch (error) {
-      const message = logAndConvertError(
-        error,
-        "Error deleting recipe",
-        { recipeId },
-        ERROR_MESSAGES.RECIPE.DELETE_FAILED
-      );
+      logError("Error deleting recipe", error, { recipeId });
+      const message = convertErrorToMessage(error, ERROR_MESSAGES.RECIPE.DELETE_FAILED);
       setDeleteError(message);
       // On error, refetch from server to restore actual state
       await refetch();

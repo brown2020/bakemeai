@@ -1,8 +1,9 @@
-import { useCallback, useRef, useState, FormEvent } from "react";
+import { useCallback, useRef, useState } from "react";
+import type { FormEvent } from "react";
 import { useRecipeStore } from "@/lib/store/recipe-store";
 import { useDebounce } from "@/hooks/useDebounce";
-import { SerializableUserProfile } from "@/lib/schemas/user";
-import { RecipeMode, RecipeModeNullable } from "@/lib/schemas/recipe";
+import type { SerializableUserProfile } from "@/lib/schemas/user";
+import type { RecipeMode } from "@/lib/schemas/recipe";
 import {
   specificRecipeInputSchema,
   ingredientsRecipeInputSchema,
@@ -47,7 +48,7 @@ export interface UseRecipeGenerationReturn {
   validationError: string | null;
   input: string;
   ingredients: string;
-  mode: RecipeModeNullable;
+  mode: RecipeMode | null;
   setInput: (input: string) => void;
   setIngredients: (ingredients: string) => void;
   handleGenerate: (e: FormEvent) => Promise<void>;

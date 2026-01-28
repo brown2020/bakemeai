@@ -22,11 +22,6 @@ import { requiredTimestampSchema } from "../utils/firestore";
  */
 export type RecipeMode = "specific" | "ingredients";
 
-/**
- * Recipe mode with nullable option for UI state.
- */
-export type RecipeModeNullable = RecipeMode | null;
-
 // ============================================================================
 // BASE SCHEMAS
 // ============================================================================
@@ -109,38 +104,6 @@ export const completeRecipeStructureSchema = z.object({
     fat: z.string().nullable(),
   }).nullable().optional(),
 });
-
-// ============================================================================
-// AI SCHEMAS
-// ============================================================================
-
-/**
- * Recipe fields for AI generation with describe() annotations.
- * Used by OpenAI structured output to understand field purpose.
- * 
- * DESIGN NOTE: `as const` usage
- * - This is an object of Zod schemas (not a Zod schema itself)
- * - Used in recipe-generation.server.ts: z.object(aiRecipeFields).strict()
- * - `as const` prevents TypeScript from widening field types
- * - Other schemas don't need `as const` because they're already Zod schemas
- * - This pattern allows field reuse while maintaining strict typing
- */
-export const aiRecipeFields = {
-  title: z.string().describe("The title of the recipe"),
-  preparationTime: z.string().describe("Time needed for preparation (e.g. '15 mins')"),
-  cookingTime: z.string().describe("Time needed for cooking (e.g. '45 mins')"),
-  servings: z.number().describe("Number of people served"),
-  difficulty: z.enum(["Easy", "Moderate", "Advanced"]).describe("Difficulty level"),
-  ingredients: z.array(z.string()).describe("List of ingredients with measurements"),
-  instructions: z.array(z.string()).describe("Step-by-step cooking instructions"),
-  tips: z.array(z.string()).describe("Helpful cooking tips"),
-  calories: z.number().nullable().describe("Approximate calories per serving (use null if unknown)"),
-  macros: z.object({
-    protein: z.string().nullable().describe("Protein per serving (use null if unknown)"),
-    carbs: z.string().nullable().describe("Carbs per serving (use null if unknown)"),
-    fat: z.string().nullable().describe("Fat per serving (use null if unknown)"),
-  }).strict().nullable().describe("Macronutrients per serving (use null if unknown)"),
-} as const;
 
 // ============================================================================
 // TYPE EXPORTS

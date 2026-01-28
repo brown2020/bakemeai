@@ -38,17 +38,14 @@ Application constants:
 ### Error Handling
 Always use the standardized error handler:
 ```typescript
-import { logAndConvertError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
+import { convertErrorToMessage, ERROR_MESSAGES } from "@/lib/utils/error-handler";
+import { logError } from "@/lib/utils/logger";
 
 try {
   await operation();
 } catch (error) {
-  const message = logAndConvertError(
-    error,
-    "Log message for debugging",
-    { contextKey: value },
-    ERROR_MESSAGES.CATEGORY.ERROR_TYPE
-  );
+  logError("Log message for debugging", error, { contextKey: value });
+  const message = convertErrorToMessage(error, ERROR_MESSAGES.CATEGORY.ERROR_TYPE);
   throw new Error(message);
 }
 ```

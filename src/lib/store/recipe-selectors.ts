@@ -1,5 +1,5 @@
-import { RecipeStructure, ParsedRecipe } from "@/lib/schemas/recipe";
-import { convertToMarkdown, buildMarkdownBody } from "@/lib/utils/markdown";
+import type { RecipeStructure, ParsedRecipe } from "@/lib/schemas/recipe";
+import { formatRecipeBodyAsMarkdown } from "@/lib/utils/markdown";
 
 /**
  * Recipe store selectors - pure functions for deriving data from store state.
@@ -30,23 +30,6 @@ export function selectDisplayRecipe(
   }
   
   const title = structuredRecipe.title ?? "";
-  const content = buildMarkdownBody(structuredRecipe);
+  const content = formatRecipeBodyAsMarkdown(structuredRecipe);
   return { title, content, structuredData: structuredRecipe };
-}
-
-/**
- * Converts structured recipe to full markdown format.
- * Returns complete markdown including title and body.
- * 
- * @param structuredRecipe - The structured recipe data from store
- * @returns Full markdown string, or empty string if no recipe available
- */
-export function selectMarkdown(
-  structuredRecipe: RecipeStructure | null
-): string {
-  if (!structuredRecipe) {
-    return "";
-  }
-  
-  return convertToMarkdown(structuredRecipe);
 }

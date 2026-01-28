@@ -71,23 +71,6 @@ export const ERROR_MESSAGES = {
 } as const;
 
 /**
- * Converts an error to a typed Error object.
- * Handles Error instances, error-like objects, and primitives.
- * 
- * @param error - The error to convert
- * @returns A typed Error or AppError instance
- */
-function toTypedError(error: unknown): Error | AppError {
-  if (error instanceof Error) {
-    return error;
-  }
-  if (error && typeof error === "object" && "message" in error) {
-    return new Error(String((error as { message: unknown }).message));
-  }
-  return new Error(String(error));
-}
-
-/**
  * Converts an error to a user-friendly message.
  * Extracts message from AppError if available, otherwise uses fallback.
  * 
@@ -96,7 +79,15 @@ function toTypedError(error: unknown): Error | AppError {
  * @returns User-friendly error message suitable for display
  */
 export function convertErrorToMessage(error: unknown, fallbackMessage: string): string {
-  const typedError = toTypedError(error);
+  // Convert to typed error for consistent handling
+  let typedError: Error | AppError;
+  if (error instanceof Error) {
+    typedError = error;
+  } else if (error && typeof error === "object" && "message" in error) {
+    typedError = new Error(String((error as { message: unknown }).message));
+  } else {
+    typedError = new Error(String(error));
+  }
   
   // If it's an AppError with a user-friendly message, prefer that
   if (isAppError(typedError) && typedError.message) {
@@ -104,38 +95,4 @@ export function convertErrorToMessage(error: unknown, fallbackMessage: string): 
   }
   
   return fallbackMessage;
-}
-
-/**
- * Logs error details and returns a user-friendly message.
- * Convenience function that combines logging and conversion.
- * 
- * COMPOSITION: This is a convenience wrapper around:
- * - logError() - logs technical details for debugging
- * - convertErrorToMessage() - extracts user-friendly message
- * 
- * When to use:
- * - Use this when you need both logging and a user message (common case)
- * - Use convertErrorToMessage() alone if error is already logged elsewhere
- * - Use logError() alone if you don't need a user message
- * 
- * @param error - The error (can be any type from catch blocks)
- * @param logMessage - The message to log for debugging
- * @param context - Additional context for debugging (e.g., userId, recipeId)
- * @param userMessage - The fallback message to show to the user
- * @returns The user-friendly error message
- */
-export function logAndConvertError(
-  error: unknown,
-  logMessage: string,
-  context: ErrorContext,
-  userMessage: string
-): string {
-  const typedError = toTypedError(error);
-  
-  // Log with full technical details for developers
-  logError(logMessage, typedError, context);
-  
-  // Convert to user-friendly message
-  return convertErrorToMessage(error, userMessage);
 }

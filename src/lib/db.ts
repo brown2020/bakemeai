@@ -39,25 +39,27 @@ import {
 import { z } from "zod";
 
 import { db } from "./firebase";
-import {
+import type {
   Recipe,
   RecipeStructure,
   CompleteRecipeStructure,
+} from "./schemas/recipe";
+import {
   recipeSchema,
   completeRecipeStructureSchema,
 } from "./schemas/recipe";
-import {
+import type {
   UserProfile,
   UserProfileInput,
-  userProfileSchema,
 } from "./schemas/user";
+import { userProfileSchema } from "./schemas/user";
 import { COLLECTIONS } from "./constants/domain";
 import {
   extractTitle,
   extractIngredients,
   extractField,
   extractServings,
-} from "./utils/markdown";
+} from "./utils/markdown-parsing-legacy";
 import { getFirestoreErrorMessage } from "./utils/firestore";
 import { AppError, ERROR_MESSAGES } from "./utils/error-handler";
 import { sanitizeUserInput } from "./utils/sanitize";
@@ -84,21 +86,15 @@ interface SaveRecipeParams {
  * @param params.structuredData - Optional structured recipe data from AI generation
  * @returns The saved recipe with generated ID
  */
-/**
- * Checks if structured data is complete and valid.
- */
-function hasCompleteStructuredData(data?: RecipeStructure): data is CompleteRecipeStructure {
-  if (!data) return false;
-  return completeRecipeStructureSchema.safeParse(data).success;
-}
-
 export async function saveRecipe({
   userId,
   content,
   structuredData,
 }: SaveRecipeParams): Promise<Recipe> {
   try {
-    const useStructured = hasCompleteStructuredData(structuredData);
+    // Check if structured data is complete and valid
+    const useStructured = structuredData != null && 
+      completeRecipeStructureSchema.safeParse(structuredData).success;
 
     const title = useStructured 
       ? structuredData.title 

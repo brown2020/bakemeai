@@ -12,15 +12,16 @@ import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useFirestoreQuery } from "@/hooks/useFirestoreQuery";
 import { getUserProfile, saveUserProfile } from "@/lib/db";
-import { UserProfileInput } from "@/lib/schemas/user";
+import type { UserProfileInput } from "@/lib/schemas/user";
+import type { CookingExperience } from "@/lib/constants/domain";
 import {
   DIETARY_OPTIONS,
   CUISINE_OPTIONS,
   EXPERIENCE_LEVELS,
-  CookingExperience,
 } from "@/lib/constants/domain";
 import { UI_TIMING, NUMBER_INPUT } from "@/lib/constants/ui";
-import { logAndConvertError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
+import { convertErrorToMessage, ERROR_MESSAGES } from "@/lib/utils/error-handler";
+import { logError } from "@/lib/utils/logger";
 
 export default function Profile() {
   const { user } = useAuthStore();
@@ -72,12 +73,8 @@ export default function Profile() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), UI_TIMING.SUCCESS_MESSAGE_DURATION);
     } catch (error) {
-      const message = logAndConvertError(
-        error,
-        "Error saving user profile",
-        { userId: user?.uid },
-        ERROR_MESSAGES.PROFILE.SAVE_FAILED
-      );
+      logError("Error saving user profile", error, { userId: user?.uid });
+      const message = convertErrorToMessage(error, ERROR_MESSAGES.PROFILE.SAVE_FAILED);
       setSaveError(message);
     } finally {
       setSaving(false);

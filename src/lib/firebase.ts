@@ -5,9 +5,9 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { logError, logWarning } from "./utils/logger";
 
 /**
- * Checks for missing Firebase environment variables and logs warnings.
- * Does not throw to avoid race conditions with Next.js 16 + Turbopack env loading.
- * Firebase SDK will fail gracefully with clear errors if config is actually missing.
+ * Checks for missing Firebase environment variables.
+ * In production: Throws error to fail fast (missing config = non-functional app).
+ * In development: Logs warning to avoid race conditions with Turbopack env loading.
  */
 function checkFirebaseConfig(): void {
   const requiredEnvVars = [
@@ -27,10 +27,14 @@ function checkFirebaseConfig(): void {
     const message = `Missing Firebase environment variables: ${missingVars.join(", ")}`;
     
     if (process.env.NODE_ENV === "production") {
-      // Structured logging for production monitoring
+      // Production: Fail fast with clear error
       logError(message, undefined, { missingVars });
+      throw new Error(
+        `Firebase configuration error: ${message}. ` +
+        "Please ensure all required environment variables are set in your deployment configuration."
+      );
     } else {
-      // Friendly warning for development (don't throw due to Turbopack timing)
+      // Development: Log warning (don't throw due to Turbopack env loading timing)
       logWarning(
         `${message}\nPlease check your .env.local file and ensure all Firebase configuration is set.`,
         { missingVars }

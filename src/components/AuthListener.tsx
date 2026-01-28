@@ -1,13 +1,54 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { onIdTokenChanged } from "firebase/auth";
+import { onIdTokenChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { clearAuthCookie } from "@/lib/utils/auth-cookies";
 import { setUserAuthToken } from "@/lib/utils/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useRecipeStore } from "@/lib/store/recipe-store";
 import { logError } from "@/lib/utils/logger";
+
+/**
+ * Syncs user auth token to cookie with race condition protection.
+ * 
+ * RACE CONDITION HANDLING:
+ * Uses version tracking + abort controller to handle rapid auth state changes:
+ * - versionRef: Incremented on each auth event, invalidates stale operations
+ * - AbortController: Cancels pending async operations from previous events
+ * - Double-check before state updates: Ensures only the latest event updates state
+ * 
+ * Why needed: If user signs out then back in quickly, we don't want the signout
+ * token operation to complete after the new signin, wiping the fresh token.
+ */
+async function syncAuthToken(
+  user: User,
+  currentVersion: number,
+  versionRef: React.MutableRefObject<number>,
+  controller: AbortController,
+  setLoading: (loading: boolean) => void
+): Promise<void> {
+  const uid = user.uid;
+
+  try {
+    await setUserAuthToken(user);
+    
+    // Guard: Check if this operation is stale (newer auth event occurred)
+    if (currentVersion !== versionRef.current) return;
+    if (controller.signal.aborted) return;
+  } catch (error) {
+    // Guard: Ignore abort errors and stale operations
+    if (currentVersion !== versionRef.current) return;
+    if (controller.signal.aborted) return;
+    
+    logError("Failed to set auth token", error, { uid });
+  } finally {
+    // Only update loading state if this is still the current operation
+    if (currentVersion === versionRef.current && !controller.signal.aborted) {
+      setLoading(false);
+    }
+  }
+}
 
 /**
  * Authentication listener component.
@@ -26,44 +67,25 @@ export function AuthListener(): React.ReactElement | null {
     
     try {
       unsubscribe = onIdTokenChanged(auth, async (user) => {
-      // Increment version to invalidate previous operations
-      const currentVersion = ++versionRef.current;
-      
-      // Cancel any pending token operations from previous auth events
-      controllerRef.current?.abort();
-      const controller = new AbortController();
-      controllerRef.current = controller;
-
-      setUser(user);
-
-      if (!user) {
-        clearAuthCookie();
-        clearPersistedState();
-        setLoading(false);
-        return;
-      }
-
-      const uid = user.uid;
-
-      try {
-        await setUserAuthToken(user);
+        // Increment version to invalidate previous operations
+        const currentVersion = ++versionRef.current;
         
-        // Check if this operation is stale (newer auth event occurred)
-        if (currentVersion !== versionRef.current) return;
-        if (controller.signal.aborted) return;
-      } catch (error) {
-        // Ignore abort errors and stale operations - they're expected when auth state changes
-        if (currentVersion !== versionRef.current) return;
-        if (controller.signal.aborted) return;
-        
-        logError("Failed to set auth token", error, { uid });
-      } finally {
-        // Only update loading state if this is still the current operation
-        if (currentVersion === versionRef.current && !controller.signal.aborted) {
+        // Cancel any pending token operations from previous auth events
+        controllerRef.current?.abort();
+        const controller = new AbortController();
+        controllerRef.current = controller;
+
+        setUser(user);
+
+        if (!user) {
+          clearAuthCookie();
+          clearPersistedState();
           setLoading(false);
+          return;
         }
-      }
-    });
+
+        await syncAuthToken(user, currentVersion, versionRef, controller, setLoading);
+      });
     } catch (error) {
       logError("Firebase authentication initialization failed", error);
       setInitError("Authentication system unavailable. Please refresh the page.");

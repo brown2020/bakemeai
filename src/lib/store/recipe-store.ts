@@ -11,15 +11,14 @@
  * SELECTORS:
  * For derived data, use selector functions instead of store methods:
  * - selectDisplayRecipe(structuredRecipe) - converts to display format
- * - selectMarkdown(structuredRecipe) - converts to markdown
  * 
  * See: recipe-selectors.ts for pure selector functions
  */
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { RecipeStructure, ParsedRecipe, RecipeModeNullable } from "@/lib/schemas/recipe";
-import { convertToMarkdown, buildMarkdownBody } from "@/lib/utils/markdown";
+import type { RecipeStructure, ParsedRecipe, RecipeMode } from "@/lib/schemas/recipe";
+import { convertToMarkdown, formatRecipeBodyAsMarkdown } from "@/lib/utils/markdown";
 
 interface RecipeState {
   // Single source of truth for recipe data
@@ -32,7 +31,7 @@ interface RecipeState {
   // Input State (persisted)
   input: string;
   ingredients: string;
-  mode: RecipeModeNullable;
+  mode: RecipeMode | null;
 
   // Saving State
   isSaving: boolean;
@@ -42,7 +41,7 @@ interface RecipeState {
   // State setters (pure state management, no orchestration)
   setInput: (input: string) => void;
   setIngredients: (ingredients: string) => void;
-  setMode: (mode: RecipeModeNullable) => void;
+  setMode: (mode: RecipeMode | null) => void;
   setStructuredRecipe: (recipe: RecipeStructure | null) => void;
   setGenerating: (isGenerating: boolean) => void;
   setGenerationError: (error: string | null) => void;
@@ -73,7 +72,7 @@ export const useRecipeStore = create<RecipeState>()(
       setIngredients: (ingredients: string) => {
         set({ ingredients });
       },
-      setMode: (mode: RecipeModeNullable) => {
+      setMode: (mode: RecipeMode | null) => {
         set({
           mode,
           structuredRecipe: null,

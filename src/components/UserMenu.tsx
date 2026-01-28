@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { User } from "firebase/auth";
+import type { User } from "firebase/auth";
 
 interface UserMenuProps {
   user: User;

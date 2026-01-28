@@ -5,16 +5,30 @@ import { streamObject } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 
-import { SerializableUserProfile } from "./schemas/user";
-import { aiRecipeFields } from "./schemas/recipe";
+import type { SerializableUserProfile } from "./schemas/user";
 import { getRecipeSystemPrompt } from "./prompts";
 
 /**
  * Schema for AI-generated recipe structure.
- * Uses base recipe fields with .describe() annotations for AI context.
+ * Uses .describe() annotations to provide context for the AI model.
  * OpenAI strict schema requires all fields to be required and additionalProperties: false.
  */
-const recipeGenerationSchema = z.object(aiRecipeFields).strict();
+const recipeGenerationSchema = z.object({
+  title: z.string().describe("The title of the recipe"),
+  preparationTime: z.string().describe("Time needed for preparation (e.g. '15 mins')"),
+  cookingTime: z.string().describe("Time needed for cooking (e.g. '45 mins')"),
+  servings: z.number().describe("Number of people served"),
+  difficulty: z.enum(["Easy", "Moderate", "Advanced"]).describe("Difficulty level"),
+  ingredients: z.array(z.string()).describe("List of ingredients with measurements"),
+  instructions: z.array(z.string()).describe("Step-by-step cooking instructions"),
+  tips: z.array(z.string()).describe("Helpful cooking tips"),
+  calories: z.number().nullable().describe("Approximate calories per serving (use null if unknown)"),
+  macros: z.object({
+    protein: z.string().nullable().describe("Protein per serving (use null if unknown)"),
+    carbs: z.string().nullable().describe("Carbs per serving (use null if unknown)"),
+    fat: z.string().nullable().describe("Fat per serving (use null if unknown)"),
+  }).strict().nullable().describe("Macronutrients per serving (use null if unknown)"),
+}).strict();
 
 /**
  * Generates a recipe using AI based on user input and preferences.

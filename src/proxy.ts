@@ -1,3 +1,23 @@
+/**
+ * Next.js 16 Proxy - handles route protection at the edge.
+ * 
+ * SECURITY MODEL:
+ * This proxy validates JWT expiry claims WITHOUT signature verification.
+ * Signature verification requires Firebase Admin SDK (Node.js runtime), which
+ * is unavailable in Edge runtime where proxy.ts executes.
+ * 
+ * RISK ACCEPTANCE:
+ * - Unsigned validation is intentional for this use case
+ * - Primary purpose: Prevent flash of protected content and improve UX
+ * - Security boundary: All API/data access verified server-side via Firestore rules
+ * - Impact: Attacker with forged token could briefly see protected UI shells (no data)
+ * 
+ * For stricter edge protection, consider:
+ * - Moving to Node.js runtime with Firebase Admin SDK
+ * - Using session tokens instead of Firebase JWTs
+ * - Implementing API-based auth checks before rendering
+ */
+
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import {
@@ -53,27 +73,13 @@ function base64UrlToUtf8(input: string): string {
 }
 
 /**
- * Checks if a JWT token's expiry claim is still valid.
- * 
- * SECURITY NOTE: This only validates the expiry claim, NOT the signature.
- * Signature verification requires Firebase Admin SDK server-side.
- * 
- * RISK ACCEPTANCE: Unsigned validation is intentional for this use case.
- * - Proxy runs on Edge runtime where Firebase Admin SDK is unavailable
- * - Primary purpose: prevent flash of protected content and improve UX
- * - Security boundary: All API calls verify tokens server-side via Firebase
- * - Mitigation: Malicious tokens cannot access actual data (Firestore rules + server validation)
- * - Impact: Attacker could briefly see protected UI shells, but no sensitive data
- * 
- * For applications requiring stricter edge protection, consider:
- * - Moving to Node.js runtime with Firebase Admin SDK
- * - Using Next.js middleware with session tokens instead of Firebase JWTs
- * - Implementing API-based auth checks before rendering
+ * Checks if a JWT token's expiry claim is still valid (unsigned validation).
+ * Does NOT verify signature - see proxy.ts header for security model.
  * 
  * @param token - The JWT token to check
  * @returns True if the token has a valid, unexpired exp claim
  */
-function hasUnexpiredJwtClaim(token: string): boolean {
+function hasUnexpiredJwtClaimUnsigned(token: string): boolean {
   const payload = parseJwtPayload(token);
   if (!payload?.exp) return false;
   
@@ -94,7 +100,7 @@ interface FirebaseJwtPayload {
 /**
  * Parses a JWT token and extracts its payload.
  * Returns null if the token is malformed or cannot be parsed.
- * Does not validate signature or expiry—use hasUnexpiredJwtClaim for expiry validation.
+ * Does not validate signature or expiry—use hasUnexpiredJwtClaimUnsigned for expiry validation.
  * 
  * @param token - The JWT token string
  * @returns The parsed payload or null if invalid
@@ -233,7 +239,7 @@ export function proxy(request: NextRequest) {
     const authToken = request.cookies.get(FIREBASE_AUTH_COOKIE)?.value;
     const cookiePresent = authToken != null;
     const payload = authToken != null ? parseJwtPayload(authToken) : null;
-    const jwtValid = authToken != null && payload != null && hasUnexpiredJwtClaim(authToken);
+    const jwtValid = authToken != null && payload != null && hasUnexpiredJwtClaimUnsigned(authToken);
     const userId = payload?.user_id ?? payload?.sub ?? null;
     const isAuthenticated = cookiePresent && jwtValid;
 
@@ -308,7 +314,7 @@ export default proxy;
 /**
  * Proxy configuration.
  * Note: Must be static for Next.js build-time analysis.
- * Keep in sync with PRIVATE_ROUTES and AUTH_PAGES constants.
+ * Manually kept in sync with PRIVATE_ROUTES and AUTH_PAGES constants.
  */
 export const config = {
   matcher: [
@@ -322,3 +328,19 @@ export const config = {
     "/reset-password",
   ],
 };
+
+// Build-time validation: ensure config stays in sync with constants
+if (process.env.NODE_ENV === "development") {
+  const expectedRoutes = PRIVATE_ROUTES.map((route) => `${route}/:path*`);
+  const expectedMatcher = [...expectedRoutes, ...AUTH_PAGES];
+  
+  const isInSync = config.matcher.length === expectedMatcher.length &&
+    config.matcher.every((route, i) => route === expectedMatcher[i]);
+
+  if (!isInSync) {
+    logError("Proxy config matcher out of sync with constants", undefined, {
+      configMatcher: config.matcher,
+      expectedMatcher,
+    });
+  }
+}

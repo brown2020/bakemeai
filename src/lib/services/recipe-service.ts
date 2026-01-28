@@ -6,11 +6,12 @@
 import { generateRecipe } from "@/lib/recipe-generation.server";
 import { readStreamableValue } from "@ai-sdk/rsc";
 import { saveRecipe as saveRecipeToDb } from "@/lib/db";
-import { SerializableUserProfile } from "@/lib/schemas/user";
-import { RecipeStructure, recipeStructureSchema } from "@/lib/schemas/recipe";
-import { AppError, ERROR_MESSAGES, logAndConvertError } from "@/lib/utils/error-handler";
+import type { SerializableUserProfile } from "@/lib/schemas/user";
+import type { RecipeStructure } from "@/lib/schemas/recipe";
+import { recipeStructureSchema } from "@/lib/schemas/recipe";
+import { AppError, ERROR_MESSAGES, convertErrorToMessage } from "@/lib/utils/error-handler";
 import { convertToMarkdown } from "@/lib/utils/markdown";
-import { logWarning } from "@/lib/utils/logger";
+import { logError, logWarning } from "@/lib/utils/logger";
 
 /**
  * Generates a recipe using AI and streams partial updates.
@@ -45,12 +46,8 @@ export async function generateRecipeWithStreaming(
       }
     }
   } catch (error) {
-    const message = logAndConvertError(
-      error,
-      "Error generating recipe",
-      {},
-      ERROR_MESSAGES.RECIPE.GENERATION_FAILED
-    );
+    logError("Error generating recipe", error, {});
+    const message = convertErrorToMessage(error, ERROR_MESSAGES.RECIPE.GENERATION_FAILED);
     onError(message);
   }
 }
@@ -79,12 +76,8 @@ export async function saveRecipeToDatabase(
       throw error;
     }
     // Otherwise wrap in AppError
-    const message = logAndConvertError(
-      error,
-      "Error saving recipe to database",
-      { userId },
-      ERROR_MESSAGES.RECIPE.SAVE_FAILED
-    );
+    logError("Error saving recipe to database", error, { userId });
+    const message = convertErrorToMessage(error, ERROR_MESSAGES.RECIPE.SAVE_FAILED);
     throw new AppError(message, "RECIPE_SAVE_FAILED", { userId });
   }
 }
