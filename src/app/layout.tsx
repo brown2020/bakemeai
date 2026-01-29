@@ -1,11 +1,11 @@
 /**
  * Root layout - Server Component (Next.js 16 default)
- * 
+ *
  * This layout is intentionally a server component to:
  * - Enable metadata export (only available in server components)
  * - Minimize client-side JavaScript bundle size
  * - Leverage server-side rendering for better performance
- * 
+ *
  * Client-only features (ErrorBoundary, AuthListener, Navbar) are
  * correctly isolated in their own "use client" components.
  */
@@ -18,6 +18,7 @@ import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { AuthListener } from "@/components/AuthListener";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Footer } from "@/components/Footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,18 +27,15 @@ export const metadata: Metadata = {
   description: "AI-powered recipe generation platform",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} flex flex-col min-h-screen`}>
         <ErrorBoundary variant="global">
           <AuthListener />
           <Navbar />
-          <main className="pt-16">{children}</main>
+          <main className="pt-16 flex-grow">{children}</main>
+          <Footer />
         </ErrorBoundary>
       </body>
     </html>
