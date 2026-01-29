@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Wand2, BookMarked, Settings } from "lucide-react";
@@ -16,29 +17,39 @@ import { clearAuthCookie } from "@/lib/utils/auth-cookies";
  * Shows authenticated navigation with user menu or login/signup buttons.
  * Fixed positioning with responsive design.
  */
-export function Navbar() {
-  const { user } = useAuthStore();
-  const { clearPersistedState } = useRecipeStore();
+export const Navbar = memo(function Navbar() {
+  // Use selectors to only subscribe to needed values
+  const user = useAuthStore((state) => state.user);
+  const clearPersistedState = useRecipeStore(
+    (state) => state.clearPersistedState
+  );
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     // Clear client state/cookies immediately to ensure proxy.ts sees a signed-out request.
     clearAuthCookie();
     clearPersistedState();
 
     try {
       await auth.signOut();
+    } catch (error) {
+      console.error("Sign out error:", error);
+      // Continue with redirect even if sign out fails
     } finally {
       // Force a full navigation to drop any prefetched/cached protected route payloads.
       window.location.assign("/login");
     }
-  };
+  }, [clearPersistedState]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white shadow-xs z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
+            <Link
+              href="/"
+              className="flex items-center space-x-2"
+              aria-label="Bake.me Home"
+            >
               <Image
                 src="/logo.png"
                 alt="BakeMe.ai Logo"
@@ -92,4 +103,4 @@ export function Navbar() {
       </div>
     </nav>
   );
-}
+});

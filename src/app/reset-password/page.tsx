@@ -7,7 +7,8 @@ import { PageLayout } from "@/components/PageLayout";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/ui/Input";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
-import { FirebaseError } from "firebase/app";
+import { convertErrorToMessage } from "@/lib/utils/error-handler";
+import { logError } from "@/lib/utils/logger";
 
 export default function ResetPassword() {
   const [email, setEmail] = useState("");
@@ -26,11 +27,12 @@ export default function ResetPassword() {
       setStatus("success");
     } catch (error) {
       setStatus("error");
-      setErrorMessage(
-        (error as FirebaseError).code === "auth/user-not-found"
-          ? "No account found with this email"
-          : "Failed to send reset email. Please try again."
+      logError("Password reset failed", error, { email });
+      const message = convertErrorToMessage(
+        error,
+        "Failed to send reset email. Please try again."
       );
+      setErrorMessage(message);
     }
   };
 

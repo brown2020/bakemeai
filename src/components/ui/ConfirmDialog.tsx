@@ -6,7 +6,7 @@ import { Button } from "@/components/Button";
 interface ConfirmDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   title: string;
   message: string;
   confirmLabel?: string;
@@ -55,9 +55,15 @@ export function ConfirmDialog({
 
   if (!isOpen) return null;
 
-  const handleConfirm = () => {
-    onConfirm();
-    onClose();
+  const handleConfirm = async () => {
+    try {
+      await onConfirm();
+      onClose();
+    } catch (error) {
+      console.error("Confirm action failed:", error);
+      // Re-throw to allow parent to handle
+      throw error;
+    }
   };
 
   return (

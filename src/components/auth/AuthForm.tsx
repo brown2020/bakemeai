@@ -19,7 +19,10 @@ import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { Button } from "@/components/Button";
 import { setUserAuthToken } from "@/lib/utils/auth";
 import { getSafeRedirectPath } from "@/lib/utils/navigation";
-import { convertErrorToMessage, ERROR_MESSAGES } from "@/lib/utils/error-handler";
+import {
+  convertErrorToMessage,
+  ERROR_MESSAGES,
+} from "@/lib/utils/error-handler";
 import { logError } from "@/lib/utils/logger";
 
 import { GoogleSignInButton } from "./GoogleSignInButton";
@@ -33,19 +36,19 @@ interface AuthFormProps {
 
 /**
  * Unified authentication form for login and signup flows.
- * 
+ *
  * Design decision: Single component handles both modes to maximize code reuse.
  * The forms share 80%+ of UI/logic (inputs, validation, Google auth, error handling).
  * Mode-specific differences (remember-me checkbox, email verification) are handled
  * via simple conditionals rather than duplicating the entire form structure.
- * 
+ *
  * Features:
  * - Email/password authentication
  * - Google OAuth integration
  * - Remember-me persistence (login only)
  * - Email verification (signup only)
  * - Consistent error handling and display
- * 
+ *
  * @param mode - Whether this is a login or signup form
  * @param redirectTo - Optional path to redirect to after successful auth
  */
@@ -60,7 +63,8 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
 
   const safeRedirectTo = getSafeRedirectPath(redirectTo);
 
-  const { signInWithGoogle, error: googleError } = useGoogleAuth(safeRedirectTo);
+  const { signInWithGoogle, error: googleError } =
+    useGoogleAuth(safeRedirectTo);
 
   const isLogin = mode === "login";
   const title = isLogin ? "Sign in to Bake.me" : "Create your Bake.me account";
@@ -71,30 +75,6 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
     : "Already have an account? Sign in";
   const altLinkHref = isLogin ? "/signup" : "/login";
 
-  const handleLogin = async () => {
-    await setPersistence(
-      auth,
-      rememberMe ? browserLocalPersistence : browserSessionPersistence
-    );
-    const userCredential = await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-    await setUserAuthToken(userCredential.user);
-  };
-
-  const handleSignup = async () => {
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-    await setUserAuthToken(userCredential.user);
-    await sendEmailVerification(userCredential.user);
-    setVerificationSent(true);
-  };
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
@@ -102,16 +82,39 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
 
     try {
       if (isLogin) {
-        await handleLogin();
+        // Login flow with persistence
+        await setPersistence(
+          auth,
+          rememberMe ? browserLocalPersistence : browserSessionPersistence
+        );
+        const userCredential = await signInWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+        await setUserAuthToken(userCredential.user);
       } else {
-        await handleSignup();
+        // Signup flow with email verification
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+        await setUserAuthToken(userCredential.user);
+        await sendEmailVerification(userCredential.user);
+        setVerificationSent(true);
       }
       router.push(safeRedirectTo);
     } catch (err) {
+      // Log for debugging (server-side only in production)
       logError(`${isLogin ? "Sign in" : "Sign up"} failed`, err, { email });
+
+      // Convert to user-friendly message
       const errorMessage = convertErrorToMessage(
         err,
-        isLogin ? ERROR_MESSAGES.AUTH.SIGN_IN_FAILED : ERROR_MESSAGES.AUTH.GENERIC
+        isLogin
+          ? ERROR_MESSAGES.AUTH.SIGN_IN_FAILED
+          : ERROR_MESSAGES.AUTH.GENERIC
       );
       setError(errorMessage);
     } finally {

@@ -4,7 +4,7 @@ import { CARD_STYLES } from "../constants";
 
 /**
  * Individual mode card component.
- * 
+ *
  * Memoization rationale:
  * - Static content that never changes
  * - Rendered in a small list (2 items)
@@ -12,15 +12,21 @@ import { CARD_STYLES } from "../constants";
  * - Minimal benefit, but follows consistent pattern
  * - Could be removed without performance impact
  */
-const ModeCard = memo(function ModeCard({ title, description, onClick }: ModeCardProps) {
+const ModeCard = memo(function ModeCard({
+  title,
+  description,
+  onClick,
+}: ModeCardProps) {
   return (
-    <div
-      className={`${CARD_STYLES.container} ${CARD_STYLES.hoverEffect}`}
+    <button
+      className={`${CARD_STYLES.container} ${CARD_STYLES.hoverEffect} w-full text-left`}
       onClick={onClick}
+      type="button"
+      aria-label={title}
     >
       <h2 className={CARD_STYLES.title}>{title}</h2>
       <p className={CARD_STYLES.description}>{description}</p>
-    </div>
+    </button>
   );
 });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
 import { PageLayout } from "@/components/PageLayout";
@@ -15,7 +15,6 @@ import { ModeSelector } from "./components/ModeSelector";
 import { RecipeForm } from "./components/RecipeForm";
 import { RecipeDisplay } from "./components/RecipeDisplay";
 import { ErrorMessage } from "./components/ErrorMessage";
-import { Mode } from "./types";
 
 export default function Generate() {
   const router = useRouter();
@@ -25,12 +24,7 @@ export default function Generate() {
   // Custom hook for user profile (handles fetching automatically)
   const { userProfile } = useUserProfile(userId);
 
-  const {
-    structuredRecipe,
-    mode,
-    setMode,
-    resetRecipe,
-  } = useRecipeStore();
+  const { structuredRecipe, mode, setMode, resetRecipe } = useRecipeStore();
 
   // Custom hook for generation logic
   const {
@@ -45,12 +39,7 @@ export default function Generate() {
   } = useRecipeGeneration(userProfile);
 
   // Custom hook for save logic
-  const {
-    saveRecipe,
-    isSaving,
-    saveError,
-    saved,
-  } = useRecipeSave();
+  const { saveRecipe, isSaving, saveError, saved } = useRecipeSave();
 
   const handleSave = useCallback(async () => {
     if (userId) {
@@ -65,8 +54,11 @@ export default function Generate() {
     resetRecipe();
   }, [setMode, resetRecipe]);
 
-  // Compute display recipe once to avoid repeated selector calls
-  const displayRecipe = structuredRecipe ? selectDisplayRecipe(structuredRecipe) : null;
+  // Memoize display recipe to avoid unnecessary recalculations
+  const displayRecipe = useMemo(
+    () => selectDisplayRecipe(structuredRecipe),
+    [structuredRecipe]
+  );
 
   return (
     <PageLayout title="Generate Recipe">

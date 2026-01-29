@@ -7,7 +7,7 @@ import { CARD_STYLES } from "../constants";
 /**
  * Recipe display component with save functionality.
  * Shows generated recipe content and provides save button with state feedback.
- * 
+ *
  * Memoization rationale:
  * - Parent re-renders frequently during AI streaming
  * - Prevents full component re-render when only parsedRecipe.content changes
@@ -30,16 +30,18 @@ export const RecipeDisplay = memo(function RecipeDisplay({
       <div className="mt-4">
         <MarkdownRenderer content={parsedRecipe.content} />
       </div>
-      <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-2">
-        <Button
-          onClick={onSave}
-          disabled={isSaving || saved || isGenerating}
-          className="min-w-[120px]"
-        >
-          {saved ? "Saved!" : isSaving ? "Saving..." : "Save Recipe"}
-        </Button>
-        {saveError && <p className="text-sm text-red-600">{saveError}</p>}
-      </div>
+      {!isGenerating && (
+        <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-2">
+          <Button
+            onClick={onSave}
+            disabled={isSaving || saved}
+            className="min-w-[120px]"
+          >
+            {saved ? "Saved!" : isSaving ? "Saving..." : "Save Recipe"}
+          </Button>
+          {saveError && <p className="text-sm text-red-600">{saveError}</p>}
+        </div>
+      )}
     </div>
   );
 });

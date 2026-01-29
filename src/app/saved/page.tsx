@@ -10,7 +10,10 @@ import { useAuthStore } from "@/lib/store/auth-store";
 import { useFirestoreQuery } from "@/hooks/useFirestoreQuery";
 import { getUserRecipes, deleteRecipe } from "@/lib/db";
 import type { Recipe } from "@/lib/schemas/recipe";
-import { convertErrorToMessage, ERROR_MESSAGES } from "@/lib/utils/error-handler";
+import {
+  convertErrorToMessage,
+  ERROR_MESSAGES,
+} from "@/lib/utils/error-handler";
 import { logError } from "@/lib/utils/logger";
 
 import { RecipeSearch } from "./components/RecipeSearch";
@@ -47,7 +50,8 @@ export default function Saved() {
         recipe.title.toLowerCase().includes(searchLower) ||
         (recipe.ingredients?.some((ingredient) =>
           ingredient.toLowerCase().includes(searchLower)
-        ) ?? false)
+        ) ??
+          false)
     );
   }, [recipes, searchTerm]);
 
@@ -69,7 +73,7 @@ export default function Saved() {
 
     // Optimistic update: remove recipe from local state immediately
     setRecipes((currentRecipes) => {
-      if (!currentRecipes) return currentRecipes;
+      if (!currentRecipes) return [];
       return currentRecipes.filter((r) => r.id !== recipeId);
     });
 
@@ -77,7 +81,10 @@ export default function Saved() {
       await deleteRecipe(recipeId);
     } catch (error) {
       logError("Error deleting recipe", error, { recipeId });
-      const message = convertErrorToMessage(error, ERROR_MESSAGES.RECIPE.DELETE_FAILED);
+      const message = convertErrorToMessage(
+        error,
+        ERROR_MESSAGES.RECIPE.DELETE_FAILED
+      );
       setDeleteError(message);
       // On error, refetch from server to restore actual state
       await refetch();

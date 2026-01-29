@@ -1,13 +1,13 @@
 /**
  * Recipe store - manages recipe generation and saving state.
- * 
+ *
  * ARCHITECTURE:
  * - Pure UI state management (no business logic or orchestration)
  * - Single source of truth: structuredRecipe (all display formats derived via selectors)
  * - Computed values: Use selector functions (not store methods)
  * - Only persists user input (mode, input, ingredients), not generated recipes
  * - Orchestration logic lives in hooks/components, not in store
- * 
+ *
  * SELECTORS:
  * For derived data, use selector functions instead of store methods:
  * - selectDisplayRecipe(structuredRecipe) - converts to display format
@@ -15,13 +15,17 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { RecipeStructure, ParsedRecipe, RecipeMode } from "@/lib/schemas/recipe";
+import type {
+  RecipeStructure,
+  ParsedRecipe,
+  RecipeMode,
+} from "@/lib/schemas/recipe";
 import { formatRecipeBodyAsMarkdown } from "@/lib/utils/markdown";
 
 interface RecipeState {
   // Single source of truth for recipe data
   structuredRecipe: RecipeStructure | null;
-  
+
   // Generation State
   isGenerating: boolean;
   generationError: string | null;
@@ -48,12 +52,13 @@ interface RecipeState {
   setSaved: (saved: boolean) => void;
   resetRecipe: () => void;
   resetSaveState: () => void;
+  resetAll: () => void;
   clearPersistedState: () => void;
 }
 
 export const useRecipeStore = create<RecipeState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       structuredRecipe: null,
       isGenerating: false,
       generationError: null,
@@ -76,6 +81,9 @@ export const useRecipeStore = create<RecipeState>()(
           structuredRecipe: null,
           generationError: null,
           saved: false,
+          saveError: null,
+          isGenerating: false,
+          isSaving: false,
         });
       },
 
@@ -109,11 +117,31 @@ export const useRecipeStore = create<RecipeState>()(
           generationError: null,
           saved: false,
           saveError: null,
+          isGenerating: false,
+          isSaving: false,
         });
       },
 
       resetSaveState: () => {
-        set({ saved: false, saveError: null });
+        set({
+          saved: false,
+          saveError: null,
+          isSaving: false,
+        });
+      },
+
+      resetAll: () => {
+        set({
+          structuredRecipe: null,
+          isGenerating: false,
+          generationError: null,
+          input: "",
+          ingredients: "",
+          mode: null,
+          isSaving: false,
+          saveError: null,
+          saved: false,
+        });
       },
 
       clearPersistedState: () => {
@@ -121,6 +149,10 @@ export const useRecipeStore = create<RecipeState>()(
           input: "",
           ingredients: "",
           mode: null,
+          structuredRecipe: null,
+          generationError: null,
+          saved: false,
+          saveError: null,
         });
       },
     }),
@@ -146,16 +178,16 @@ export const useRecipeStore = create<RecipeState>()(
 /**
  * Converts structured recipe to display format for UI rendering.
  * Returns recipe with title and markdown body for rendering.
- * 
+ *
  * PATTERN: Selectors as pure functions
  * - Take state as input, return derived value
  * - No side effects, no mutations
  * - Can be tested independently of store
  * - Clear separation: selectors compute, store holds state
- * 
+ *
  * @param structuredRecipe - The structured recipe data from store
  * @returns Parsed recipe for display, or null if no recipe available
- * 
+ *
  * @example
  * const { structuredRecipe } = useRecipeStore();
  * const displayRecipe = selectDisplayRecipe(structuredRecipe);
@@ -166,7 +198,7 @@ export function selectDisplayRecipe(
   if (!structuredRecipe) {
     return null;
   }
-  
+
   const title = structuredRecipe.title ?? "";
   const content = formatRecipeBodyAsMarkdown(structuredRecipe);
   return { title, content, structuredData: structuredRecipe };

@@ -36,7 +36,12 @@ export function UserMenu({ user, onSignOut }: UserMenuProps) {
 
   const handleSignOut = async () => {
     setIsOpen(false);
-    await onSignOut();
+    try {
+      await onSignOut();
+    } catch (error) {
+      console.error("Sign out error:", error);
+      // Error is handled in the parent component (Navbar)
+    }
   };
 
   return (

@@ -3,11 +3,11 @@ import { useEffect, useRef, useCallback } from "react";
 /**
  * Hook for debouncing function calls to prevent excessive API requests.
  * Useful for rate-limiting expensive operations like AI generation.
- * 
+ *
  * @param callback - The function to debounce
  * @param delay - Delay in milliseconds before executing the callback
  * @returns Debounced function that can be called multiple times but only executes after delay
- * 
+ *
  * @example
  * const debouncedGenerate = useDebounce(() => generateRecipe(), 1000);
  * // Multiple rapid calls will only execute once after 1 second
@@ -26,13 +26,14 @@ export function useDebounce<T extends (...args: never[]) => unknown>(
     callbackRef.current = callback;
   }, [callback]);
 
+  // Cleanup timeout on unmount or delay change
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, []);
+  }, [delay]);
 
   return useCallback(
     (...args: Parameters<T>) => {
@@ -41,7 +42,13 @@ export function useDebounce<T extends (...args: never[]) => unknown>(
       }
 
       timeoutRef.current = setTimeout(() => {
-        callbackRef.current(...args);
+        try {
+          callbackRef.current(...args);
+        } catch (error) {
+          // Log error instead of silently failing
+          console.error("Debounced callback error:", error);
+          throw error;
+        }
       }, delay);
     },
     [delay]

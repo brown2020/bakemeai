@@ -33,26 +33,25 @@ export function ChipSelect({
         {label}
       </label>
       <div className="flex flex-wrap gap-2">
-        {options.map((option) => (
-          <button
-            key={option}
-            type="button"
-            onClick={() => onChange(option)}
-            className={`${baseClasses} ${variantClasses} ${
-              selected.includes(option)
-                ? "bg-blue-500 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            {option}
-          </button>
-        ))}
+        {options.map((option) => {
+          const isSelected = selected.includes(option);
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => onChange(option)}
+              aria-pressed={isSelected}
+              className={`${baseClasses} ${variantClasses} ${
+                isSelected
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {option}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
-
-
-
-
-

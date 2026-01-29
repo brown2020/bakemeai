@@ -18,6 +18,7 @@ export function GoogleSignInButton({
     <button
       type="button"
       onClick={onClick}
+      aria-label={label}
       className="w-full py-2 px-4 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 flex items-center justify-center space-x-2 transition-colors"
     >
       <GoogleIcon />
@@ -48,4 +49,3 @@ function GoogleIcon() {
     </svg>
   );
 }
-
