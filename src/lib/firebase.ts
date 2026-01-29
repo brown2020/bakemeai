@@ -44,28 +44,37 @@ function checkFirebaseConfig(): void {
   }
 }
 
-checkFirebaseConfig();
-
-// Suppress Firebase console errors
+// Suppress Firebase console errors FIRST, before any Firebase code runs
 if (typeof window !== "undefined") {
-  setLogLevel("silent");
+  const originalConsoleError = console.error.bind(console);
 
-  // Additional console error suppression for Firebase auth errors
-  // Firebase v9+ still logs some auth errors to console even with silent log level
-  // We catch and handle these errors in our UI, so suppress the console noise
-  const originalConsoleError = console.error;
   console.error = (...args: unknown[]) => {
-    // Check if this is a Firebase auth error
-    const errorString = args[0]?.toString() || "";
-    const isFirebaseAuthError =
-      errorString.includes("Firebase:") && errorString.includes("auth/");
+    // Convert args to string for checking
+    const errorStr = args
+      .map((arg) => {
+        if (arg instanceof Error) return arg.message + arg.stack;
+        return String(arg);
+      })
+      .join(" ");
 
-    // Only suppress Firebase auth errors, log everything else normally
+    // Filter Firebase auth errors - we handle these gracefully in the UI
+    const isFirebaseAuthError =
+      (errorStr.includes("Firebase:") && errorStr.includes("auth/")) ||
+      errorStr.includes("auth/invalid-credential") ||
+      errorStr.includes("auth/user-not-found") ||
+      errorStr.includes("auth/wrong-password") ||
+      errorStr.includes("auth/email-already-in-use") ||
+      errorStr.includes("Error (auth");
+
     if (!isFirebaseAuthError) {
-      originalConsoleError.apply(console, args);
+      originalConsoleError(...args);
     }
   };
+
+  setLogLevel("silent");
 }
+
+checkFirebaseConfig();
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
