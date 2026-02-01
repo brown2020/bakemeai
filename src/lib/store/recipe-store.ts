@@ -52,8 +52,17 @@ interface RecipeState {
   setSaved: (saved: boolean) => void;
   resetRecipe: () => void;
   resetSaveState: () => void;
+  /**
+   * Complete state reset including all in-progress flags.
+   * Use for full reset scenarios (e.g., dev tools, testing).
+   */
   resetAll: () => void;
-  clearPersistedState: () => void;
+  /**
+   * Resets user input and recipe data but NOT in-progress flags.
+   * Use when user signs out - preserves any pending operation states
+   * to avoid UI inconsistencies during async logout.
+   */
+  resetUserInput: () => void;
 }
 
 export const useRecipeStore = create<RecipeState>()(
@@ -144,7 +153,7 @@ export const useRecipeStore = create<RecipeState>()(
         });
       },
 
-      clearPersistedState: () => {
+      resetUserInput: () => {
         set({
           input: "",
           ingredients: "",

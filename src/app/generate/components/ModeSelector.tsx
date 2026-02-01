@@ -1,22 +1,14 @@
-import { memo } from "react";
 import { ModeSelectorProps, ModeCardProps } from "../types";
 import { CARD_STYLES } from "../constants";
 
 /**
  * Individual mode card component.
- *
- * Memoization rationale:
+ * Simple presentational component - no memoization needed because:
  * - Static content that never changes
- * - Rendered in a small list (2 items)
- * - Parent (ModeSelector) doesn't re-render in practice
- * - Minimal benefit, but follows consistent pattern
- * - Could be removed without performance impact
+ * - Only 2 items rendered
+ * - Parent doesn't re-render frequently
  */
-const ModeCard = memo(function ModeCard({
-  title,
-  description,
-  onClick,
-}: ModeCardProps) {
+function ModeCard({ title, description, onClick }: ModeCardProps) {
   return (
     <button
       className={`${CARD_STYLES.container} ${CARD_STYLES.hoverEffect} w-full text-left`}
@@ -28,7 +20,7 @@ const ModeCard = memo(function ModeCard({
       <p className={CARD_STYLES.description}>{description}</p>
     </button>
   );
-});
+}
 
 /**
  * Mode selector component for recipe generation.

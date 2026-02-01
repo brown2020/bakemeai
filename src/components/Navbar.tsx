@@ -20,14 +20,14 @@ import { clearAuthCookie } from "@/lib/utils/auth-cookies";
 export const Navbar = memo(function Navbar() {
   // Use selectors to only subscribe to needed values
   const user = useAuthStore((state) => state.user);
-  const clearPersistedState = useRecipeStore(
-    (state) => state.clearPersistedState
+  const resetUserInput = useRecipeStore(
+    (state) => state.resetUserInput
   );
 
   const handleSignOut = useCallback(async () => {
     // Clear client state/cookies immediately to ensure proxy.ts sees a signed-out request.
     clearAuthCookie();
-    clearPersistedState();
+    resetUserInput();
 
     try {
       await auth.signOut();
@@ -38,7 +38,7 @@ export const Navbar = memo(function Navbar() {
       // Force a full navigation to drop any prefetched/cached protected route payloads.
       window.location.assign("/login");
     }
-  }, [clearPersistedState]);
+  }, [resetUserInput]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white shadow-xs z-50">

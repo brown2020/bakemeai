@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { User } from "firebase/auth";
+import type { SerializableAuthUser } from "@/lib/schemas/auth";
 
 interface UserMenuProps {
-  user: User;
+  user: SerializableAuthUser;
   onSignOut: () => Promise<void>;
 }
 

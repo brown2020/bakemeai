@@ -31,10 +31,13 @@ interface UseFirestoreQueryReturn<T> {
 /**
  * Generic hook for querying Firestore with consistent error handling and loading states.
  * Provides a clean abstraction over Firestore operations.
- * 
+ *
  * Handles unstable queryFn and logContext references automatically using refs
  * to prevent infinite re-fetching loops.
- * 
+ *
+ * Uses version tracking to prevent race conditions when userId changes rapidly.
+ * Only the most recent request's results are applied to state.
+ *
  * @example
  * const { data: recipes, isLoading, error, refetch } = useFirestoreQuery({
  *   queryFn: getUserRecipes,
@@ -57,6 +60,10 @@ export function useFirestoreQuery<T>({
   const queryFnRef = useRef(queryFn);
   const logContextRef = useRef(logContext);
 
+  // Version tracking to prevent stale responses from overwriting fresh data
+  // when userId changes rapidly (e.g., during auth state transitions)
+  const requestVersionRef = useRef(0);
+
   // Update refs when values change
   useEffect(() => {
     queryFnRef.current = queryFn;
@@ -69,20 +76,33 @@ export function useFirestoreQuery<T>({
       return;
     }
 
+    // Increment version at start of request
+    const currentVersion = ++requestVersionRef.current;
+
     setError(null);
     setIsLoading(true);
 
     try {
       const result = await queryFnRef.current(userId);
-      setData(result);
+
+      // Only update state if this is still the latest request
+      if (currentVersion === requestVersionRef.current) {
+        setData(result);
+      }
     } catch (err) {
-      logError(`Firestore query error: ${errorMessage}`, err, {
-        userId,
-        ...logContextRef.current,
-      });
-      setError(errorMessage);
+      // Only update state if this is still the latest request
+      if (currentVersion === requestVersionRef.current) {
+        logError(`Firestore query error: ${errorMessage}`, err, {
+          userId,
+          ...logContextRef.current,
+        });
+        setError(errorMessage);
+      }
     } finally {
-      setIsLoading(false);
+      // Only update loading state if this is still the latest request
+      if (currentVersion === requestVersionRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [userId, errorMessage, enabled]);
 

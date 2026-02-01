@@ -7,6 +7,7 @@ import { clearAuthCookie } from "@/lib/utils/auth-cookies";
 import { setUserAuthToken } from "@/lib/utils/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useRecipeStore } from "@/lib/store/recipe-store";
+import { toSerializableAuthUser } from "@/lib/schemas/auth";
 import { logError } from "@/lib/utils/logger";
 
 /**
@@ -57,7 +58,7 @@ async function syncAuthToken(
  */
 export function AuthListener(): React.ReactElement | null {
   const { setUser, setLoading } = useAuthStore();
-  const { clearPersistedState } = useRecipeStore();
+  const { resetUserInput } = useRecipeStore();
   const controllerRef = useRef<AbortController | null>(null);
   const versionRef = useRef(0);
   const [initError, setInitError] = useState<string | null>(null);
@@ -96,12 +97,13 @@ export function AuthListener(): React.ReactElement | null {
         const controller = new AbortController();
         controllerRef.current = controller;
 
-        setUser(user);
+        // Convert Firebase User to serializable type for store
+        setUser(user ? toSerializableAuthUser(user) : null);
 
         if (!user) {
           // User signed out: clear all auth state immediately
           clearAuthCookie();
-          clearPersistedState();
+          resetUserInput();
           setLoading(false);
           return;
         }
@@ -141,7 +143,7 @@ export function AuthListener(): React.ReactElement | null {
       controllerRef.current?.abort();
       unsubscribe();
     };
-  }, [setUser, setLoading, clearPersistedState]);
+  }, [setUser, setLoading, resetUserInput]);
 
   if (initError) {
     return (

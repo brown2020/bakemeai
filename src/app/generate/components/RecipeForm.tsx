@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { RecipeFormProps } from "../types";
 import { Button } from "@/components/Button";
 import { FormInput } from "./FormInput";
@@ -6,8 +7,13 @@ import { CARD_STYLES } from "../constants";
 /**
  * Recipe generation form component.
  * Adapts input fields based on selected mode (specific dish vs ingredients).
+ *
+ * Memoization rationale:
+ * - Parent (Generate page) re-renders frequently during AI streaming
+ * - Form props are stable during streaming (callbacks are memoized, input unchanged)
+ * - Prevents unnecessary re-renders while recipe content streams in
  */
-export function RecipeForm({
+export const RecipeForm = memo(function RecipeForm({
   mode,
   onBack,
   onSubmit,
@@ -58,4 +64,4 @@ export function RecipeForm({
       </form>
     </div>
   );
-}
+});

@@ -44,33 +44,10 @@ function checkFirebaseConfig(): void {
   }
 }
 
-// Suppress Firebase console errors FIRST, before any Firebase code runs
+// Suppress Firebase SDK internal logging on client
+// Firebase auth errors are handled gracefully in the UI via try/catch in AuthForm
+// No need to override console.error - setLogLevel("silent") prevents SDK logs
 if (typeof window !== "undefined") {
-  const originalConsoleError = console.error.bind(console);
-
-  console.error = (...args: unknown[]) => {
-    // Convert args to string for checking
-    const errorStr = args
-      .map((arg) => {
-        if (arg instanceof Error) return arg.message + arg.stack;
-        return String(arg);
-      })
-      .join(" ");
-
-    // Filter Firebase auth errors - we handle these gracefully in the UI
-    const isFirebaseAuthError =
-      (errorStr.includes("Firebase:") && errorStr.includes("auth/")) ||
-      errorStr.includes("auth/invalid-credential") ||
-      errorStr.includes("auth/user-not-found") ||
-      errorStr.includes("auth/wrong-password") ||
-      errorStr.includes("auth/email-already-in-use") ||
-      errorStr.includes("Error (auth");
-
-    if (!isFirebaseAuthError) {
-      originalConsoleError(...args);
-    }
-  };
-
   setLogLevel("silent");
 }
 

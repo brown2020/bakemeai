@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 import { PageLayout } from "@/components/PageLayout";
@@ -54,11 +54,8 @@ export default function Generate() {
     resetRecipe();
   }, [setMode, resetRecipe]);
 
-  // Memoize display recipe to avoid unnecessary recalculations
-  const displayRecipe = useMemo(
-    () => selectDisplayRecipe(structuredRecipe),
-    [structuredRecipe]
-  );
+  // Select display recipe - no memoization needed as selector is pure and cheap
+  const displayRecipe = selectDisplayRecipe(structuredRecipe);
 
   return (
     <PageLayout title="Generate Recipe">

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { useRecipeStore } from "@/lib/store/recipe-store";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -73,6 +73,7 @@ export interface UseRecipeGenerationReturn {
 export function useRecipeGeneration(userProfile: SerializableUserProfile | null): UseRecipeGenerationReturn {
   const [validationError, setValidationError] = useState<string | null>(null);
   const lastSubmitTimeRef = useRef<number>(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const {
     isGenerating,
@@ -88,10 +89,22 @@ export function useRecipeGeneration(userProfile: SerializableUserProfile | null)
     resetSaveState,
   } = useRecipeStore();
 
-  // Debounced generation with service orchestration
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+
+  // Debounced generation with service orchestration and abort support
   const debouncedGeneration = useDebounce(
     useCallback(
       async (prompt: string, isIngredientsMode: boolean) => {
+        // Cancel any in-flight generation to prevent race conditions
+        abortControllerRef.current?.abort();
+        abortControllerRef.current = new AbortController();
+        const signal = abortControllerRef.current.signal;
+
         setGenerating(true);
         setStructuredRecipe(null);
         setGenerationError(null);
@@ -101,11 +114,21 @@ export function useRecipeGeneration(userProfile: SerializableUserProfile | null)
           prompt,
           isIngredientsMode,
           userProfile,
-          (recipe) => setStructuredRecipe(recipe),
-          (errorMessage) => setGenerationError(errorMessage)
+          (recipe) => {
+            // Only update if this request hasn't been aborted
+            if (!signal.aborted) setStructuredRecipe(recipe);
+          },
+          (errorMessage) => {
+            // Only update if this request hasn't been aborted
+            if (!signal.aborted) setGenerationError(errorMessage);
+          },
+          signal
         );
 
-        setGenerating(false);
+        // Only update generating state if this request hasn't been aborted
+        if (!signal.aborted) {
+          setGenerating(false);
+        }
       },
       [setGenerating, setStructuredRecipe, setGenerationError, resetSaveState, userProfile]
     ),

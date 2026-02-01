@@ -8,12 +8,10 @@ import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useFirestoreQuery } from "@/hooks/useFirestoreQuery";
-import { getUserRecipes, deleteRecipe } from "@/lib/db";
+import { getUserRecipes } from "@/lib/db";
+import { deleteRecipeFromDatabase } from "@/lib/services/recipe-service";
 import type { Recipe } from "@/lib/schemas/recipe";
-import {
-  convertErrorToMessage,
-  ERROR_MESSAGES,
-} from "@/lib/utils/error-handler";
+import { convertErrorToMessage, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 import { logError } from "@/lib/utils/logger";
 
 import { RecipeSearch } from "./components/RecipeSearch";
@@ -63,6 +61,9 @@ export default function Saved() {
     if (!recipeToDelete) return;
 
     const recipeId = recipeToDelete.id;
+    // Store deleted recipe for potential rollback if both delete and refetch fail
+    const deletedRecipe = recipeToDelete;
+
     setDeleteError(null);
 
     // Close dialog first
@@ -78,16 +79,34 @@ export default function Saved() {
     });
 
     try {
-      await deleteRecipe(recipeId);
+      await deleteRecipeFromDatabase(recipeId);
     } catch (error) {
-      logError("Error deleting recipe", error, { recipeId });
+      // Service layer already logs the error
       const message = convertErrorToMessage(
         error,
         ERROR_MESSAGES.RECIPE.DELETE_FAILED
       );
       setDeleteError(message);
-      // On error, refetch from server to restore actual state
-      await refetch();
+
+      // Try to refetch from server to restore actual state
+      try {
+        await refetch();
+      } catch (refetchError) {
+        // Both delete and refetch failed - manual rollback from stored recipe
+        logError("Error refetching after failed delete", refetchError, {
+          recipeId,
+        });
+        setRecipes((currentRecipes) => {
+          if (!currentRecipes) return [deletedRecipe];
+          // Re-insert deleted recipe and sort by creation date (newest first)
+          return [...currentRecipes, deletedRecipe].sort(
+            (a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)
+          );
+        });
+        setDeleteError(
+          `${message} The page may be out of sync. Please refresh to see the current state.`
+        );
+      }
     }
   }, [recipeToDelete, setRecipes, refetch]);
 

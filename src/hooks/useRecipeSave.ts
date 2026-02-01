@@ -1,15 +1,21 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useRecipeStore } from "@/lib/store/recipe-store";
 import { saveRecipeToDatabase } from "@/lib/services/recipe-service";
-import { ERROR_MESSAGES } from "@/lib/utils/error-handler";
+import { ERROR_MESSAGES, convertErrorToMessage } from "@/lib/utils/error-handler";
 
 /**
  * Custom hook for saving recipes to the database.
  * Separates business logic from state management.
- * 
+ *
+ * Includes duplicate save prevention using a ref for instant checking
+ * (state updates are async and can't prevent concurrent calls).
+ *
  * @returns Save handler and state
  */
 export function useRecipeSave() {
+  // Ref for instant save-in-progress check (state is async)
+  const savingRef = useRef(false);
+
   const {
     structuredRecipe,
     isSaving,
@@ -22,6 +28,10 @@ export function useRecipeSave() {
 
   const saveRecipe = useCallback(
     async (userId: string) => {
+      // Immediate guard using ref to prevent duplicate saves
+      // (state updates are async and can't prevent concurrent calls)
+      if (savingRef.current) return;
+
       if (!userId) {
         setSaveError(ERROR_MESSAGES.AUTH.LOGIN_REQUIRED);
         return;
@@ -32,6 +42,7 @@ export function useRecipeSave() {
         return;
       }
 
+      savingRef.current = true;
       setIsSaving(true);
       setSaveError(null);
 
@@ -39,8 +50,10 @@ export function useRecipeSave() {
         await saveRecipeToDatabase(userId, structuredRecipe);
         setSaved(true);
       } catch (error) {
-        setSaveError(error instanceof Error ? error.message : ERROR_MESSAGES.RECIPE.SAVE_FAILED);
+        // Use standardized error conversion for consistent Firebase error mapping
+        setSaveError(convertErrorToMessage(error, ERROR_MESSAGES.RECIPE.SAVE_FAILED));
       } finally {
+        savingRef.current = false;
         setIsSaving(false);
       }
     },
