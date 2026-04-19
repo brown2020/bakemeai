@@ -9,7 +9,7 @@ type AuthMode = "login" | "signup";
 
 function Inner({ mode }: { mode: AuthMode }) {
   const searchParams = useSearchParams();
-  const raw = searchParams.get("redirect");
+  const raw = searchParams?.get("redirect");
   const redirectTo = getSafeRedirectPath(raw);
   return <AuthForm mode={mode} redirectTo={redirectTo} />;
 }
