@@ -11,6 +11,7 @@ import { useAuthStore } from "@/lib/store/auth-store";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useProfileOnboarding } from "@/hooks/useProfileOnboarding";
 import { useRecipeGeneration } from "@/hooks/useRecipeGeneration";
+import { useRecipeServingScale } from "@/hooks/useRecipeServingScale";
 import { useRecipeSave } from "@/hooks/useRecipeSave";
 
 import { ModeSelector } from "./components/ModeSelector";
@@ -50,6 +51,14 @@ export default function Generate() {
     handleGenerate,
     handleRegenerate,
   } = useRecipeGeneration(userProfile);
+
+  const {
+    targetServings,
+    setTargetServings,
+    applyServingScale,
+    canScale,
+    isScaled,
+  } = useRecipeServingScale({ structuredRecipe, isGenerating });
 
   // Custom hook for save logic
   const { saveRecipe, isSaving, saveError, saved } = useRecipeSave();
@@ -107,6 +116,11 @@ export default function Generate() {
                   onRegenerate={handleRegenerate}
                   tweak={tweak}
                   onTweakChange={setTweak}
+                  targetServings={targetServings}
+                  onTargetServingsChange={setTargetServings}
+                  onApplyServingScale={applyServingScale}
+                  canScaleServings={canScale}
+                  isServingScalePending={isScaled}
                   isSaving={isSaving}
                   saved={saved}
                   isGenerating={isGenerating}
