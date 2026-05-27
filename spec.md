@@ -62,6 +62,7 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 | Google auth | Shipped | Popup flow |
 | Password reset | Shipped | `/reset-password` |
 | Cooking preferences profile | Shipped | `/profile` — chips, tags, serving size |
+| Post-signup profile onboarding | Shipped | Banner on `/generate`; welcome flow at `/profile?welcome=1` |
 | Recipe generation (specific dish) | Shipped | Zod-validated input, streaming UI |
 | Recipe generation (ingredients) | Shipped | Same pipeline, different prompt |
 | AI personalization | Shipped | Profile injected into system prompt |
@@ -79,7 +80,7 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 | Serving scaling | Not shipped | Profile has default size; no adjust-after-generate |
 | Shopping list | Not shipped | README aspirational only |
 | Meal planning | Not shipped | README aspirational only |
-| Automated tests | Not shipped | No runner configured |
+| Automated tests | Partial | Vitest unit tests for auth/route/onboarding utils |
 | CI pipeline | Not shipped | No `.github/workflows` in repo |
 
 ### Current user flows (detail)
@@ -88,7 +89,7 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 1. User creates account; verification email sent (signup not blocked if unverified — inferred).
 2. Redirect to `/generate` (or `?redirect=` target).
 3. Mode selector → form → stream → optional save.
-4. Profile is optional; generation works without saved profile (prompt says "No specific user preferences").
+4. New users without a profile see an onboarding prompt on `/generate` (skippable).
 
 **Returning user**
 1. Auth cookie + Firebase session restored via `AuthListener`.
@@ -120,7 +121,7 @@ See [`AGENTS.md`](AGENTS.md) for layer diagram and file map.
 ### Technical constraints
 
 - Edge proxy cannot verify JWT signatures (no Firebase Admin on Edge).
-- Server action accepts serializable profile + prompt; **no server-side auth check on AI calls** (inferred gap — OpenAI usage not tied to Firebase session).
+- Server action `generateRecipe` requires authenticated cookie verified via Firebase REST API.
 - Production build requires all `NEXT_PUBLIC_FIREBASE_*` vars; `firebase.ts` throws in production if missing.
 - Firestore query `recipes` by `userId` + `orderBy(createdAt desc)` requires a composite index.
 - AI schema uses OpenAI strict JSON mode (all fields required in generation schema; nulls for unknown nutrition).
@@ -134,7 +135,7 @@ See [`AGENTS.md`](AGENTS.md) for layer diagram and file map.
 - **Saved recipes** store markdown `content` plus structured fields; legacy recipes may lack optional metadata (schema uses `.passthrough()`).
 - **Branding inconsistency**: Some assets/alt text still say "BakeMe.ai" (e.g. landing image alt).
 - **No `.env.example`** committed (`.env*` gitignored); setup documented in README only.
-- **Profile onboarding**: No guided first-run flow after signup.
+- **Profile onboarding**: First-run banner on `/generate`; skip stored per user in localStorage until profile is saved.
 - **Accessibility**: Some patterns present (`aria-live` on recipe display); no audit recorded.
 
 ---
@@ -145,18 +146,18 @@ Ordered by product impact and dependency. Each item is sized for one focused com
 
 ---
 
-### Milestone 1 — Post-signup preference onboarding
+### Milestone 1 — Post-signup preference onboarding ✅
+
+**Status**: Shipped (2026-05-26)
 
 **User value**: First recipe reflects allergies and diet without hunting for Profile.
 
-**Intent**: After first login/signup, if `userProfiles/{uid}` is missing, show a lightweight modal or `/profile?welcome=1` banner prompting preference setup; allow skip to generate.
+**Implementation note**: `ProfileOnboardingBanner` on `/generate` when no `userProfiles/{uid}` doc exists; skip persisted in localStorage per user. “Set up preferences” links to `/profile?welcome=1` with welcome copy and “Save and start cooking” redirect back to `/generate`. Profile save updates `user-profile-store` so generation uses new preferences immediately.
 
-**Acceptance criteria**:
-- New user sees onboarding prompt once before or on first visit to `/generate`.
-- Completing onboarding persists profile and subsequent generations use it.
-- Skip path lands on generate with unchanged behavior for users without profile.
-
-**Depends on**: Existing profile save flow.
+**Acceptance criteria** (verified):
+- [x] New user sees onboarding prompt once before or on first visit to `/generate`.
+- [x] Completing onboarding persists profile and subsequent generations use it.
+- [x] Skip path lands on generate with unchanged behavior for users without profile.
 
 ---
 
@@ -236,20 +237,18 @@ Ordered by product impact and dependency. Each item is sized for one focused com
 
 ---
 
-### Milestone 7 — Secure AI generation (authenticated server action)
+### Milestone 7 — Secure AI generation (authenticated server action) ✅
+
+**Status**: Shipped (2026-05-26) — prior dev stabilization pass
 
 **User value**: Platform sustainability and user trust — only signed-in users consume AI.
 
-**Intent**: Verify Firebase ID token in `generateRecipe` (Admin SDK or session cookie verification on Node runtime); reject unauthenticated calls with clear error.
+**Implementation note**: `requireAuthenticatedUserId()` in `generateRecipe` verifies auth cookie via Firebase Identity Toolkit REST API (with unsigned fallback in dev only).
 
-**Acceptance criteria**:
-- Unauthenticated server action invocation fails without calling OpenAI.
-- Signed-in user's generate flow unchanged.
-- Error message surfaced via existing generation error path.
-
-**Depends on**: Auth architecture decision (may require runtime change from pure RSC stream).
-
-**Note**: Product-enabling for any future monetization or abuse controls.
+**Acceptance criteria** (verified):
+- [x] Unauthenticated server action invocation fails without calling OpenAI.
+- [x] Signed-in user's generate flow unchanged.
+- [x] Error message surfaced via existing generation error path.
 
 ---
 
