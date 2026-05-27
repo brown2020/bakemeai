@@ -1,7 +1,9 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import type { Recipe } from "@/lib/schemas/recipe";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+import { NutritionSummaryPanel } from "@/components/NutritionSummaryPanel";
 import { PrintRecipeButton } from "@/components/PrintRecipeButton";
+import { extractNutritionSummary } from "@/lib/utils/nutrition";
 
 interface RecipeDetailProps {
   recipe: Recipe | null;
@@ -18,6 +20,11 @@ interface RecipeDetailProps {
  * - Prevents expensive markdown re-parsing on unrelated updates
  */
 export const RecipeDetail = memo(function RecipeDetail({ recipe }: RecipeDetailProps) {
+  const nutrition = useMemo(
+    () => (recipe ? extractNutritionSummary(recipe) : null),
+    [recipe]
+  );
+
   if (!recipe) {
     return (
       <div className="h-full flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300">
@@ -32,6 +39,7 @@ export const RecipeDetail = memo(function RecipeDetail({ recipe }: RecipeDetailP
         <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 break-words">
           {recipe.title}
         </h2>
+        {nutrition && <NutritionSummaryPanel summary={nutrition} />}
         <MarkdownRenderer content={recipe.content} />
       </div>
       <div className="no-print mt-4">

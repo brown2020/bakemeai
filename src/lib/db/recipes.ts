@@ -96,6 +96,10 @@ export async function saveRecipe({
       cookingTime: structuredData.cookingTime,
       servings: structuredData.servings,
       difficulty: structuredData.difficulty,
+      ...(structuredData.calories != null
+        ? { calories: structuredData.calories }
+        : {}),
+      ...(structuredData.macros != null ? { macros: structuredData.macros } : {}),
     };
 
     const docRef = await addDoc(collection(db, COLLECTIONS.RECIPES), recipe);

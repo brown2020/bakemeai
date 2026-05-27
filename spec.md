@@ -214,11 +214,25 @@ Ordered by product impact and dependency. Each item is sized for one focused com
 
 **Intent**: When `calories` / `macros` exist on `structuredRecipe`, render a compact summary card above markdown (generate + saved detail); do not block save when null.
 
-**Acceptance criteria**:
-- Panel visible when data present; hidden when all null.
-- Saved recipes show panel when structured fields exist on document (may require backfill from markdown for legacy — optional).
+**Implementation note**: `NutritionSummaryPanel` renders above markdown on generate (`RecipeDisplay`) and saved detail (`RecipeDetail`) when `extractNutritionSummary` finds data. `saveRecipe` persists `calories` and `macros` on new saves so saved recipes can show the panel without markdown parsing.
+
+**Acceptance criteria** (verified):
+- [x] Panel visible when data present; hidden when all null.
+- [x] Saved recipes show panel when structured fields exist on document (may require backfill from markdown for legacy — optional).
 
 **Depends on**: Existing schema fields; mostly UI.
+
+---
+
+### Milestone 5 (follow-up) — Legacy saved recipe nutrition backfill
+
+**User value**: Older saved recipes show nutrition when it exists only in markdown body.
+
+**Intent**: Optional one-time or on-read parse of calories/macros from saved `content` for documents missing top-level fields.
+
+**Acceptance criteria**:
+- Saved detail shows nutrition panel for pre-persistence recipes when markdown contains parseable nutrition lines.
+- No change to save flow for new recipes.
 
 ---
 
