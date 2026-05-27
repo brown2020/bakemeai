@@ -55,3 +55,57 @@
     border-color: var(--color-gray-200, currentColor);
   }
 }
+
+/* Recipe print layout — only `.recipe-printable` content is visible when printing */
+@media print {
+  @page {
+    margin: 1.25cm;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .recipe-printable,
+  .recipe-printable * {
+    visibility: visible;
+  }
+
+  .recipe-printable {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
+
+  .recipe-printable h1,
+  .recipe-printable h2 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .recipe-printable ul,
+  .recipe-printable ol {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .recipe-printable li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

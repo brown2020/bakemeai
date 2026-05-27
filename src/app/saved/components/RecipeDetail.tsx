@@ -1,6 +1,7 @@
 import { memo } from "react";
 import type { Recipe } from "@/lib/schemas/recipe";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+import { PrintRecipeButton } from "@/components/PrintRecipeButton";
 
 interface RecipeDetailProps {
   recipe: Recipe | null;
@@ -27,10 +28,15 @@ export const RecipeDetail = memo(function RecipeDetail({ recipe }: RecipeDetailP
 
   return (
     <div className="p-4 sm:p-6 bg-white rounded-lg shadow-sm border border-surface-200">
-      <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 break-words">
-        {recipe.title}
-      </h2>
-      <MarkdownRenderer content={recipe.content} />
+      <div className="recipe-printable">
+        <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 break-words">
+          {recipe.title}
+        </h2>
+        <MarkdownRenderer content={recipe.content} />
+      </div>
+      <div className="no-print mt-4">
+        <PrintRecipeButton ariaLabel={`Print ${recipe.title}`} />
+      </div>
     </div>
   );
 });
