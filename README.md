@@ -178,7 +178,8 @@ src/
 | `npm run dev`   | Start development server with hot reload |
 | `npm run build` | Create optimized production build        |
 | `npm run start` | Serve production build locally           |
-| `npm run lint`  | Run ESLint                               |
+| `npm run lint`         | ESLint                               |
+| `npm run test`         | Vitest unit tests (CI-safe)          |
 
 ## 🏗️ Architecture
 

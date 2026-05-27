@@ -5,8 +5,16 @@ import { streamObject } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 
+import { FORM_VALIDATION } from "@/lib/constants/ui";
+import { AppError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
+import { requireAuthenticatedUserId } from "@/lib/utils/server-auth";
+
 import type { SerializableUserProfile } from "./schemas/user";
 import { getRecipeSystemPrompt } from "./prompts";
+
+/** Max prompt length — allows wrapped templates over raw input limits. */
+const MAX_SERVER_PROMPT_LENGTH =
+  FORM_VALIDATION.TEXTAREA_MAX_LENGTH + 500;
 
 /**
  * Schema for AI-generated recipe structure.
@@ -42,11 +50,24 @@ export async function generateRecipe(
   isIngredientBased: boolean,
   userProfile?: SerializableUserProfile | null
 ) {
+  await requireAuthenticatedUserId();
+
+  const trimmedPrompt = prompt.trim();
+  if (
+    trimmedPrompt.length < FORM_VALIDATION.INPUT_MIN_LENGTH ||
+    trimmedPrompt.length > MAX_SERVER_PROMPT_LENGTH
+  ) {
+    throw new AppError(
+      ERROR_MESSAGES.RECIPE.GENERATION_FAILED,
+      "INVALID_PROMPT"
+    );
+  }
+
   const result = streamObject({
     model: openai("gpt-4o"),
     schema: recipeGenerationSchema,
     system: getRecipeSystemPrompt(isIngredientBased, userProfile),
-    prompt: prompt,
+    prompt: trimmedPrompt,
     temperature: 0,
   });
 

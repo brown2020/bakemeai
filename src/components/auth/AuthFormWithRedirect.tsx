@@ -10,7 +10,7 @@ type AuthMode = "login" | "signup";
 function Inner({ mode }: { mode: AuthMode }) {
   const searchParams = useSearchParams();
   const raw = searchParams?.get("redirect");
-  const redirectTo = getSafeRedirectPath(raw);
+  const redirectTo = getSafeRedirectPath(raw, "/generate");
   return <AuthForm mode={mode} redirectTo={redirectTo} />;
 }
 
@@ -20,7 +20,7 @@ function Inner({ mode }: { mode: AuthMode }) {
  */
 export function AuthFormWithRedirect({ mode }: { mode: AuthMode }) {
   return (
-    <Suspense fallback={<AuthForm mode={mode} redirectTo="/" />}>
+    <Suspense fallback={<AuthForm mode={mode} redirectTo="/generate" />}>
       <Inner mode={mode} />
     </Suspense>
   );

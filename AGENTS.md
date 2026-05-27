@@ -28,7 +28,7 @@ Help home cooks turn what they have (or what they crave) into actionable recipes
 | Lint | ESLint 10 flat config | No Prettier npm script |
 | Package manager | **npm** (`package-lock.json`) | Do not switch managers |
 
-**Not present**: API routes (`src/app/api/`), test runner, CI workflows, background jobs/cron, `.env.example` in repo (`.env*` gitignored).
+**Not present**: API routes (`src/app/api/`), CI workflows, background jobs/cron. Unit tests via Vitest (`npm run test`); no E2E runner.
 
 ---
 
@@ -120,6 +120,7 @@ Run before committing:
 
 ```bash
 npm run lint
+npm run test
 npm run build
 ```
 

@@ -11,6 +11,7 @@ import { useAuthStore } from "@/lib/store/auth-store";
 import { useRecipeStore } from "@/lib/store/recipe-store";
 import { auth } from "@/lib/firebase";
 import { clearAuthCookie } from "@/lib/utils/auth-cookies";
+import { logError } from "@/lib/utils/logger";
 
 /**
  * Main navigation bar component.
@@ -32,7 +33,7 @@ export const Navbar = memo(function Navbar() {
     try {
       await auth.signOut();
     } catch (error) {
-      console.error("Sign out error:", error);
+      logError("Sign out error", error, {});
       // Continue with redirect even if sign out fails
     } finally {
       // Force a full navigation to drop any prefetched/cached protected route payloads.
