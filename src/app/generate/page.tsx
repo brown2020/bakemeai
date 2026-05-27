@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 
 import { PageLayout } from "@/components/PageLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ProfileOnboardingBanner } from "@/components/ProfileOnboardingBanner";
 import { useRecipeStore, selectDisplayRecipe } from "@/lib/store/recipe-store";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useProfileOnboarding } from "@/hooks/useProfileOnboarding";
 import { useRecipeGeneration } from "@/hooks/useRecipeGeneration";
 import { useRecipeSave } from "@/hooks/useRecipeSave";
 
@@ -22,7 +24,15 @@ export default function Generate() {
   const userId = user?.uid;
 
   // Custom hook for user profile (handles fetching automatically)
-  const { userProfile } = useUserProfile(userId);
+  const { userProfile, isLoading: isProfileLoading, error: profileError } =
+    useUserProfile(userId);
+
+  const { shouldShowOnboarding, dismissOnboarding } = useProfileOnboarding({
+    userId,
+    userProfile,
+    isLoading: isProfileLoading,
+    error: profileError,
+  });
 
   const { structuredRecipe, mode, setMode, resetRecipe } = useRecipeStore();
 
@@ -60,6 +70,10 @@ export default function Generate() {
   return (
     <PageLayout title="Generate Recipe">
       <div className="space-y-6">
+        {shouldShowOnboarding && (
+          <ProfileOnboardingBanner onDismiss={dismissOnboarding} />
+        )}
+
         {!mode ? (
           <ErrorBoundary variant="feature" featureName="Mode Selection">
             <ModeSelector onSelectMode={setMode} />
