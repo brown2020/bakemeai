@@ -4,9 +4,10 @@ import { RefreshCw } from "lucide-react";
 import { RecipeDisplayProps } from "../types";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/ui/Input";
+import { NumberInput } from "@/components/ui/NumberInput";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { PrintRecipeButton } from "@/components/PrintRecipeButton";
-import { FORM_VALIDATION } from "@/lib/constants/ui";
+import { FORM_VALIDATION, NUMBER_INPUT } from "@/lib/constants/ui";
 import { CARD_STYLES } from "../constants";
 
 /**
@@ -18,6 +19,11 @@ export const RecipeDisplay = memo(function RecipeDisplay({
   onRegenerate,
   tweak,
   onTweakChange,
+  targetServings,
+  onTargetServingsChange,
+  onApplyServingScale,
+  canScaleServings,
+  isServingScalePending,
   isSaving,
   saved,
   isGenerating,
@@ -46,6 +52,27 @@ export const RecipeDisplay = memo(function RecipeDisplay({
       </div>
       {!isGenerating && (
         <div className="no-print mt-4 space-y-4">
+          {canScaleServings && (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <NumberInput
+                label="Servings"
+                value={targetServings}
+                onChange={onTargetServingsChange}
+                min={NUMBER_INPUT.SERVING_SIZE_MIN}
+                max={NUMBER_INPUT.SERVING_SIZE_MAX}
+                className="w-full sm:w-32"
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={onApplyServingScale}
+                disabled={!isServingScalePending}
+                className="w-full sm:w-auto"
+              >
+                Update servings
+              </Button>
+            </div>
+          )}
           <Input
             label="Tweak this recipe (optional)"
             placeholder="e.g., make it spicier, serve 2..."

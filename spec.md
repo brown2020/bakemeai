@@ -66,6 +66,7 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 | Recipe generation (specific dish) | Shipped | Zod-validated input, streaming UI |
 | Recipe generation (ingredients) | Shipped | Same pipeline, different prompt |
 | Regenerate with optional tweak | Shipped | On `/generate` after first result |
+| Serving size adjustment | Shipped | Deterministic scale on `/generate` (1–12 servings) |
 | AI personalization | Shipped | Profile injected into system prompt |
 | Difficulty + times + servings | Shipped | In schema, markdown, and saved docs |
 | Tips | Shipped | Optional in generation output |
@@ -78,7 +79,7 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 | Recipe sharing | Not shipped | — |
 | Print / export | Shipped | Print button on generate + saved detail; `@media print` layout |
 | Regenerate from saved | Not shipped | Regenerate on `/generate` only (Milestone 3) |
-| Serving scaling | Not shipped | Profile has default size; no adjust-after-generate |
+| Serving scaling | Not shipped | Adjust on `/generate` only; not in saved library |
 | Shopping list | Not shipped | README aspirational only |
 | Meal planning | Not shipped | README aspirational only |
 | Automated tests | Partial | Vitest unit tests for auth/route/onboarding utils |
@@ -192,18 +193,18 @@ Ordered by product impact and dependency. Each item is sized for one focused com
 
 ---
 
-### Milestone 4 — Serving size adjustment
+### Milestone 4 — Serving size adjustment ✅
+
+**Status**: Shipped (2026-05-26)
 
 **User value**: Change servings after generation to match household size.
 
-**Intent**: UI control on `RecipeDisplay` to scale ingredient quantities (deterministic multiplier from current servings to target, or secondary AI call — prefer deterministic first).
+**Implementation note**: `NumberInput` (1–12) and **Update servings** on `RecipeDisplay` call `scaleRecipeServings` to deterministically scale ingredient lines, embedded instruction quantities, calories, and servings; prepends an adjustment note to instructions. Save state resets so the scaled recipe must be saved explicitly.
 
-**Acceptance criteria**:
-- User selects target servings (1–12, aligned with profile defaults).
-- Ingredient list updates; instructions note adjusted quantities where applicable.
-- Save persists scaled version user confirms.
-
-**Depends on**: Structured `ingredients` array; may need parsing heuristics for quantities in strings.
+**Acceptance criteria** (verified):
+- [x] User selects target servings (1–12, aligned with profile defaults).
+- [x] Ingredient list updates; instructions note adjusted quantities where applicable.
+- [x] Save persists scaled version user confirms.
 
 ---
 

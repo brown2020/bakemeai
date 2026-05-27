@@ -42,6 +42,11 @@ export interface RecipeDisplayProps {
   onRegenerate: () => void;
   tweak: string;
   onTweakChange: (value: string) => void;
+  targetServings: number;
+  onTargetServingsChange: (servings: number) => void;
+  onApplyServingScale: () => void;
+  canScaleServings: boolean;
+  isServingScalePending: boolean;
   isSaving: boolean;
   saved: boolean;
   isGenerating: boolean;
