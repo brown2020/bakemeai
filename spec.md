@@ -75,7 +75,7 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 | Firestore security | Shipped | Default-deny; per-user ownership |
 | Firebase Storage | Not used | SDK + rules exist; no UI |
 | Recipe sharing | Not shipped | — |
-| Print / export | Not shipped | — |
+| Print / export | Shipped | Print button on generate + saved detail; `@media print` layout |
 | Regenerate from saved | Not shipped | — |
 | Serving scaling | Not shipped | Profile has default size; no adjust-after-generate |
 | Shopping list | Not shipped | README aspirational only |
@@ -161,18 +161,18 @@ Ordered by product impact and dependency. Each item is sized for one focused com
 
 ---
 
-### Milestone 2 — Print-friendly recipe view
+### Milestone 2 — Print-friendly recipe view ✅
+
+**Status**: Shipped (2026-05-26)
 
 **User value**: Cook from a saved or generated recipe on paper or tablet without chrome.
 
-**Intent**: Add "Print" action on `RecipeDisplay` and `RecipeDetail` opening a print-styled view (`@media print` or dedicated route) with title, metadata, ingredients, instructions.
+**Implementation note**: `PrintRecipeButton` on `RecipeDisplay` (after stream completes) and `RecipeDetail`. Global `@media print` rules in `globals.css` isolate `.recipe-printable` content (title + markdown) and hide nav, actions, and sidebar via visibility scoping.
 
-**Acceptance criteria**:
-- Print from generated recipe (after stream completes) and from saved detail.
-- Output excludes nav, buttons, and site chrome.
-- Markdown content renders readably in print layout.
-
-**Depends on**: Existing markdown pipeline.
+**Acceptance criteria** (verified):
+- [x] Print from generated recipe (after stream completes) and from saved detail.
+- [x] Output excludes nav, buttons, and site chrome.
+- [x] Markdown content renders readably in print layout.
 
 ---
 
