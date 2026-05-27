@@ -1,126 +1,34 @@
 /**
  * Next.js 16 Proxy - handles route protection at the edge.
- * 
+ *
  * SECURITY MODEL:
  * This proxy validates JWT expiry claims WITHOUT signature verification.
  * Signature verification requires Firebase Admin SDK (Node.js runtime), which
  * is unavailable in Edge runtime where proxy.ts executes.
- * 
+ *
  * RISK ACCEPTANCE:
  * - Unsigned validation is intentional for this use case
  * - Primary purpose: Prevent flash of protected content and improve UX
- * - Security boundary: All API/data access verified server-side via Firestore rules
+ * - Security boundary: Firestore rules + server action token verification
  * - Impact: Attacker with forged token could briefly see protected UI shells (no data)
- * 
- * For stricter edge protection, consider:
- * - Moving to Node.js runtime with Firebase Admin SDK
- * - Using session tokens instead of Firebase JWTs
- * - Implementing API-based auth checks before rendering
  */
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+
 import {
   PRIVATE_ROUTES,
   AUTH_PAGES,
-  JWT_VALIDATION_CONFIG,
   FIREBASE_AUTH_COOKIE,
 } from "@/lib/constants/auth";
 import { deleteAuthCookies } from "@/lib/utils/auth-cookies";
+import {
+  getUserIdFromJwtPayload,
+  hasUnexpiredJwtClaimUnsigned,
+  parseJwtPayload,
+} from "@/lib/utils/jwt";
 import { logError } from "@/lib/utils/logger";
-
-// ============================================================================
-// ROUTE CHECKING UTILITIES
-// ============================================================================
-
-/**
- * Checks if a given path is a private route.
- */
-function isPrivateRoute(path: string): boolean {
-  return PRIVATE_ROUTES.some((route) => path.startsWith(route));
-}
-
-// ============================================================================
-// JWT PARSING AND VALIDATION UTILITIES
-// ============================================================================
-
-/**
- * Base64 encoding uses groups of 4 characters.
- * When the input length is not a multiple of 4, padding with "=" is required.
- */
-const BASE64_PADDING_SIZE = 4;
-
-/**
- * Decodes base64url JWT payload to UTF-8.
- * Handles both Edge runtime (atob) and Node runtime (Buffer).
- */
-function base64UrlToUtf8(input: string): string {
-  const base64 = input.replace(/-/g, "+").replace(/_/g, "/");
-  const paddingNeeded = (BASE64_PADDING_SIZE - (base64.length % BASE64_PADDING_SIZE)) % BASE64_PADDING_SIZE;
-  const padded = base64.padEnd(base64.length + paddingNeeded, "=");
-
-  if (typeof atob === "function") {
-    const binary = atob(padded);
-    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
-    return new TextDecoder().decode(bytes);
-  }
-
-  if (typeof Buffer !== "undefined") {
-    return Buffer.from(padded, "base64").toString("utf8");
-  }
-
-  throw new Error("No base64 decoder available");
-}
-
-/**
- * Milliseconds per second conversion constant.
- * Used for converting JavaScript timestamps (milliseconds) to Unix timestamps (seconds).
- */
-const MILLISECONDS_PER_SECOND = 1000;
-
-/**
- * Checks if a JWT token's expiry claim is still valid (unsigned validation).
- * Does NOT verify signature - see proxy.ts header for security model.
- * 
- * @param token - The JWT token to check
- * @returns True if the token has a valid, unexpired exp claim
- */
-function hasUnexpiredJwtClaimUnsigned(token: string): boolean {
-  const payload = parseJwtPayload(token);
-  if (!payload?.exp) return false;
-  
-  const nowSeconds = Math.floor(Date.now() / MILLISECONDS_PER_SECOND);
-  // Add leeway to account for small time differences between servers
-  return payload.exp > nowSeconds - JWT_VALIDATION_CONFIG.EXPIRY_LEEWAY_SECONDS;
-}
-
-/**
- * Firebase JWT token payload structure.
- */
-interface FirebaseJwtPayload {
-  exp?: number;
-  sub?: string;
-  user_id?: string;
-}
-
-/**
- * Parses a JWT token and extracts its payload.
- * Returns null if the token is malformed or cannot be parsed.
- * Does not validate signature or expiry—use hasUnexpiredJwtClaimUnsigned for expiry validation.
- * 
- * @param token - The JWT token string
- * @returns The parsed payload or null if invalid
- */
-function parseJwtPayload(token: string): FirebaseJwtPayload | null {
-  const jwtParts = token.split(".");
-  if (jwtParts.length !== 3) return null;
-  
-  try {
-    return JSON.parse(base64UrlToUtf8(jwtParts[1])) as FirebaseJwtPayload;
-  } catch {
-    return null;
-  }
-}
+import { isAuthPage, isPrivateRoute } from "@/lib/utils/route-match";
 
 // ============================================================================
 // RESPONSE BUILDING UTILITIES
@@ -134,10 +42,6 @@ interface DebugContext {
   isAuthPage?: boolean;
 }
 
-/**
- * Adds debug headers to the response in development mode.
- * Helps with debugging authentication and routing issues.
- */
 function withDebugHeaders(
   response: NextResponse,
   opts: DebugContext
@@ -162,9 +66,6 @@ function withDebugHeaders(
   return response;
 }
 
-/**
- * Handles authenticated user on auth pages - redirect to app.
- */
 function handleAuthenticatedOnAuthPage(
   request: NextRequest,
   debugContext: DebugContext
@@ -174,9 +75,6 @@ function handleAuthenticatedOnAuthPage(
   return withDebugHeaders(NextResponse.redirect(url), debugContext);
 }
 
-/**
- * Handles invalid cookie on auth pages - clear and stay.
- */
 function handleInvalidCookieOnAuthPage(
   debugContext: DebugContext
 ): NextResponse {
@@ -185,9 +83,6 @@ function handleInvalidCookieOnAuthPage(
   return withDebugHeaders(response, debugContext);
 }
 
-/**
- * Handles unauthenticated user on protected routes - redirect to login.
- */
 function handleUnauthenticatedOnPrivateRoute(
   request: NextRequest,
   pathname: string,
@@ -201,9 +96,6 @@ function handleUnauthenticatedOnPrivateRoute(
   return withDebugHeaders(response, debugContext);
 }
 
-/**
- * Handles normal request flow - allow through with optional user ID header.
- */
 function handleNormalRequest(
   userId: string | null,
   jwtValid: boolean,
@@ -220,41 +112,26 @@ function handleNormalRequest(
 // MAIN PROXY FUNCTION
 // ============================================================================
 
-/**
- * Next.js 16 Proxy - handles route protection at the edge.
- * 
- * Execution flow:
- * 1. Runs before every page render (edge runtime)
- * 2. Validates JWT token from cookie (expiry check only, no signature verification)
- * 3. Applies routing logic with early returns for clarity
- * 4. Handles redirects and cookie cleanup as needed
- * 
- * Benefits:
- * - Prevents flash of protected content
- * - Clear control flow with early returns
- * - Clean redirects with proper error handling
- */
 export function proxy(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl;
+    const onAuthPage = isAuthPage(pathname);
 
-    // Determine route type
-    const isAuthPage = AUTH_PAGES.some((page) => pathname.startsWith(page));
-
-    // Extract and validate auth token
     const authToken = request.cookies.get(FIREBASE_AUTH_COOKIE)?.value;
     const cookiePresent = authToken != null;
     const payload = authToken != null ? parseJwtPayload(authToken) : null;
-    const jwtValid = authToken != null && payload != null && hasUnexpiredJwtClaimUnsigned(authToken);
-    const userId = payload?.user_id ?? payload?.sub ?? null;
+    const jwtValid =
+      authToken != null &&
+      payload != null &&
+      hasUnexpiredJwtClaimUnsigned(authToken);
+    const userId = getUserIdFromJwtPayload(payload);
     const isAuthenticated = cookiePresent && jwtValid;
 
-    // Log expired token detection for debugging
     if (cookiePresent && !jwtValid && process.env.NODE_ENV === "development") {
       logError("Expired or invalid auth token detected", undefined, {
         pathname,
         userId,
-        isAuthPage,
+        isAuthPage: onAuthPage,
       });
     }
 
@@ -263,42 +140,38 @@ export function proxy(request: NextRequest) {
       cookiePresent,
       jwtValid,
       userId,
-      isAuthPage,
+      isAuthPage: onAuthPage,
     };
 
-    // Auth pages with valid authentication => redirect to app
-    if (isAuthPage && isAuthenticated) {
+    if (onAuthPage && isAuthenticated) {
       return handleAuthenticatedOnAuthPage(request, debugContext);
     }
 
-    // Auth pages with invalid cookie => clear cookie and stay
-    if (isAuthPage && cookiePresent && !jwtValid) {
+    if (onAuthPage && cookiePresent && !jwtValid) {
       return handleInvalidCookieOnAuthPage(debugContext);
     }
 
-    // Protected routes without authentication => redirect to login
     if (isPrivateRoute(pathname) && !isAuthenticated) {
-      return handleUnauthenticatedOnPrivateRoute(request, pathname, debugContext);
+      return handleUnauthenticatedOnPrivateRoute(
+        request,
+        pathname,
+        debugContext
+      );
     }
 
-    // All other cases => allow through
     return handleNormalRequest(userId, jwtValid, debugContext);
   } catch (error) {
     const { pathname } = request.nextUrl;
-    
-    // Log all proxy errors for debugging
+
     logError("Proxy error encountered", error, { pathname });
-    
-    const isAuthPage = AUTH_PAGES.some((page) => pathname.startsWith(page));
+
+    const onAuthPage = isAuthPage(pathname);
     const isPrivate = isPrivateRoute(pathname);
 
-    // For auth pages, allow through even on error to avoid redirect loops
-    if (isAuthPage) {
+    if (onAuthPage) {
       return NextResponse.next();
     }
 
-    // For protected routes, fail closed (redirect to login) as a security measure
-    // This prevents accessing protected content if auth validation fails
     if (isPrivate) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
@@ -308,13 +181,10 @@ export function proxy(request: NextRequest) {
       return response;
     }
 
-    // For public routes, allow through despite error
-    // Public content should remain accessible even if auth check fails
     return NextResponse.next();
   }
 }
 
-// Keep default export for compatibility; Next's proxy template prefers the named `proxy` export.
 export default proxy;
 
 /**
@@ -324,23 +194,21 @@ export default proxy;
  */
 export const config = {
   matcher: [
-    // Protected routes (from PRIVATE_ROUTES)
     "/generate/:path*",
     "/profile/:path*",
     "/saved/:path*",
-    // Auth pages (from AUTH_PAGES - so signed-in users get redirected away, and invalid cookies get cleared)
     "/login",
     "/signup",
     "/reset-password",
   ],
 };
 
-// Build-time validation: ensure config stays in sync with constants
 if (process.env.NODE_ENV === "development") {
   const expectedRoutes = PRIVATE_ROUTES.map((route) => `${route}/:path*`);
   const expectedMatcher = [...expectedRoutes, ...AUTH_PAGES];
-  
-  const isInSync = config.matcher.length === expectedMatcher.length &&
+
+  const isInSync =
+    config.matcher.length === expectedMatcher.length &&
     config.matcher.every((route, i) => route === expectedMatcher[i]);
 
   if (!isInSync) {

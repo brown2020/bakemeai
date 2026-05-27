@@ -1,5 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
 
+import { logError } from "@/lib/utils/logger";
+
 /**
  * Hook for debouncing function calls to prevent excessive API requests.
  * Useful for rate-limiting expensive operations like AI generation.
@@ -45,9 +47,7 @@ export function useDebounce<T extends (...args: never[]) => unknown>(
         try {
           callbackRef.current(...args);
         } catch (error) {
-          // Log error instead of silently failing
-          console.error("Debounced callback error:", error);
-          throw error;
+          logError("Debounced callback error", error, {});
         }
       }, delay);
     },

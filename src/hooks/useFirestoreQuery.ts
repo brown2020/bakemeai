@@ -72,6 +72,8 @@ export function useFirestoreQuery<T>({
 
   const fetchData = useCallback(async () => {
     if (!userId || !enabled) {
+      setData(null);
+      setError(null);
       setIsLoading(false);
       return;
     }
