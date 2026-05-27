@@ -65,6 +65,7 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 | Post-signup profile onboarding | Shipped | Banner on `/generate`; welcome flow at `/profile?welcome=1` |
 | Recipe generation (specific dish) | Shipped | Zod-validated input, streaming UI |
 | Recipe generation (ingredients) | Shipped | Same pipeline, different prompt |
+| Regenerate with optional tweak | Shipped | On `/generate` after first result |
 | AI personalization | Shipped | Profile injected into system prompt |
 | Difficulty + times + servings | Shipped | In schema, markdown, and saved docs |
 | Tips | Shipped | Optional in generation output |
@@ -76,7 +77,7 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 | Firebase Storage | Not used | SDK + rules exist; no UI |
 | Recipe sharing | Not shipped | — |
 | Print / export | Shipped | Print button on generate + saved detail; `@media print` layout |
-| Regenerate from saved | Not shipped | — |
+| Regenerate from saved | Not shipped | Regenerate on `/generate` only (Milestone 3) |
 | Serving scaling | Not shipped | Profile has default size; no adjust-after-generate |
 | Shopping list | Not shipped | README aspirational only |
 | Meal planning | Not shipped | README aspirational only |
@@ -176,18 +177,18 @@ Ordered by product impact and dependency. Each item is sized for one focused com
 
 ---
 
-### Milestone 3 — Regenerate and refine
+### Milestone 3 — Regenerate and refine ✅
+
+**Status**: Shipped (2026-05-26)
 
 **User value**: Iterate on a recipe without retyping the whole prompt.
 
-**Intent**: Add "Regenerate" on generate page (same inputs) and optional "Tweak" field ("make it spicier", "serve 2") appended to prompt; preserve mode and inputs.
+**Implementation note**: Optional tweak field and **Regenerate** button on `RecipeDisplay` after generation completes. `useRecipeGeneration.handleRegenerate` reuses the same inputs, appends tweak via `appendTweakToPrompt`, clears save state, and aborts in-flight streams like the initial generate flow. Form submit always uses an empty tweak.
 
-**Acceptance criteria**:
-- Regenerate clears prior save state and streams new recipe.
-- Tweak text is optional; empty regenerate uses original prompt only.
-- Abort/cancel behavior matches existing generation hook.
-
-**Depends on**: `useRecipeGeneration`, recipe store reset semantics.
+**Acceptance criteria** (verified):
+- [x] Regenerate clears prior save state and streams new recipe.
+- [x] Tweak text is optional; empty regenerate uses original prompt only.
+- [x] Abort/cancel behavior matches existing generation hook.
 
 ---
 

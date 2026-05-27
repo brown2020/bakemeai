@@ -43,9 +43,12 @@ export default function Generate() {
     validationError,
     input,
     ingredients,
+    tweak,
     setInput,
     setIngredients,
+    setTweak,
     handleGenerate,
+    handleRegenerate,
   } = useRecipeGeneration(userProfile);
 
   // Custom hook for save logic
@@ -101,6 +104,9 @@ export default function Generate() {
                 <RecipeDisplay
                   parsedRecipe={displayRecipe}
                   onSave={handleSave}
+                  onRegenerate={handleRegenerate}
+                  tweak={tweak}
+                  onTweakChange={setTweak}
                   isSaving={isSaving}
                   saved={saved}
                   isGenerating={isGenerating}
