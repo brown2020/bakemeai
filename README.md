@@ -182,55 +182,9 @@ src/
 
 ## 🏗️ Architecture
 
-### State Management
+Layered architecture (components → hooks → services → Firestore / server actions), Zustand stores, and route protection are documented in **[`AGENTS.md`](AGENTS.md)**. Product capabilities and roadmap: **[`spec.md`](spec.md)**.
 
-Uses **Zustand** for global state with three focused stores:
-
-- **`auth-store`** — User authentication state
-- **`recipe-store`** — Recipe generation, input persistence, saving
-- **`user-profile-store`** — User preferences and dietary settings
-
-Recipe inputs are persisted to localStorage to prevent data loss on refresh.
-
-### AI Integration
-
-Leverages the **Vercel AI SDK** with `streamObject` for type-safe structured generation:
-
-```typescript
-const result = streamObject({
-  model: openai("gpt-4o"),
-  schema: recipeSchema, // Zod schema
-  system: systemPrompt,
-  prompt: userPrompt,
-  temperature: 0, // Deterministic output
-});
-```
-
-Recipes stream in real-time as structured JSON, validated against a Zod schema.
-
-### Route Protection
-
-The `proxy.ts` middleware protects authenticated routes (`/generate`, `/profile`, `/saved`) by checking for a valid Firebase auth cookie.
-
-### Firebase Security Rules
-
-This repo includes **default-deny** Firebase rules with per-user ownership checks:
-
-- **Firestore** (`firestore.rules`):
-  - **Default**: deny all reads/writes.
-  - **`recipes/{recipeId}`**: users can read/update/delete only if `resource.data.userId === request.auth.uid`.
-  - **Create recipe**: allowed only when signed in and `request.resource.data.userId === request.auth.uid`.
-  - **`userProfiles/{userId}`**: document id is the UID; signed-in users can read/create/update/delete only their own doc.
-
-- **Storage** (`storage.rules`):
-  - **Default**: deny all reads/writes.
-  - **`users/{userId}/**`**: signed-in users can read/write only within their own folder.
-
-### Component Architecture
-
-- **UI Primitives** (`components/ui/`) — Reusable, unstyled building blocks
-- **Feature Components** — Co-located with their routes
-- **Shared Components** — Cross-cutting concerns (Navbar, PageLayout)
+Firebase **default-deny** rules with per-user ownership are in `firestore.rules` and `storage.rules`.
 
 ## 🤝 Contributing
 
@@ -260,27 +214,9 @@ We welcome contributions! Here's how to get started:
 
 ## 🗺️ Roadmap
 
-### In Progress
+Product direction, feature inventory, and prioritized milestones live in **[`spec.md`](spec.md)** — the authoritative product document.
 
-- [ ] Recipe difficulty ratings
-- [ ] Ingredient substitution suggestions
-- [ ] Unit conversion (metric/imperial)
-
-### Planned
-
-- [ ] Meal planning calendar
-- [ ] Shopping list generation
-- [ ] Recipe scaling
-- [ ] Nutritional information
-- [ ] Recipe sharing
-- [ ] Mobile app (React Native)
-
-### Future
-
-- [ ] Voice-guided cooking
-- [ ] Smart kitchen device integration
-- [ ] Community recipe sharing
-- [ ] AI meal plan optimization
+Agent and architecture guidance for contributors and autonomous tools: **[`AGENTS.md`](AGENTS.md)**.
 
 ## 📝 License
 

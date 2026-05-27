@@ -1,5 +1,7 @@
 # App Directory Conventions
 
+Repository-wide agent and architecture guidance: [`AGENTS.md`](../../AGENTS.md). Product spec: [`spec.md`](../../spec.md).
+
 This directory follows Next.js 16 App Router conventions.
 
 ## Export Patterns
