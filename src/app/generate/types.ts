@@ -39,6 +39,9 @@ export interface RecipeFormProps {
 export interface RecipeDisplayProps {
   parsedRecipe: ParsedRecipe;
   onSave: () => void;
+  onRegenerate: () => void;
+  tweak: string;
+  onTweakChange: (value: string) => void;
   isSaving: boolean;
   saved: boolean;
   isGenerating: boolean;
