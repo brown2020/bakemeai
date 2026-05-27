@@ -6,8 +6,10 @@ import { Button } from "@/components/Button";
 import { Input } from "@/components/ui/Input";
 import { NumberInput } from "@/components/ui/NumberInput";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+import { NutritionSummaryPanel } from "@/components/NutritionSummaryPanel";
 import { PrintRecipeButton } from "@/components/PrintRecipeButton";
 import { FORM_VALIDATION, NUMBER_INPUT } from "@/lib/constants/ui";
+import { extractNutritionSummary } from "@/lib/utils/nutrition";
 import { CARD_STYLES } from "../constants";
 
 /**
@@ -29,6 +31,8 @@ export const RecipeDisplay = memo(function RecipeDisplay({
   isGenerating,
   saveError,
 }: RecipeDisplayProps) {
+  const nutrition = extractNutritionSummary(parsedRecipe.structuredData);
+
   return (
     <div
       className={CARD_STYLES.container}
@@ -43,6 +47,7 @@ export const RecipeDisplay = memo(function RecipeDisplay({
             {parsedRecipe.title}
           </h2>
         )}
+        {nutrition && <NutritionSummaryPanel summary={nutrition} />}
         <div
           className="mt-4"
           aria-labelledby={parsedRecipe.title ? "recipe-title" : undefined}

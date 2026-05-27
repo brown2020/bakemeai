@@ -84,6 +84,15 @@ export const recipeSchema = z.object({
   servings: z.number().int().positive().optional(),
   cuisine: z.string().optional(),
   difficulty: z.string().optional(),
+  calories: z.number().nullable().optional(),
+  macros: z
+    .object({
+      protein: z.string().nullable(),
+      carbs: z.string().nullable(),
+      fat: z.string().nullable(),
+    })
+    .nullable()
+    .optional(),
 }).passthrough();
 
 // ============================================================================
