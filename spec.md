@@ -77,7 +77,8 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 | Route protection (UX) | Shipped | `proxy.ts` cookie/JWT expiry check |
 | Firestore security | Shipped | Default-deny; per-user ownership |
 | Firebase Storage | Not used | SDK + rules exist; no UI |
-| Recipe sharing | Not shipped | — |
+| Copy recipe to clipboard | Shipped | `CopyRecipeButton` (markdown incl. macros) on generate + saved detail |
+| Recipe sharing (public link) | Not shipped | Clipboard copy only; no public URLs |
 | Print / export | Shipped | Print button on generate + saved detail; `@media print` layout |
 | Regenerate from saved | Not shipped | Regenerate on `/generate` only |
 | Serving scaling | Partial | Adjust on `/generate` only; not in saved library |
@@ -157,25 +158,11 @@ Each item is sized for **one focused commit sequence on `dev`** (a single PR-siz
 | Serving-size adjustment (generate) | `scaleRecipeServings` 1–12 on `RecipeDisplay` |
 | Nutrition summary panel | `NutritionSummaryPanel` on generate + saved detail; persisted on new saves |
 | Authenticated AI generation | `requireAuthenticatedUserId()` gates `generateRecipe` before OpenAI |
+| Copy recipe to clipboard | `CopyRecipeButton` + `buildRecipeCopyText` (markdown incl. macros) on generate + saved detail |
 
 ---
 
-### Milestone 1 — Copy recipe to clipboard
-
-**User value**: Get a recipe out of the app — into Notes, a message, or a doc — in one click, the most-requested low-friction sharing path before any link/account sharing exists.
-
-**Intent**: Add a "Copy recipe" action beside Print on `RecipeDisplay` and `RecipeDetail`. Reuse `convertToMarkdown` for the copied text; use the clipboard API with inline success feedback. No public URLs or storage.
-
-**Acceptance criteria**:
-- One click copies the full recipe (title, times, servings, ingredients, instructions, tips, nutrition when present) as markdown/plain text.
-- Inline success feedback ("Copied"); resets after a few seconds.
-- Copied content matches what is displayed, including a scaled serving size on generate.
-
-**Depends on**: `convertToMarkdown`, display selectors. Cover the formatter with a colocated unit test.
-
----
-
-### Milestone 2 — Serving-size adjustment in the saved library
+### Milestone 1 — Serving-size adjustment in the saved library
 
 **User value**: Rescale a saved recipe to tonight's headcount without regenerating or re-paying for AI — completes the half-shipped scaling feature so it works everywhere a recipe is shown.
 
@@ -190,7 +177,7 @@ Each item is sized for **one focused commit sequence on `dev`** (a single PR-siz
 
 ---
 
-### Milestone 3 — Legacy nutrition backfill on read
+### Milestone 2 — Legacy nutrition backfill on read
 
 **User value**: Older saved recipes show the nutrition panel that newer ones do, so the library feels consistent.
 
@@ -205,7 +192,7 @@ Each item is sized for **one focused commit sequence on `dev`** (a single PR-siz
 
 ---
 
-### Milestone 4 — Session generation history
+### Milestone 3 — Session generation history
 
 **User value**: Generate a few variations and pick the best before saving, instead of losing the previous result on each regenerate.
 
@@ -220,7 +207,7 @@ Each item is sized for **one focused commit sequence on `dev`** (a single PR-siz
 
 ---
 
-### Milestone 5 — Server-side generation rate limit
+### Milestone 4 — Server-side generation rate limit
 
 **User value**: Protects the product's OpenAI budget (and therefore its availability) from runaway or abusive use now that generation is auth-gated but unbounded.
 
