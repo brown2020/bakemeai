@@ -26,9 +26,10 @@ Help home cooks turn what they have (or what they crave) into actionable recipes
 | State | Zustand 5 (`persist` on recipe inputs only) | Three stores |
 | Validation | Zod 4 | Schemas in `src/lib/schemas/` |
 | Lint | ESLint 10 flat config | No Prettier npm script |
-| Package manager | **npm** (`package-lock.json`) | Do not switch managers |
+| Package manager | **npm** (`package-lock.json`, `.npmrc` `legacy-peer-deps=true`) | Do not switch managers |
+| Tests | Vitest 3 (`node` env, `src/**/*.test.ts`) | Pure-util unit tests only; no E2E/component runner |
 
-**Not present**: API routes (`src/app/api/`), CI workflows, background jobs/cron. Unit tests via Vitest (`npm run test`); no E2E runner.
+**Not present**: REST API routes (`src/app/api/`), CI workflows (`.github/`), background jobs/cron/queues, E2E/browser tests. The only server entry point is the `generateRecipe` server action.
 
 ---
 
@@ -87,30 +88,36 @@ Components → Hooks → Services → DB / Server Actions (AI)
 
 1. **Auth** — Email/password + Google; remember-me; email verification on signup; password reset; auth cookie `bakemeai_firebaseAuth`.
 2. **Profile** — Dietary tags, allergies, disliked ingredients, cuisines, experience, default serving size → fed into AI system prompt.
-3. **Generate** — Two modes (`specific` | `ingredients`); streaming structured JSON; debounced submit; AbortController cancels stale streams.
-4. **Save** — Validates `completeRecipeStructureSchema` before Firestore write; markdown derived via `convertToMarkdown`.
-5. **Saved library** — List, search (title/ingredients), detail panel, optimistic delete with rollback.
-6. **Static pages** — Landing, about, privacy, terms, support.
-7. **Route protection** — `proxy.ts` soft-gates `/generate`, `/profile`, `/saved`; Firestore rules are the real security boundary.
+3. **Post-signup onboarding** — `ProfileOnboardingBanner` on `/generate` when no `userProfiles/{uid}` doc exists; skip persisted per-user in localStorage (`useProfileOnboarding`).
+4. **Generate** — Two modes (`specific` | `ingredients`); streaming structured JSON; debounced submit (`UI_TIMING.AI_GENERATION_DEBOUNCE`); AbortController cancels stale streams. Server action **requires an authenticated user** before calling OpenAI.
+5. **Regenerate / refine** — Optional tweak field + Regenerate button on `RecipeDisplay`; reuses inputs via `appendTweakToPrompt` and resets save state (`useRecipeGeneration.handleRegenerate`).
+6. **Serving-size adjustment** — `NumberInput` (1–12) + `scaleRecipeServings` deterministically rescales ingredients/calories on `/generate` (`useRecipeServingScale`); generate page only, not saved detail.
+7. **Nutrition panel** — `NutritionSummaryPanel` renders calories/macros above markdown on generate + saved detail when `extractNutritionSummary` finds data; `saveRecipe` persists `calories`/`macros` top-level when present.
+8. **Save** — Validates `completeRecipeStructureSchema` before Firestore write; markdown derived via `convertToMarkdown`.
+9. **Saved library** — List, search (title/ingredients), detail panel, optimistic delete with rollback (`saved/page.tsx`).
+10. **Print / export** — `PrintRecipeButton` on generate (after stream completes) + saved detail; `@media print` rules in `globals.css` isolate `.recipe-printable`.
+11. **Static pages** — Landing, about, privacy, terms, support.
+12. **Route protection** — `proxy.ts` soft-gates `/generate`, `/profile`, `/saved`; Firestore rules are the real security boundary.
 
 **Partial / unused (inferred)**:
-- `calories` / `macros` generated and stored in markdown when present, but no dedicated nutrition UI.
 - Firebase Storage initialized + rules exist; no upload UI.
 - `user-profile-store` used only via `useUserProfile`; profile page uses `useFirestoreQuery` directly instead.
+- Legacy saved recipes created before nutrition persistence have data only in markdown body; the panel reads top-level fields, so older recipes may not show it.
 
 ---
 
 ## Important Commands
 
 ```bash
-npm install          # Install dependencies (use lockfile)
-npm run dev          # Dev server (Turbopack)
-npm run build        # Production build (requires env vars in prod mode)
+npm install          # Install dependencies (use lockfile; .npmrc sets legacy-peer-deps)
+npm run dev          # Dev server (Next 16 / Turbopack default)
+npm run build        # Production build (requires NEXT_PUBLIC_FIREBASE_* + OPENAI_API_KEY in prod)
 npm run start        # Serve production build
-npm run lint         # ESLint
+npm run lint         # ESLint 10 flat config
+npm run test         # Vitest unit tests (single run, CI-safe)
 ```
 
-There is no `npm test`, `npm run typecheck`, or Prettier script.
+There is no `npm run typecheck` (type errors surface via `next build`) and no Prettier npm script (`.prettierrc.json` is editor/pre-commit only).
 
 ---
 
@@ -183,7 +190,11 @@ Constants: `src/lib/constants/auth.ts` (`PRIVATE_ROUTES`, `AUTH_PAGES`).
 
 **Critical**: `proxy.ts` `config.matcher` must stay in sync with constants (dev drift check logs error).
 
-**Security**: Proxy validates JWT **expiry only** (no signature). Real enforcement is Firestore rules (`userId === request.auth.uid`). The `generateRecipe` server action does **not** verify auth today — treat cost/abuse hardening as product work (see `spec.md`).
+**Security**: Proxy validates JWT **expiry only** (no signature — Firebase Admin is unavailable on Edge). Real enforcement has two layers:
+- **Data**: Firestore rules (`userId === request.auth.uid`); default-deny on everything else.
+- **AI cost**: `generateRecipe` calls `requireAuthenticatedUserId()` (`lib/utils/server-auth.ts`), which reads the auth cookie and verifies it via the Firebase Identity Toolkit REST API (unsigned expiry fallback only in `development` when the API key is absent). Unauthenticated calls throw before OpenAI is hit.
+
+Remaining hardening (rate limiting, per-user quotas) is product work — see `spec.md`.
 
 ---
 
@@ -203,9 +214,12 @@ Race patterns in use: AbortController (generation, auth token fetch), version re
 
 ## Testing Expectations
 
-**No test infrastructure exists.** Do not add tests unless the task explicitly requests them.
+Vitest is configured (`vitest.config.ts`, `node` environment, glob `src/**/*.test.ts`, `@` alias). `npm run test` runs once and is CI-safe — never use watch mode.
 
-When tests are introduced, prefer boundaries: `lib/services/`, `lib/utils/`, `lib/schemas/`, store selectors, then hooks with mocks, then E2E for auth + generate + save.
+Current coverage is **pure-function unit tests only**, colocated next to their source:
+`jwt`, `route-match`, `onboarding`, `recipe-prompt`, `recipe-servings`, `nutrition`, `print-recipe`.
+
+When extending tests, keep targeting deterministic boundaries first: `lib/utils/`, `lib/schemas/`, store selectors. Firebase, the OpenAI server action, and React components are **not** unit-tested — do not add tests that require network, Firebase, or a browser/component runner unless the task explicitly asks for that infrastructure. Cover new pure utilities with a colocated `*.test.ts`.
 
 ---
 
@@ -215,8 +229,8 @@ When tests are introduced, prefer boundaries: `lib/services/`, `lib/utils/`, `li
 |------|-----|
 | `src/proxy.ts` + `constants/auth.ts` | Matcher drift breaks route protection UX |
 | `firestore.rules` / `storage.rules` | Production data access |
-| `src/lib/recipe-generation.server.ts` | OpenAI cost; no auth gate |
-| `src/lib/schemas/recipe.ts` | Streaming vs save validation contract |
+| `src/lib/recipe-generation.server.ts` + `src/lib/utils/server-auth.ts` | OpenAI cost; the auth gate that protects it |
+| `src/lib/schemas/recipe.ts` | Streaming vs save validation contract (`recipeStructureSchema` vs `completeRecipeStructureSchema`) |
 | `src/lib/utils/sanitize.ts` | XSS surface for markdown |
 | `src/components/AuthListener.tsx` | Auth race conditions |
 | `src/lib/store/recipe-store.ts` | Persistence scope — never persist AI output |
@@ -291,12 +305,16 @@ Stop and report (do not guess) when:
 | Purpose | File |
 |---------|------|
 | AI server action | `src/lib/recipe-generation.server.ts` |
+| Server-side auth gate | `src/lib/utils/server-auth.ts` |
 | System prompt | `src/lib/prompts.ts` |
 | Recipe service | `src/lib/services/recipe-service.ts` |
 | Firestore recipes | `src/lib/db/recipes.ts` |
 | Firestore profiles | `src/lib/db/profiles.ts` |
 | Recipe schemas | `src/lib/schemas/recipe.ts` |
-| Generation hook | `src/hooks/useRecipeGeneration.ts` |
+| Generation hook (generate + regenerate) | `src/hooks/useRecipeGeneration.ts` |
+| Serving-scale hook | `src/hooks/useRecipeServingScale.ts` |
+| Onboarding hook | `src/hooks/useProfileOnboarding.ts` |
+| Serving / nutrition / print utils | `src/lib/utils/recipe-servings.ts`, `nutrition.ts`, `print-recipe.ts` |
 | Auth listener | `src/components/AuthListener.tsx` |
 | Auth form | `src/components/auth/AuthForm.tsx` |
 | Route proxy | `src/proxy.ts` |

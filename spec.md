@@ -2,7 +2,7 @@
 
 **Authoritative product document.** Architecture and agent conventions live in [`AGENTS.md`](AGENTS.md). End-user setup remains in [`README.md`](README.md).
 
-**Last reviewed**: 2026-05-26 (from codebase inspection on `dev` branch)
+**Last reviewed**: 2026-05-28 (from full codebase inspection on `dev` branch)
 
 ---
 
@@ -70,7 +70,8 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 | AI personalization | Shipped | Profile injected into system prompt |
 | Difficulty + times + servings | Shipped | In schema, markdown, and saved docs |
 | Tips | Shipped | Optional in generation output |
-| Calories / macros | Partial | Generated when model provides; shown in markdown only |
+| Nutrition (calories / macros) | Shipped | `NutritionSummaryPanel` on generate + saved detail; persisted top-level on new saves |
+| Authenticated generation | Shipped | `requireAuthenticatedUserId()` gates the server action before OpenAI |
 | Save recipe | Shipped | Requires complete structured fields |
 | Saved library | Shipped | Search, detail, delete with optimistic UI |
 | Route protection (UX) | Shipped | `proxy.ts` cookie/JWT expiry check |
@@ -78,11 +79,11 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 | Firebase Storage | Not used | SDK + rules exist; no UI |
 | Recipe sharing | Not shipped | — |
 | Print / export | Shipped | Print button on generate + saved detail; `@media print` layout |
-| Regenerate from saved | Not shipped | Regenerate on `/generate` only (Milestone 3) |
-| Serving scaling | Not shipped | Adjust on `/generate` only; not in saved library |
+| Regenerate from saved | Not shipped | Regenerate on `/generate` only |
+| Serving scaling | Partial | Adjust on `/generate` only; not in saved library |
 | Shopping list | Not shipped | README aspirational only |
 | Meal planning | Not shipped | README aspirational only |
-| Automated tests | Partial | Vitest unit tests for auth/route/onboarding utils |
+| Automated tests | Partial | 7 Vitest suites (29 tests) over pure utils: `jwt`, `route-match`, `onboarding`, `recipe-prompt`, `recipe-servings`, `nutrition`, `print-recipe` |
 | CI pipeline | Not shipped | No `.github/workflows` in repo |
 
 ### Current user flows (detail)
@@ -131,12 +132,12 @@ See [`AGENTS.md`](AGENTS.md) for layer diagram and file map.
 
 ### Known limitations
 
-- **Documentation drift**: Root `README.md` still describes obsolete paths (`lib/actions.ts`, `lib/db.ts`); use `AGENTS.md` / this file instead.
-- **No rate limiting** beyond 500ms client debounce on generate submit.
+- **No rate limiting** beyond the client-side generate debounce (`UI_TIMING.AI_GENERATION_DEBOUNCE`); the server action gates on auth but not on volume.
 - **No usage quotas** or billing for end users.
+- **Legacy nutrition**: Older saved recipes only have nutrition inside markdown `content`; `NutritionSummaryPanel` reads top-level fields, so the panel does not render for pre-persistence documents.
 - **Saved recipes** store markdown `content` plus structured fields; legacy recipes may lack optional metadata (schema uses `.passthrough()`).
-- **Branding inconsistency**: Some assets/alt text still say "BakeMe.ai" (e.g. landing image alt).
-- **No `.env.example`** committed (`.env*` gitignored); setup documented in README only.
+- **Serving scaling is generate-only** — saved recipes cannot be rescaled from the library yet.
+- **Branding inconsistency**: Some image `alt` text still says "BakeMe.ai" (`Navbar.tsx`, landing `page.tsx`).
 - **Profile onboarding**: First-run banner on `/generate`; skip stored per user in localStorage until profile is saved.
 - **Accessibility**: Some patterns present (`aria-live` on recipe display); no audit recorded.
 
@@ -144,142 +145,93 @@ See [`AGENTS.md`](AGENTS.md) for layer diagram and file map.
 
 ## 3. Product Roadmap
 
-Ordered by product impact and dependency. Each item is sized for one focused commit sequence on `dev`. Acceptance criteria are testable from a user perspective.
+Each item is sized for **one focused commit sequence on `dev`** (a single PR-sized change) and ordered by product impact + dependency. Acceptance criteria are testable from a user perspective.
+
+### Recently shipped (do not re-plan)
+
+| Shipped | What |
+|---------|------|
+| Post-signup preference onboarding | `ProfileOnboardingBanner` → `/profile?welcome=1`; first recipe respects diet/allergies |
+| Print-friendly recipe view | `PrintRecipeButton` + `@media print` on generate + saved detail |
+| Regenerate / refine | Optional tweak + Regenerate on `RecipeDisplay` |
+| Serving-size adjustment (generate) | `scaleRecipeServings` 1–12 on `RecipeDisplay` |
+| Nutrition summary panel | `NutritionSummaryPanel` on generate + saved detail; persisted on new saves |
+| Authenticated AI generation | `requireAuthenticatedUserId()` gates `generateRecipe` before OpenAI |
 
 ---
 
-### Milestone 1 — Post-signup preference onboarding ✅
+### Milestone 1 — Copy recipe to clipboard
 
-**Status**: Shipped (2026-05-26)
+**User value**: Get a recipe out of the app — into Notes, a message, or a doc — in one click, the most-requested low-friction sharing path before any link/account sharing exists.
 
-**User value**: First recipe reflects allergies and diet without hunting for Profile.
-
-**Implementation note**: `ProfileOnboardingBanner` on `/generate` when no `userProfiles/{uid}` doc exists; skip persisted in localStorage per user. “Set up preferences” links to `/profile?welcome=1` with welcome copy and “Save and start cooking” redirect back to `/generate`. Profile save updates `user-profile-store` so generation uses new preferences immediately.
-
-**Acceptance criteria** (verified):
-- [x] New user sees onboarding prompt once before or on first visit to `/generate`.
-- [x] Completing onboarding persists profile and subsequent generations use it.
-- [x] Skip path lands on generate with unchanged behavior for users without profile.
-
----
-
-### Milestone 2 — Print-friendly recipe view ✅
-
-**Status**: Shipped (2026-05-26)
-
-**User value**: Cook from a saved or generated recipe on paper or tablet without chrome.
-
-**Implementation note**: `PrintRecipeButton` on `RecipeDisplay` (after stream completes) and `RecipeDetail`. Global `@media print` rules in `globals.css` isolate `.recipe-printable` content (title + markdown) and hide nav, actions, and sidebar via visibility scoping.
-
-**Acceptance criteria** (verified):
-- [x] Print from generated recipe (after stream completes) and from saved detail.
-- [x] Output excludes nav, buttons, and site chrome.
-- [x] Markdown content renders readably in print layout.
-
----
-
-### Milestone 3 — Regenerate and refine ✅
-
-**Status**: Shipped (2026-05-26)
-
-**User value**: Iterate on a recipe without retyping the whole prompt.
-
-**Implementation note**: Optional tweak field and **Regenerate** button on `RecipeDisplay` after generation completes. `useRecipeGeneration.handleRegenerate` reuses the same inputs, appends tweak via `appendTweakToPrompt`, clears save state, and aborts in-flight streams like the initial generate flow. Form submit always uses an empty tweak.
-
-**Acceptance criteria** (verified):
-- [x] Regenerate clears prior save state and streams new recipe.
-- [x] Tweak text is optional; empty regenerate uses original prompt only.
-- [x] Abort/cancel behavior matches existing generation hook.
-
----
-
-### Milestone 4 — Serving size adjustment ✅
-
-**Status**: Shipped (2026-05-26)
-
-**User value**: Change servings after generation to match household size.
-
-**Implementation note**: `NumberInput` (1–12) and **Update servings** on `RecipeDisplay` call `scaleRecipeServings` to deterministically scale ingredient lines, embedded instruction quantities, calories, and servings; prepends an adjustment note to instructions. Save state resets so the scaled recipe must be saved explicitly.
-
-**Acceptance criteria** (verified):
-- [x] User selects target servings (1–12, aligned with profile defaults).
-- [x] Ingredient list updates; instructions note adjusted quantities where applicable.
-- [x] Save persists scaled version user confirms.
-
----
-
-### Milestone 5 — Nutrition summary panel
-
-**User value**: See calories and macros at a glance when the model provides them.
-
-**Intent**: When `calories` / `macros` exist on `structuredRecipe`, render a compact summary card above markdown (generate + saved detail); do not block save when null.
-
-**Implementation note**: `NutritionSummaryPanel` renders above markdown on generate (`RecipeDisplay`) and saved detail (`RecipeDetail`) when `extractNutritionSummary` finds data. `saveRecipe` persists `calories` and `macros` on new saves so saved recipes can show the panel without markdown parsing.
-
-**Acceptance criteria** (verified):
-- [x] Panel visible when data present; hidden when all null.
-- [x] Saved recipes show panel when structured fields exist on document (may require backfill from markdown for legacy — optional).
-
-**Depends on**: Existing schema fields; mostly UI.
-
----
-
-### Milestone 5 (follow-up) — Legacy saved recipe nutrition backfill
-
-**User value**: Older saved recipes show nutrition when it exists only in markdown body.
-
-**Intent**: Optional one-time or on-read parse of calories/macros from saved `content` for documents missing top-level fields.
+**Intent**: Add a "Copy recipe" action beside Print on `RecipeDisplay` and `RecipeDetail`. Reuse `convertToMarkdown` for the copied text; use the clipboard API with inline success feedback. No public URLs or storage.
 
 **Acceptance criteria**:
-- Saved detail shows nutrition panel for pre-persistence recipes when markdown contains parseable nutrition lines.
-- No change to save flow for new recipes.
+- One click copies the full recipe (title, times, servings, ingredients, instructions, tips, nutrition when present) as markdown/plain text.
+- Inline success feedback ("Copied"); resets after a few seconds.
+- Copied content matches what is displayed, including a scaled serving size on generate.
+
+**Depends on**: `convertToMarkdown`, display selectors. Cover the formatter with a colocated unit test.
 
 ---
 
-### Milestone 6 — Copy / share recipe (private link deferred)
+### Milestone 2 — Serving-size adjustment in the saved library
 
-**User value**: Share a recipe with a friend via clipboard.
+**User value**: Rescale a saved recipe to tonight's headcount without regenerating or re-paying for AI — completes the half-shipped scaling feature so it works everywhere a recipe is shown.
 
-**Intent**: "Copy recipe" exports plain-text or markdown to clipboard from generate and saved views; no public URLs in v1.
+**Intent**: Surface the existing `NumberInput` + `scaleRecipeServings` controls on `RecipeDetail` (saved view), mirroring `RecipeDisplay`. Scaling is display-only by default; offer an explicit "Save scaled copy" rather than mutating the original document.
 
 **Acceptance criteria**:
-- One click copies full recipe text.
-- Success feedback (toast or inline).
-- Copied content matches displayed recipe.
+- Saved detail shows a servings control (1–12) defaulting to the recipe's stored servings.
+- Adjusting servings rescales ingredients/calories using the same util as generate.
+- Original saved document is unchanged unless the user explicitly saves a scaled copy.
 
-**Depends on**: `convertToMarkdown` / display selectors.
-
-**Out of scope for this milestone**: Public sharing, Firebase Storage images.
+**Depends on**: `useRecipeServingScale` / `scaleRecipeServings` (already tested).
 
 ---
 
-### Milestone 7 — Secure AI generation (authenticated server action) ✅
+### Milestone 3 — Legacy nutrition backfill on read
 
-**Status**: Shipped (2026-05-26) — prior dev stabilization pass
+**User value**: Older saved recipes show the nutrition panel that newer ones do, so the library feels consistent.
 
-**User value**: Platform sustainability and user trust — only signed-in users consume AI.
-
-**Implementation note**: `requireAuthenticatedUserId()` in `generateRecipe` verifies auth cookie via Firebase Identity Toolkit REST API (with unsigned fallback in dev only).
-
-**Acceptance criteria** (verified):
-- [x] Unauthenticated server action invocation fails without calling OpenAI.
-- [x] Signed-in user's generate flow unchanged.
-- [x] Error message surfaced via existing generation error path.
-
----
-
-### Milestone 8 — Generation history (session)
-
-**User value**: Compare last few generations before saving one.
-
-**Intent**: Keep in-memory (or sessionStorage) list of last N `structuredRecipe` snapshots on generate page; select to restore display without re-calling AI.
+**Intent**: When a saved document lacks top-level `calories`/`macros`, parse them from the markdown `content` on read so `NutritionSummaryPanel` can render. Pure, read-time only; no migration job and no change to the save path.
 
 **Acceptance criteria**:
-- Up to 5 recent generations listed while on `/generate`.
-- Selecting one updates display; save works on selected snapshot.
-- Clearing on sign-out or explicit "Clear history".
+- Saved detail shows the nutrition panel for pre-persistence recipes whose markdown contains parseable nutrition lines.
+- Recipes with neither structured fields nor parseable markdown still hide the panel cleanly.
+- New saves are unaffected.
 
-**Depends on**: Recipe store extension (do not persist to localStorage long-term).
+**Depends on**: `nutrition.ts` (extend with a markdown parser + colocated test).
+
+---
+
+### Milestone 4 — Session generation history
+
+**User value**: Generate a few variations and pick the best before saving, instead of losing the previous result on each regenerate.
+
+**Intent**: Keep an in-memory (session-scoped, not localStorage-persisted) list of the last N `structuredRecipe` snapshots while on `/generate`. Let the user select a prior snapshot to restore the display and save it.
+
+**Acceptance criteria**:
+- Up to 5 recent generations are listed while on `/generate`.
+- Selecting one restores the display and Save works on the selected snapshot.
+- History clears on sign-out and via an explicit "Clear history"; never persisted long-term.
+
+**Depends on**: Recipe-store extension (keep AI output out of `persist`/localStorage — see State Management in `AGENTS.md`).
+
+---
+
+### Milestone 5 — Server-side generation rate limit
+
+**User value**: Protects the product's OpenAI budget (and therefore its availability) from runaway or abusive use now that generation is auth-gated but unbounded.
+
+**Intent**: Add a per-user request cap in `requireAuthenticatedUserId()`'s caller / the server action (e.g. short-window counter keyed by uid). Surface the existing rate-limit error path to the user. Keep it minimal and dependency-light; no new infra beyond what the action already has access to.
+
+**Acceptance criteria**:
+- A signed-in user exceeding the window receives the existing rate-limit error and no OpenAI call is made.
+- Normal usage is unaffected.
+- The limit is documented in `AGENTS.md` security notes.
+
+**Depends on**: `server-auth.ts`, `ERROR_MESSAGES.RECIPE.RATE_LIMIT`.
 
 ---
 
@@ -293,7 +245,7 @@ These are **not** current roadmap commitments unless product scope expands:
 - Mobile native app
 - Voice-guided cooking
 - Smart appliance integration
-- Unit conversion (metric/imperial) as standalone — may fold into Milestone 4
+- Unit conversion (metric/imperial) as a standalone toggle — could extend the serving-scale utility
 
 ---
 
