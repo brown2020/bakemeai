@@ -1,9 +1,11 @@
-import { memo, useMemo } from "react";
+import { memo, useCallback, useMemo } from "react";
 import type { Recipe } from "@/lib/schemas/recipe";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { NutritionSummaryPanel } from "@/components/NutritionSummaryPanel";
 import { PrintRecipeButton } from "@/components/PrintRecipeButton";
+import { CopyRecipeButton } from "@/components/CopyRecipeButton";
 import { extractNutritionSummary } from "@/lib/utils/nutrition";
+import { buildRecipeCopyText } from "@/lib/utils/recipe-copy";
 
 interface RecipeDetailProps {
   recipe: Recipe | null;
@@ -25,6 +27,18 @@ export const RecipeDetail = memo(function RecipeDetail({ recipe }: RecipeDetailP
     [recipe]
   );
 
+  const getCopyText = useCallback(
+    () =>
+      recipe
+        ? buildRecipeCopyText({
+            title: recipe.title,
+            content: recipe.content,
+            nutrition,
+          })
+        : "",
+    [recipe, nutrition]
+  );
+
   if (!recipe) {
     return (
       <div className="h-full flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300">
@@ -42,8 +56,12 @@ export const RecipeDetail = memo(function RecipeDetail({ recipe }: RecipeDetailP
         {nutrition && <NutritionSummaryPanel summary={nutrition} />}
         <MarkdownRenderer content={recipe.content} />
       </div>
-      <div className="no-print mt-4">
+      <div className="no-print mt-4 flex flex-wrap items-center gap-2">
         <PrintRecipeButton ariaLabel={`Print ${recipe.title}`} />
+        <CopyRecipeButton
+          getText={getCopyText}
+          ariaLabel={`Copy ${recipe.title} to clipboard`}
+        />
       </div>
     </div>
   );

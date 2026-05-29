@@ -96,8 +96,9 @@ Components → Hooks → Services → DB / Server Actions (AI)
 8. **Save** — Validates `completeRecipeStructureSchema` before Firestore write; markdown derived via `convertToMarkdown`.
 9. **Saved library** — List, search (title/ingredients), detail panel, optimistic delete with rollback (`saved/page.tsx`).
 10. **Print / export** — `PrintRecipeButton` on generate (after stream completes) + saved detail; `@media print` rules in `globals.css` isolate `.recipe-printable`.
-11. **Static pages** — Landing, about, privacy, terms, support.
-12. **Route protection** — `proxy.ts` soft-gates `/generate`, `/profile`, `/saved`; Firestore rules are the real security boundary.
+11. **Copy to clipboard** — `CopyRecipeButton` + `buildRecipeCopyText` (`lib/utils/recipe-copy.ts`) copy the displayed recipe as markdown (incl. macros) with inline feedback, on generate + saved detail.
+12. **Static pages** — Landing, about, privacy, terms, support.
+13. **Route protection** — `proxy.ts` soft-gates `/generate`, `/profile`, `/saved`; Firestore rules are the real security boundary.
 
 **Partial / unused (inferred)**:
 - Firebase Storage initialized + rules exist; no upload UI.
