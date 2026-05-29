@@ -1,9 +1,9 @@
 # Bake.me 🧑‍🍳
 
-[![Next.js](https://img.shields.io/badge/Next.js-16.0-black?logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19.1.1-61dafb?logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-3178c6?logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1.18-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61dafb?logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6-3178c6?logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
 [![License: AGPL--3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE.md)
 
 **Bake.me** is an AI-powered recipe generator that creates personalized recipes based on your ingredients, dietary preferences, and cooking experience. Built with Next.js 16, React 19, and the Vercel AI SDK for streaming structured responses.
@@ -22,108 +22,64 @@
 
 ## 🛠️ Tech Stack
 
-### Core Framework
+> Exact pinned versions live in [`package.json`](package.json) (the source of truth). This table lists the major versions and what each library does.
 
-| Package                                       | Version | Purpose                               |
-| --------------------------------------------- | ------- | ------------------------------------- |
-| [Next.js](https://nextjs.org/)                | 16.0.0  | React framework with App Router & RSC |
-| [React](https://react.dev/)                   | 19.1.1  | UI library with Server Components     |
-| [TypeScript](https://www.typescriptlang.org/) | 5.9.2   | Type safety                           |
-
-### AI & Data
-
-| Package                                                                   | Version | Purpose                              |
-| ------------------------------------------------------------------------- | ------- | ------------------------------------ |
-| [Vercel AI SDK](https://sdk.vercel.ai/)                                   | 6.0.3   | AI streaming & structured generation |
-| [@ai-sdk/openai](https://sdk.vercel.ai/providers/ai-sdk-providers/openai) | 3.0.1   | OpenAI provider for GPT models       |
-| [@ai-sdk/rsc](https://sdk.vercel.ai/docs/ai-sdk-rsc)                      | 2.0.3   | React Server Components integration  |
-| [Zod](https://zod.dev/)                                                   | 4.1.12  | Schema validation for AI responses   |
-
-### Backend Services
-
-| Package                                             | Version | Purpose                      |
-| --------------------------------------------------- | ------- | ---------------------------- |
-| [Firebase](https://firebase.google.com/)            | 12.1    | Auth, Firestore database     |
-| [js-cookie](https://github.com/js-cookie/js-cookie) | 3.0.5   | Auth token cookie management |
-
-### UI & Styling
-
-| Package                                                                   | Version | Purpose                      |
-| ------------------------------------------------------------------------- | ------- | ---------------------------- |
-| [Tailwind CSS](https://tailwindcss.com/)                                  | 4.1.18  | Utility-first CSS            |
-| [@tailwindcss/typography](https://tailwindcss.com/docs/typography-plugin) | 0.5.19  | Prose styling for recipes    |
-| [Lucide React](https://lucide.dev/)                                       | 0.562.0 | Icon library                 |
-| [class-variance-authority](https://cva.style/)                            | 0.7.1   | Component variant management |
-| [react-markdown](https://github.com/remarkjs/react-markdown)              | 10.1.0  | Markdown rendering           |
-
-### State Management
-
-| Package                                  | Version | Purpose                       |
-| ---------------------------------------- | ------- | ----------------------------- |
-| [Zustand](https://zustand-demo.pmnd.rs/) | 5.0.8   | Global state with persistence |
+| Layer | Libraries (major) | Purpose |
+| ----- | ----------------- | ------- |
+| Framework | [Next.js](https://nextjs.org/) 16 (App Router, RSC, Turbopack), [React](https://react.dev/) 19, [TypeScript](https://www.typescriptlang.org/) 6 | React framework + Server Components, type safety |
+| AI | [Vercel AI SDK](https://sdk.vercel.ai/) 6, `@ai-sdk/openai` 3, `@ai-sdk/rsc` 2, [Zod](https://zod.dev/) 4 | Streaming structured generation (`gpt-4o`) + schema validation |
+| Backend | [Firebase](https://firebase.google.com/) 12, [js-cookie](https://github.com/js-cookie/js-cookie) 3 | Auth, Firestore, auth-cookie management |
+| UI | [Tailwind CSS](https://tailwindcss.com/) 4, `@tailwindcss/typography`, [Lucide React](https://lucide.dev/), [class-variance-authority](https://cva.style/), [react-markdown](https://github.com/remarkjs/react-markdown) | Styling, icons, variants, recipe markdown |
+| State | [Zustand](https://zustand-demo.pmnd.rs/) 5 | Global state (persists recipe inputs only) |
+| Tests | [Vitest](https://vitest.dev/) 3 | Unit tests for pure utilities |
 
 ## 📁 Project Structure
 
 ```
 src/
 ├── app/                          # Next.js App Router
-│   ├── layout.tsx                # Root layout with AuthListener
-│   ├── page.tsx                  # Landing page (RSC)
-│   ├── generate/                 # Recipe generation
-│   │   ├── page.tsx              # Main generate page
-│   │   ├── components/           # Feature components
-│   │   │   ├── RecipeForm.tsx    # Input form
-│   │   │   ├── RecipeDisplay.tsx # Recipe output
-│   │   │   └── ModeSelector.tsx  # Generation mode picker
-│   │   ├── types.ts              # Feature types
-│   │   └── constants.ts          # Prompt templates
-│   ├── profile/                  # User preferences
+│   ├── layout.tsx                # Root layout (AuthListener, Navbar, Footer, ErrorBoundary)
+│   ├── page.tsx                  # Landing page (RSC; HeroCTA is client)
+│   ├── generate/                 # Recipe generation (mode → form → stream → save)
+│   │   └── components/           # RecipeForm, RecipeDisplay, ModeSelector, FormInput, ErrorMessage
+│   ├── profile/                  # Cooking preferences
 │   ├── saved/                    # Saved recipes library
-│   ├── login/                    # Auth (uses shared AuthForm)
-│   ├── signup/                   # Auth (uses shared AuthForm)
-│   └── reset-password/           # Password recovery
+│   │   └── components/           # RecipeList, RecipeDetail, RecipeSearch, EmptyState, LoadingSkeleton
+│   ├── login/ · signup/ · reset-password/   # Auth (shared AuthForm)
+│   └── about/ · privacy/ · terms/ · support/ # Static pages
 │
 ├── components/                   # Shared components
-│   ├── ui/                       # UI primitives
-│   │   ├── Button.tsx            # Button with variants
-│   │   ├── Input.tsx             # Input & Textarea
-│   │   ├── ChipSelect.tsx        # Multi-select chips
-│   │   ├── TagInput.tsx          # Comma-separated tags
-│   │   ├── NavLink.tsx           # Active nav link
-│   │   ├── ErrorMessage.tsx      # Error alerts
-│   │   └── PageSkeleton.tsx      # Loading skeletons
-│   ├── auth/                     # Auth components
-│   │   ├── AuthForm.tsx          # Unified login/signup
-│   │   └── GoogleSignInButton.tsx
-│   ├── Navbar.tsx                # Navigation bar
-│   ├── PageLayout.tsx            # Page wrapper
-│   ├── MarkdownRenderer.tsx      # Recipe markdown display
-│   └── HeroCTA.tsx               # Landing page CTA
+│   ├── ui/                       # Primitives (Input, ChipSelect, TagInput, NumberInput, NavLink, …)
+│   ├── auth/                     # AuthForm, AuthFormWithRedirect, GoogleSignInButton
+│   ├── Navbar.tsx · Footer.tsx · PageLayout.tsx · MarkdownRenderer.tsx · HeroCTA.tsx
+│   ├── NutritionSummaryPanel.tsx · PrintRecipeButton.tsx · ProfileOnboardingBanner.tsx
+│   └── AuthListener.tsx · ErrorBoundary.tsx
 │
-├── hooks/                        # Custom hooks
-│   └── useGoogleAuth.ts          # Google auth logic
+├── hooks/                        # useRecipeGeneration, useRecipeSave, useRecipeServingScale,
+│                                 # useUserProfile, useFirestoreQuery, useProfileOnboarding, …
+├── lib/
+│   ├── recipe-generation.server.ts  # "use server" — OpenAI streaming (auth-gated)
+│   ├── prompts.ts                    # System prompt builder
+│   ├── services/recipe-service.ts    # Client-side service wrappers
+│   ├── db/                           # Firestore CRUD (recipes, profiles)
+│   ├── schemas/                      # Zod schemas (recipe, user, auth) + types
+│   ├── store/                        # Zustand stores (auth, recipe, user-profile)
+│   ├── constants/                    # auth, domain, ui, onboarding
+│   ├── utils/                        # errors, logger, jwt, server-auth, markdown, sanitize,
+│   │                                 # nutrition, recipe-servings, print-recipe, … (+ *.test.ts)
+│   └── firebase.ts
 │
-├── lib/                          # Utilities & config
-│   ├── actions.ts                # Server actions (AI calls)
-│   ├── db.ts                     # Firestore operations
-│   ├── firebase.ts               # Firebase initialization
-│   ├── auth-cookie.ts            # Auth cookie helpers
-│   ├── constants.ts              # App constants
-│   ├── types.ts                  # Shared types
-│   └── store/                    # Zustand stores
-│       ├── auth-store.ts         # Auth state
-│       ├── recipe-store.ts       # Recipe generation state
-│       └── user-profile-store.ts # User preferences
-│
-└── proxy.ts                      # Route protection middleware
+└── proxy.ts                      # Edge route protection (JWT expiry only, unsigned)
 ```
+
+> Full architecture and layer boundaries: [`AGENTS.md`](AGENTS.md).
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- **Node.js** 18.17 or later
-- **npm** or **yarn** or **pnpm**
+- **Node.js** 20.9 or later (required by Next.js 16)
+- **npm** — this repo is npm-only (`package-lock.json` + `.npmrc`); do not switch package managers
 - **Firebase project** with Auth and Firestore enabled
 - **OpenAI API key**
 
@@ -209,8 +165,9 @@ We welcome contributions! Here's how to get started:
 
 - Adding more dietary preference options
 - Improving mobile responsiveness
-- Adding recipe print view
-- Writing unit tests
+- Copy-recipe-to-clipboard action (see `spec.md` Milestone 1)
+- Serving-size adjustment in the saved library (see `spec.md` Milestone 2)
+- Expanding unit-test coverage of `lib/utils/`
 - Improving accessibility (a11y)
 
 ## 🗺️ Roadmap
