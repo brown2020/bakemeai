@@ -9,7 +9,10 @@
  * Security rules enforced:
  * - Must be a non-empty string
  * - Must start with "/" (relative path only)
+ * - Must NOT start with "//" (prevents protocol-relative URLs)
  * - Must NOT contain "//" anywhere (prevents protocol-relative URLs and path traversal)
+ * - Must NOT contain a backslash (some browsers normalize "\" to "/", so "/\evil.com"
+ *   can be treated as a protocol-relative URL — reject it to prevent open redirects)
  * 
  * This prevents attackers from crafting URLs that redirect users to external malicious sites.
  * 
@@ -20,11 +23,18 @@
  * isSafeRedirectPath("/dashboard")    // true
  * isSafeRedirectPath("//evil.com")    // false
  * isSafeRedirectPath("/foo//bar")     // false
+ * isSafeRedirectPath("/\\evil.com")   // false
  * isSafeRedirectPath("https://x.com") // false
  * isSafeRedirectPath(null)            // false
  */
 export function isSafeRedirectPath(path: string | null | undefined): path is string {
-  return typeof path === "string" && path.length > 0 && path.startsWith("/") && !path.includes("//");
+  return (
+    typeof path === "string" &&
+    path.length > 0 &&
+    path.startsWith("/") &&
+    !path.includes("//") &&
+    !path.includes("\\")
+  );
 }
 
 /**

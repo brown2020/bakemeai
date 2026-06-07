@@ -59,7 +59,7 @@ export default function Home() {
               <Image
                 className="rounded-lg shadow-xl"
                 src="/bakemekey.png"
-                alt="BakeMe.ai Kitchen"
+                alt="Bake.me Kitchen"
                 width={1024}
                 height={768}
                 priority
