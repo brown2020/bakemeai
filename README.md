@@ -169,7 +169,6 @@ We welcome contributions! Here's how to get started:
 - Legacy nutrition backfill on read (see `spec.md` Milestone 2)
 - Expanding unit-test coverage of `lib/utils/`
 - Improving accessibility (a11y)
-- Fixing remaining "BakeMe.ai" alt-text branding to "Bake.me" (`Navbar.tsx`, landing `page.tsx`)
 
 ## 🗺️ Roadmap
 

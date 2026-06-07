@@ -53,7 +53,7 @@ export const Navbar = memo(function Navbar() {
             >
               <Image
                 src="/logo.png"
-                alt="BakeMe.ai Logo"
+                alt="Bake.me Logo"
                 width={32}
                 height={32}
                 className="w-8 h-8"

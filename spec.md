@@ -84,7 +84,7 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 | Serving scaling | Partial | Adjust on `/generate` only; not in saved library |
 | Shopping list | Not shipped | README aspirational only |
 | Meal planning | Not shipped | README aspirational only |
-| Automated tests | Partial | 8 Vitest suites (34 tests) over pure utils: `jwt`, `route-match`, `onboarding`, `recipe-prompt`, `recipe-servings`, `nutrition`, `print-recipe`, `recipe-copy` |
+| Automated tests | Partial | 9 Vitest suites (42 tests) over pure utils: `jwt`, `route-match`, `navigation`, `onboarding`, `recipe-prompt`, `recipe-servings`, `nutrition`, `print-recipe`, `recipe-copy` |
 | CI pipeline | Not shipped | No `.github/workflows` in repo |
 
 ### Current user flows (detail)
@@ -138,7 +138,6 @@ See [`AGENTS.md`](AGENTS.md) for layer diagram and file map.
 - **Legacy nutrition**: Older saved recipes only have nutrition inside markdown `content`; `NutritionSummaryPanel` reads top-level fields, so the panel does not render for pre-persistence documents.
 - **Saved recipes** store markdown `content` plus structured fields; legacy recipes may lack optional metadata (schema uses `.passthrough()`).
 - **Serving scaling is generate-only** — saved recipes cannot be rescaled from the library yet.
-- **Branding inconsistency**: Some image `alt` text still says "BakeMe.ai" (`Navbar.tsx`, landing `page.tsx`).
 - **Profile onboarding**: First-run banner on `/generate`; skip stored per user in localStorage until profile is saved.
 - **Accessibility**: Some patterns present (`aria-live` on recipe display); no audit recorded.
 
