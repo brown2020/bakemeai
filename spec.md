@@ -2,7 +2,7 @@
 
 **Authoritative product document.** Architecture and agent conventions live in [`AGENTS.md`](AGENTS.md). End-user setup remains in [`README.md`](README.md).
 
-**Last reviewed**: 2026-05-28 (from full codebase inspection on `dev` branch)
+**Last reviewed**: 2026-06-06 (from full codebase inspection on `dev` branch)
 
 ---
 
@@ -84,7 +84,7 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 | Serving scaling | Partial | Adjust on `/generate` only; not in saved library |
 | Shopping list | Not shipped | README aspirational only |
 | Meal planning | Not shipped | README aspirational only |
-| Automated tests | Partial | 7 Vitest suites (29 tests) over pure utils: `jwt`, `route-match`, `onboarding`, `recipe-prompt`, `recipe-servings`, `nutrition`, `print-recipe` |
+| Automated tests | Partial | 8 Vitest suites (34 tests) over pure utils: `jwt`, `route-match`, `onboarding`, `recipe-prompt`, `recipe-servings`, `nutrition`, `print-recipe`, `recipe-copy` |
 | CI pipeline | Not shipped | No `.github/workflows` in repo |
 
 ### Current user flows (detail)

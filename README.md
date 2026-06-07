@@ -165,10 +165,11 @@ We welcome contributions! Here's how to get started:
 
 - Adding more dietary preference options
 - Improving mobile responsiveness
-- Copy-recipe-to-clipboard action (see `spec.md` Milestone 1)
-- Serving-size adjustment in the saved library (see `spec.md` Milestone 2)
+- Serving-size adjustment in the saved library (see `spec.md` Milestone 1)
+- Legacy nutrition backfill on read (see `spec.md` Milestone 2)
 - Expanding unit-test coverage of `lib/utils/`
 - Improving accessibility (a11y)
+- Fixing remaining "BakeMe.ai" alt-text branding to "Bake.me" (`Navbar.tsx`, landing `page.tsx`)
 
 ## 🗺️ Roadmap
 
