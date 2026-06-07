@@ -73,3 +73,32 @@ export function formatRecipeBodyAsMarkdown(recipe: RecipeStructure): string {
 
   return sections.join("");
 }
+
+// ============================================================================
+// TITLE HEADING HANDLING
+// ============================================================================
+
+/**
+ * Removes a leading `# <title>` heading from markdown content so a separately
+ * rendered title is not duplicated.
+ *
+ * Saved recipes persist `content` from {@link convertToMarkdown}, which prepends
+ * `# <title>`. Views that render the title on their own (e.g. saved RecipeDetail)
+ * must strip it to avoid showing the title twice. Only strips when the first line
+ * matches the title exactly; legacy/body-only content is returned unchanged.
+ *
+ * @param content - Markdown content that may start with a `# <title>` heading
+ * @param title - The recipe title rendered separately
+ * @returns Content with the leading title heading removed when present
+ */
+export function stripLeadingTitleHeading(content: string, title: string): string {
+  const trimmedTitle = (title ?? "").trim();
+  if (!trimmedTitle) return content;
+
+  const newlineIndex = content.indexOf("\n");
+  const firstLine =
+    newlineIndex === -1 ? content : content.slice(0, newlineIndex);
+  if (firstLine.trim() !== `# ${trimmedTitle}`) return content;
+
+  return newlineIndex === -1 ? "" : content.slice(newlineIndex + 1).trimStart();
+}

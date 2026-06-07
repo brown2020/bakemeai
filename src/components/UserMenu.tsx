@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { SerializableAuthUser } from "@/lib/schemas/auth";
+import { logError } from "@/lib/utils/logger";
 
 interface UserMenuProps {
   user: SerializableAuthUser;
@@ -39,8 +40,8 @@ export function UserMenu({ user, onSignOut }: UserMenuProps) {
     try {
       await onSignOut();
     } catch (error) {
-      console.error("Sign out error:", error);
-      // Error is handled in the parent component (Navbar)
+      // Error is also handled in the parent component (Navbar)
+      logError("Sign out error", error);
     }
   };
 
@@ -61,7 +62,7 @@ export function UserMenu({ user, onSignOut }: UserMenuProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5">
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black/5">
           <div className="px-4 py-2 text-sm text-gray-700 border-b truncate">
             {user.email}
           </div>
