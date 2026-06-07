@@ -53,8 +53,9 @@ src/
 │   ├── db/                           # Firestore CRUD (recipes, profiles)
 │   ├── schemas/                      # Zod + inferred types
 │   ├── store/                        # Zustand (pure state)
-│   ├── constants/                    # auth, domain, ui
-│   └── utils/                        # errors, logger, markdown, sanitize, cookies
+│   ├── constants/                    # auth, domain, ui, onboarding
+│   └── utils/                        # errors, logger, jwt, server-auth, navigation (safe-redirect),
+│                                     # sanitize, markdown, auth-cookies, nutrition, recipe-servings, …
 └── proxy.ts                # Edge route protection (JWT expiry only, unsigned)
 firestore.rules, storage.rules
 ```
@@ -195,6 +196,8 @@ Constants: `src/lib/constants/auth.ts` (`PRIVATE_ROUTES`, `AUTH_PAGES`).
 - **Data**: Firestore rules (`userId === request.auth.uid`); default-deny on everything else.
 - **AI cost**: `generateRecipe` calls `requireAuthenticatedUserId()` (`lib/utils/server-auth.ts`), which reads the auth cookie and verifies it via the Firebase Identity Toolkit REST API (unsigned expiry fallback only in `development` when the API key is absent). Unauthenticated calls throw before OpenAI is hit.
 
+**Return URLs**: All post-auth redirects (`?redirect=`) must pass through `getSafeRedirectPath` / `isSafeRedirectPath` (`lib/utils/navigation.ts`), which rejects absolute URLs, protocol-relative `//`, and backslash paths to prevent open redirects. Never `router.push` a raw redirect param.
+
 Remaining hardening (rate limiting, per-user quotas) is product work — see `spec.md`.
 
 ---
@@ -233,6 +236,7 @@ When extending tests, keep targeting deterministic boundaries first: `lib/utils/
 | `src/lib/recipe-generation.server.ts` + `src/lib/utils/server-auth.ts` | OpenAI cost; the auth gate that protects it |
 | `src/lib/schemas/recipe.ts` | Streaming vs save validation contract (`recipeStructureSchema` vs `completeRecipeStructureSchema`) |
 | `src/lib/utils/sanitize.ts` | XSS surface for markdown |
+| `src/lib/utils/navigation.ts` | Open-redirect surface for post-auth `?redirect=` handling |
 | `src/components/AuthListener.tsx` | Auth race conditions |
 | `src/lib/store/recipe-store.ts` | Persistence scope — never persist AI output |
 | `package-lock.json` | npm-only; lock intentional dependency versions |
