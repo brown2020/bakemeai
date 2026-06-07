@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/Button";
+import { logError } from "@/lib/utils/logger";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -60,15 +61,16 @@ export function ConfirmDialog({
       await onConfirm();
       onClose();
     } catch (error) {
-      console.error("Confirm action failed:", error);
-      // Re-throw to allow parent to handle
-      throw error;
+      // Keep the dialog open on failure; the parent surfaces the error message.
+      // Do not rethrow: this runs from an onClick handler, where a rejected
+      // promise would become an unhandled rejection.
+      logError("Confirm action failed", error);
     }
   };
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={onClose}
       role="dialog"
       aria-modal="true"

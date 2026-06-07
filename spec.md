@@ -84,7 +84,7 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 | Serving scaling | Partial | Adjust on `/generate` only; not in saved library |
 | Shopping list | Not shipped | README aspirational only |
 | Meal planning | Not shipped | README aspirational only |
-| Automated tests | Partial | 12 Vitest suites (55 tests) over pure utils + the proxy matcher invariant: `jwt`, `route-match`, `navigation`, `onboarding`, `recipe-prompt`, `recipe-servings`, `nutrition`, `print-recipe`, `recipe-copy`, `error-handler`, `firestore`, `proxy` |
+| Automated tests | Partial | 13 Vitest suites (61 tests) over pure utils + the proxy matcher invariant: `jwt`, `route-match`, `navigation`, `onboarding`, `recipe-prompt`, `recipe-servings`, `nutrition`, `print-recipe`, `recipe-copy`, `markdown`, `error-handler`, `firestore`, `proxy` |
 | CI pipeline | Not shipped | No `.github/workflows` in repo |
 
 ### Current user flows (detail)

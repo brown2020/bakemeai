@@ -220,8 +220,8 @@ Race patterns in use: AbortController (generation, auth token fetch), version re
 
 Vitest is configured (`vitest.config.ts`, `node` environment, glob `src/**/*.test.ts`, `@` alias). `npm run test` runs once and is CI-safe — never use watch mode.
 
-Current coverage is **pure-function / static-invariant unit tests only** (12 suites, 55 tests), colocated next to their source:
-`jwt`, `route-match`, `navigation`, `onboarding`, `recipe-prompt`, `recipe-servings`, `nutrition`, `print-recipe`, `recipe-copy`, `error-handler`, `firestore`, plus `proxy` (asserts `config.matcher` stays in sync with the route constants).
+Current coverage is **pure-function / static-invariant unit tests only** (13 suites, 61 tests), colocated next to their source:
+`jwt`, `route-match`, `navigation`, `onboarding`, `recipe-prompt`, `recipe-servings`, `nutrition`, `print-recipe`, `recipe-copy`, `markdown`, `error-handler`, `firestore`, plus `proxy` (asserts `config.matcher` stays in sync with the route constants).
 
 When extending tests, keep targeting deterministic boundaries first: `lib/utils/`, `lib/schemas/`, store selectors. Firebase, the OpenAI server action, and React components are **not** unit-tested — do not add tests that require network, Firebase, or a browser/component runner unless the task explicitly asks for that infrastructure. Cover new pure utilities with a colocated `*.test.ts`.
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { FORM_VALIDATION, RECIPE } from "@/lib/constants/ui";
 
 interface TagInputProps {
@@ -11,10 +13,27 @@ interface TagInputProps {
   maxItemLength?: number;
 }
 
+const TAG_COMPARE_SEPARATOR = "\u0000";
+
+/**
+ * Parses comma-separated text into trimmed, length-validated tags.
+ */
+function parseTags(input: string, maxItemLength: number): string[] {
+  return input
+    .split(",")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0 && item.length <= maxItemLength);
+}
+
 /**
  * Comma-separated tag input component.
  * Converts comma-separated text to/from string arrays for easy entry.
- * 
+ *
+ * Keeps the raw text in local state so in-progress separators (e.g. a trailing
+ * comma) are not stripped mid-typing by the parsed value. The parsed array is
+ * still emitted to the parent on every change, and local text is reconciled
+ * when the external value changes for a different reason (e.g. profile load).
+ *
  * Features:
  * - Validates total input length to prevent excessive data
  * - Validates individual item length to prevent abuse
@@ -29,20 +48,34 @@ export function TagInput({
   maxLength = FORM_VALIDATION.TEXTAREA_MAX_LENGTH,
   maxItemLength = RECIPE.MAX_TITLE_LENGTH,
 }: TagInputProps) {
+  const [text, setText] = useState<string>(() => value.join(", "));
+  const [prevValue, setPrevValue] = useState(value);
+
+  // Reconcile local text during render when the external value changes for a
+  // reason other than the user's current typing (e.g. a loaded profile). Skip
+  // when the parsed text already matches the value, which would otherwise eat
+  // an in-progress separator such as a trailing comma. (Adjusting state during
+  // render is React's recommended alternative to a sync effect.)
+  if (prevValue !== value) {
+    setPrevValue(value);
+    if (
+      parseTags(text, maxItemLength).join(TAG_COMPARE_SEPARATOR) !==
+      value.join(TAG_COMPARE_SEPARATOR)
+    ) {
+      setText(value.join(", "));
+    }
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value;
-    
+
     // Prevent excessive input length (defense against DoS/memory issues)
     if (input.length > maxLength) {
       return;
     }
-    
-    const newValue = input
-      .split(",")
-      .map((item) => item.trim())
-      .filter((item) => item.length > 0 && item.length <= maxItemLength);
-    
-    onChange(newValue);
+
+    setText(input);
+    onChange(parseTags(input, maxItemLength));
   };
 
   return (
@@ -52,7 +85,7 @@ export function TagInput({
       </label>
       <input
         type="text"
-        value={value.join(", ")}
+        value={text}
         onChange={handleChange}
         placeholder={placeholder}
         maxLength={maxLength}
@@ -61,8 +94,4 @@ export function TagInput({
     </div>
   );
 }
-
-
-
-
 

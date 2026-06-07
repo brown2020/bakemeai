@@ -7,6 +7,7 @@
  */
 
 import type { NutritionSummary } from "./nutrition";
+import { stripLeadingTitleHeading } from "./markdown";
 
 export interface RecipeCopyInput {
   /** Recipe title (rendered separately from the markdown body on the generate view). */
@@ -31,7 +32,7 @@ export function buildRecipeCopyText({
   nutrition,
 }: RecipeCopyInput): string {
   const heading = (title ?? "").trim();
-  const body = stripLeadingTitle((content ?? "").trim(), heading);
+  const body = stripLeadingTitleHeading((content ?? "").trim(), heading);
 
   const parts: string[] = [];
   if (heading) parts.push(`# ${heading}`);
@@ -41,20 +42,6 @@ export function buildRecipeCopyText({
   if (macrosSection) parts.push(macrosSection);
 
   return parts.join("\n\n").trim();
-}
-
-/**
- * Removes a leading `# <title>` heading from the body so the title is not duplicated.
- * Only strips when the first line matches the recipe title exactly.
- */
-function stripLeadingTitle(content: string, title: string): string {
-  if (!title) return content;
-
-  const newlineIndex = content.indexOf("\n");
-  const firstLine = newlineIndex === -1 ? content : content.slice(0, newlineIndex);
-  if (firstLine.trim() !== `# ${title}`) return content;
-
-  return newlineIndex === -1 ? "" : content.slice(newlineIndex + 1).trimStart();
 }
 
 /**

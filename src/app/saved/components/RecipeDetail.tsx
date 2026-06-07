@@ -5,6 +5,7 @@ import { NutritionSummaryPanel } from "@/components/NutritionSummaryPanel";
 import { PrintRecipeButton } from "@/components/PrintRecipeButton";
 import { CopyRecipeButton } from "@/components/CopyRecipeButton";
 import { extractNutritionSummary } from "@/lib/utils/nutrition";
+import { stripLeadingTitleHeading } from "@/lib/utils/markdown";
 import { buildRecipeCopyText } from "@/lib/utils/recipe-copy";
 
 interface RecipeDetailProps {
@@ -24,6 +25,13 @@ interface RecipeDetailProps {
 export const RecipeDetail = memo(function RecipeDetail({ recipe }: RecipeDetailProps) {
   const nutrition = useMemo(
     () => (recipe ? extractNutritionSummary(recipe) : null),
+    [recipe]
+  );
+
+  // Saved content begins with `# <title>` (from convertToMarkdown); strip it so
+  // the title isn't rendered twice alongside the heading below.
+  const body = useMemo(
+    () => (recipe ? stripLeadingTitleHeading(recipe.content, recipe.title) : ""),
     [recipe]
   );
 
@@ -54,7 +62,7 @@ export const RecipeDetail = memo(function RecipeDetail({ recipe }: RecipeDetailP
           {recipe.title}
         </h2>
         {nutrition && <NutritionSummaryPanel summary={nutrition} />}
-        <MarkdownRenderer content={recipe.content} />
+        <MarkdownRenderer content={body} />
       </div>
       <div className="no-print mt-4 flex flex-wrap items-center gap-2">
         <PrintRecipeButton ariaLabel={`Print ${recipe.title}`} />
