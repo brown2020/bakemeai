@@ -28,8 +28,8 @@ after npm introduced broad unrelated lockfile metadata churn.
 ## Branch and Push
 
 - Branch: `dev`
-- Commit: pending for this phase report
-- Pushed to: pending for this phase report
+- Commit: `16482ed perf: add legacy nutrition read fallback`
+- Pushed to: `origin dev`
 
 ## Commands Run
 
