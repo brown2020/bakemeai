@@ -104,21 +104,27 @@ export function useRecipeGeneration(
         setGenerationError(null);
         resetSaveState();
 
-        await generateRecipeWithStreaming(
-          prompt,
-          isIngredientsMode,
-          userProfile,
-          (recipe) => {
-            if (!signal.aborted) setStructuredRecipe(recipe);
-          },
-          (errorMessage) => {
-            if (!signal.aborted) setGenerationError(errorMessage);
-          },
-          signal
-        );
-
-        if (!signal.aborted) {
-          setGenerating(false);
+        try {
+          await generateRecipeWithStreaming(
+            prompt,
+            isIngredientsMode,
+            userProfile,
+            (recipe) => {
+              if (!signal.aborted) setStructuredRecipe(recipe);
+            },
+            (errorMessage) => {
+              if (!signal.aborted) setGenerationError(errorMessage);
+            },
+            signal
+          );
+        } catch {
+          if (!signal.aborted) {
+            setGenerationError(ERROR_MESSAGES.RECIPE.GENERATION_FAILED);
+          }
+        } finally {
+          if (!signal.aborted) {
+            setGenerating(false);
+          }
         }
       },
       [

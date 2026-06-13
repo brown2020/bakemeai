@@ -9,7 +9,12 @@ import { saveRecipe as saveRecipeToDb, deleteRecipe as deleteRecipeFromDb } from
 import type { SerializableUserProfile } from "@/lib/schemas/user";
 import type { RecipeStructure } from "@/lib/schemas/recipe";
 import { recipeStructureSchema, completeRecipeStructureSchema } from "@/lib/schemas/recipe";
-import { AppError, ERROR_MESSAGES, convertErrorToMessage } from "@/lib/utils/error-handler";
+import {
+  AppError,
+  ERROR_MESSAGES,
+  convertErrorToMessage,
+  convertRecipeGenerationErrorToMessage,
+} from "@/lib/utils/error-handler";
 import { convertToMarkdown } from "@/lib/utils/markdown";
 import { logError, logWarning } from "@/lib/utils/logger";
 
@@ -60,8 +65,12 @@ export async function generateRecipeWithStreaming(
     // Don't report errors for aborted requests
     if (signal?.aborted) return;
 
-    logError("Error generating recipe", error, {});
-    const message = convertErrorToMessage(error, ERROR_MESSAGES.RECIPE.GENERATION_FAILED);
+    const message = convertRecipeGenerationErrorToMessage(error);
+    if (message === ERROR_MESSAGES.RECIPE.GENERATION_UNAVAILABLE) {
+      logWarning("Recipe generation unavailable", {});
+    } else {
+      logError("Error generating recipe", error, {});
+    }
     onError(message);
   }
 }

@@ -49,6 +49,8 @@ export const ERROR_MESSAGES = {
     LOAD_FAILED: "Unable to load recipes. Please try again.",
     DELETE_FAILED: "Unable to delete recipe. Please try again.",
     GENERATION_FAILED: "Failed to generate recipe. Please try again.",
+    GENERATION_UNAVAILABLE:
+      "Recipe generation is temporarily unavailable. Please try again later.",
     NO_RECIPE_TO_SAVE: "No recipe to save. Please generate a recipe first.",
     RATE_LIMIT: "Please wait a moment before generating another recipe.",
   },
@@ -91,6 +93,66 @@ const FIREBASE_ERROR_MESSAGES: Record<string, string> = {
   "auth/network-request-failed": ERROR_MESSAGES.AUTH.NETWORK_ERROR,
 };
 
+const RECIPE_PROVIDER_ERROR_CODES = new Set([
+  "invalid_api_key",
+  "insufficient_quota",
+  "rate_limit_exceeded",
+  "OPENAI_API_KEY_MISSING",
+  "RECIPE_PROVIDER_ERROR",
+]);
+
+const RECIPE_PROVIDER_ERROR_PATTERN =
+  /api key|authentication|unauthorized|invalid_api_key|incorrect api key|quota|rate limit/i;
+
+/**
+ * Extracts a stable error code from Firebase, provider, and AppError-like
+ * errors without exposing raw error messages to users.
+ */
+export function getErrorCode(error: unknown): string | undefined {
+  if (!error || typeof error !== "object" || !("code" in error)) {
+    return undefined;
+  }
+
+  const code = (error as { code: unknown }).code;
+  return typeof code === "string" ? code : undefined;
+}
+
+function getErrorStatus(error: unknown): number | undefined {
+  if (!error || typeof error !== "object" || !("status" in error)) {
+    return undefined;
+  }
+
+  const status = (error as { status: unknown }).status;
+  return typeof status === "number" ? status : undefined;
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object" && "message" in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return String(error ?? "");
+}
+
+/**
+ * Returns true for expected Firebase Auth failures that should be shown inline
+ * without triggering noisy development error overlays.
+ */
+export function isKnownFirebaseAuthError(error: unknown): boolean {
+  const code = getErrorCode(error);
+  return code ? code in FIREBASE_ERROR_MESSAGES : false;
+}
+
+function isRecipeProviderError(error: unknown): boolean {
+  const code = getErrorCode(error);
+  if (code && RECIPE_PROVIDER_ERROR_CODES.has(code)) return true;
+
+  const status = getErrorStatus(error);
+  if (status === 401 || status === 403 || status === 429) return true;
+
+  return RECIPE_PROVIDER_ERROR_PATTERN.test(getErrorMessage(error));
+}
+
 /**
  * Converts an error to a user-friendly message.
  * Handles Firebase auth errors, AppErrors, and generic errors.
@@ -104,9 +166,9 @@ export function convertErrorToMessage(
   fallbackMessage: string
 ): string {
   // Handle Firebase errors with error codes
-  if (error && typeof error === "object" && "code" in error) {
-    const firebaseError = error as { code: string };
-    const firebaseMessage = FIREBASE_ERROR_MESSAGES[firebaseError.code];
+  const errorCode = getErrorCode(error);
+  if (errorCode) {
+    const firebaseMessage = FIREBASE_ERROR_MESSAGES[errorCode];
     if (firebaseMessage) {
       return firebaseMessage;
     }
@@ -128,4 +190,21 @@ export function convertErrorToMessage(
   }
 
   return fallbackMessage;
+}
+
+/**
+ * Converts OpenAI/provider failures into a recipe-specific user message.
+ * Provider auth/config/quota details are intentionally hidden from users.
+ */
+export function convertRecipeGenerationErrorToMessage(error: unknown): string {
+  const message = getErrorMessage(error);
+  if (message === ERROR_MESSAGES.RECIPE.GENERATION_UNAVAILABLE) {
+    return message;
+  }
+
+  if (isRecipeProviderError(error)) {
+    return ERROR_MESSAGES.RECIPE.GENERATION_UNAVAILABLE;
+  }
+
+  return convertErrorToMessage(error, ERROR_MESSAGES.RECIPE.GENERATION_FAILED);
 }
