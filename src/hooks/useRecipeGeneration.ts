@@ -140,7 +140,6 @@ export function useRecipeGeneration(
         setValidationError(ERROR_MESSAGES.RECIPE.RATE_LIMIT);
         return;
       }
-      lastSubmitTimeRef.current = Date.now();
 
       resetSaveState();
       setValidationError(null);
@@ -158,6 +157,7 @@ export function useRecipeGeneration(
         return;
       }
 
+      lastSubmitTimeRef.current = Date.now();
       const prompt = appendTweakToPrompt(buildPrompt(promptInput, mode), tweakText);
       debouncedGeneration(prompt, mode === "ingredients");
     },
