@@ -70,7 +70,7 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 | AI personalization | Shipped | Profile injected into system prompt |
 | Difficulty + times + servings | Shipped | In schema, markdown, and saved docs |
 | Tips | Shipped | Optional in generation output |
-| Nutrition (calories / macros) | Shipped | `NutritionSummaryPanel` on generate + saved detail; persisted top-level on new saves |
+| Nutrition (calories / macros) | Shipped | `NutritionSummaryPanel` on generate + saved detail; persisted top-level on new saves; legacy saved markdown is parsed on read |
 | Authenticated generation | Shipped | `requireAuthenticatedUserId()` gates the server action before OpenAI |
 | Save recipe | Shipped | Requires complete structured fields |
 | Saved library | Shipped | Search, detail, delete with optimistic UI |
@@ -135,7 +135,6 @@ See [`AGENTS.md`](AGENTS.md) for layer diagram and file map.
 
 - **No rate limiting** beyond the client-side generate debounce (`UI_TIMING.AI_GENERATION_DEBOUNCE`); the server action gates on auth but not on volume.
 - **No usage quotas** or billing for end users.
-- **Legacy nutrition**: Older saved recipes only have nutrition inside markdown `content`; `NutritionSummaryPanel` reads top-level fields, so the panel does not render for pre-persistence documents.
 - **Saved recipes** store markdown `content` plus structured fields; legacy recipes may lack optional metadata (schema uses `.passthrough()`).
 - **Serving scaling is generate-only** — saved recipes cannot be rescaled from the library yet.
 - **Profile onboarding**: First-run banner on `/generate`; skip stored per user in localStorage until profile is saved.
@@ -158,6 +157,7 @@ Each item is sized for **one focused commit sequence on `dev`** (a single PR-siz
 | Nutrition summary panel | `NutritionSummaryPanel` on generate + saved detail; persisted on new saves |
 | Authenticated AI generation | `requireAuthenticatedUserId()` gates `generateRecipe` before OpenAI |
 | Copy recipe to clipboard | `CopyRecipeButton` + `buildRecipeCopyText` (markdown incl. macros) on generate + saved detail |
+| Legacy nutrition backfill | Saved detail parses nutrition from legacy markdown content when top-level nutrition fields are missing |
 
 ---
 
@@ -176,22 +176,7 @@ Each item is sized for **one focused commit sequence on `dev`** (a single PR-siz
 
 ---
 
-### Milestone 2 — Legacy nutrition backfill on read
-
-**User value**: Older saved recipes show the nutrition panel that newer ones do, so the library feels consistent.
-
-**Intent**: When a saved document lacks top-level `calories`/`macros`, parse them from the markdown `content` on read so `NutritionSummaryPanel` can render. Pure, read-time only; no migration job and no change to the save path.
-
-**Acceptance criteria**:
-- Saved detail shows the nutrition panel for pre-persistence recipes whose markdown contains parseable nutrition lines.
-- Recipes with neither structured fields nor parseable markdown still hide the panel cleanly.
-- New saves are unaffected.
-
-**Depends on**: `nutrition.ts` (extend with a markdown parser + colocated test).
-
----
-
-### Milestone 3 — Session generation history
+### Milestone 2 — Session generation history
 
 **User value**: Generate a few variations and pick the best before saving, instead of losing the previous result on each regenerate.
 
@@ -206,7 +191,7 @@ Each item is sized for **one focused commit sequence on `dev`** (a single PR-siz
 
 ---
 
-### Milestone 4 — Server-side generation rate limit
+### Milestone 3 — Server-side generation rate limit
 
 **User value**: Protects the product's OpenAI budget (and therefore its availability) from runaway or abusive use now that generation is auth-gated but unbounded.
 

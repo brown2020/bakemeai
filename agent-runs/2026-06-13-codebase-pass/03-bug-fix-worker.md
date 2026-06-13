@@ -25,8 +25,8 @@ side debounce window.
 ## Branch and Push
 
 - Branch: `dev`
-- Commit: pending for this phase report
-- Pushed to: pending for this phase report
+- Commit: `52f8116 fix: avoid throttling invalid recipe submissions`
+- Pushed to: `origin dev`
 
 ## Commands Run
 
