@@ -6,7 +6,12 @@ import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 
 import { FORM_VALIDATION } from "@/lib/constants/ui";
-import { AppError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
+import {
+  AppError,
+  ERROR_MESSAGES,
+  convertRecipeGenerationErrorToMessage,
+} from "@/lib/utils/error-handler";
+import { logError } from "@/lib/utils/logger";
 import { requireAuthenticatedUserId } from "@/lib/utils/server-auth";
 
 import type { SerializableUserProfile } from "./schemas/user";
@@ -15,6 +20,35 @@ import { getRecipeSystemPrompt } from "./prompts";
 /** Max prompt length — allows wrapped templates over raw input limits. */
 const MAX_SERVER_PROMPT_LENGTH =
   FORM_VALIDATION.TEXTAREA_MAX_LENGTH + 500;
+
+function assertOpenAiConfigured(): void {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new AppError(
+      ERROR_MESSAGES.RECIPE.GENERATION_UNAVAILABLE,
+      "OPENAI_API_KEY_MISSING"
+    );
+  }
+}
+
+function toRecipeGenerationError(error: unknown): AppError {
+  return new AppError(
+    convertRecipeGenerationErrorToMessage(error),
+    "RECIPE_PROVIDER_ERROR"
+  );
+}
+
+async function* withRecipeGenerationErrors<T>(
+  stream: AsyncIterable<T>
+): AsyncIterable<T> {
+  try {
+    for await (const partialObject of stream) {
+      yield partialObject;
+    }
+  } catch (error) {
+    logError("Recipe provider stream failed", error, {});
+    throw toRecipeGenerationError(error);
+  }
+}
 
 /**
  * Schema for AI-generated recipe structure.
@@ -51,6 +85,7 @@ export async function generateRecipe(
   userProfile?: SerializableUserProfile | null
 ) {
   await requireAuthenticatedUserId();
+  assertOpenAiConfigured();
 
   const trimmedPrompt = prompt.trim();
   if (
@@ -63,14 +98,23 @@ export async function generateRecipe(
     );
   }
 
-  const result = streamObject({
-    model: openai("gpt-4o"),
-    schema: recipeGenerationSchema,
-    system: getRecipeSystemPrompt(isIngredientBased, userProfile),
-    prompt: trimmedPrompt,
-    temperature: 0,
-  });
+  let partialObjectStream: AsyncIterable<unknown>;
+  try {
+    const result = streamObject({
+      model: openai("gpt-4o"),
+      schema: recipeGenerationSchema,
+      system: getRecipeSystemPrompt(isIngredientBased, userProfile),
+      prompt: trimmedPrompt,
+      temperature: 0,
+    });
+    partialObjectStream = result.partialObjectStream;
+  } catch (error) {
+    logError("Recipe provider failed to start", error, {});
+    throw toRecipeGenerationError(error);
+  }
 
-  const stream = createStreamableValue(result.partialObjectStream);
+  const stream = createStreamableValue(
+    withRecipeGenerationErrors(partialObjectStream)
+  );
   return stream.value;
 }

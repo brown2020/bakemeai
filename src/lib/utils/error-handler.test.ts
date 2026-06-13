@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   AppError,
   ERROR_MESSAGES,
+  convertRecipeGenerationErrorToMessage,
   convertErrorToMessage,
+  isKnownFirebaseAuthError,
   isAppError,
 } from "@/lib/utils/error-handler";
 
@@ -53,5 +55,45 @@ describe("convertErrorToMessage", () => {
     expect(convertErrorToMessage({ message: "nope" }, FALLBACK)).toBe(FALLBACK);
     expect(convertErrorToMessage("string error", FALLBACK)).toBe(FALLBACK);
     expect(convertErrorToMessage(undefined, FALLBACK)).toBe(FALLBACK);
+  });
+});
+
+describe("isKnownFirebaseAuthError", () => {
+  it("identifies mapped Firebase auth errors", () => {
+    expect(isKnownFirebaseAuthError({ code: "auth/invalid-credential" })).toBe(
+      true
+    );
+  });
+
+  it("rejects unknown error codes", () => {
+    expect(isKnownFirebaseAuthError({ code: "auth/something-new" })).toBe(
+      false
+    );
+    expect(isKnownFirebaseAuthError(new Error("boom"))).toBe(false);
+  });
+});
+
+describe("convertRecipeGenerationErrorToMessage", () => {
+  it("hides provider API key details", () => {
+    expect(
+      convertRecipeGenerationErrorToMessage(
+        new Error("Incorrect API key provided")
+      )
+    ).toBe(ERROR_MESSAGES.RECIPE.GENERATION_UNAVAILABLE);
+  });
+
+  it("maps provider auth and quota status codes", () => {
+    expect(convertRecipeGenerationErrorToMessage({ status: 401 })).toBe(
+      ERROR_MESSAGES.RECIPE.GENERATION_UNAVAILABLE
+    );
+    expect(convertRecipeGenerationErrorToMessage({ status: 429 })).toBe(
+      ERROR_MESSAGES.RECIPE.GENERATION_UNAVAILABLE
+    );
+  });
+
+  it("falls back for unknown generation errors", () => {
+    expect(convertRecipeGenerationErrorToMessage(new Error("random"))).toBe(
+      ERROR_MESSAGES.RECIPE.GENERATION_FAILED
+    );
   });
 });

@@ -22,8 +22,10 @@ import { getSafeRedirectPath } from "@/lib/utils/navigation";
 import {
   convertErrorToMessage,
   ERROR_MESSAGES,
+  getErrorCode,
+  isKnownFirebaseAuthError,
 } from "@/lib/utils/error-handler";
-import { logError } from "@/lib/utils/logger";
+import { logError, logWarning } from "@/lib/utils/logger";
 
 import { GoogleSignInButton } from "./GoogleSignInButton";
 
@@ -106,9 +108,6 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
       }
       router.push(safeRedirectTo);
     } catch (err) {
-      // Log for debugging (server-side only in production)
-      logError(`${isLogin ? "Sign in" : "Sign up"} failed`, err, { email });
-
       // Convert to user-friendly message
       const errorMessage = convertErrorToMessage(
         err,
@@ -116,6 +115,15 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
           ? ERROR_MESSAGES.AUTH.SIGN_IN_FAILED
           : ERROR_MESSAGES.AUTH.GENERIC
       );
+
+      if (isKnownFirebaseAuthError(err)) {
+        logWarning(`${isLogin ? "Sign in" : "Sign up"} rejected`, {
+          code: getErrorCode(err),
+        });
+      } else {
+        logError(`${isLogin ? "Sign in" : "Sign up"} failed`, err, { email });
+      }
+
       setError(errorMessage);
     } finally {
       setIsSubmitting(false);
