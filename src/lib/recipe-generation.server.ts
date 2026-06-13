@@ -31,23 +31,12 @@ function assertOpenAiConfigured(): void {
 }
 
 function toRecipeGenerationError(error: unknown): AppError {
+  if (error instanceof AppError) return error;
+
   return new AppError(
     convertRecipeGenerationErrorToMessage(error),
     "RECIPE_PROVIDER_ERROR"
   );
-}
-
-async function* withRecipeGenerationErrors<T>(
-  stream: AsyncIterable<T>
-): AsyncIterable<T> {
-  try {
-    for await (const partialObject of stream) {
-      yield partialObject;
-    }
-  } catch (error) {
-    logError("Recipe provider stream failed", error, {});
-    throw toRecipeGenerationError(error);
-  }
 }
 
 /**
@@ -113,8 +102,18 @@ export async function generateRecipe(
     throw toRecipeGenerationError(error);
   }
 
-  const stream = createStreamableValue(
-    withRecipeGenerationErrors(partialObjectStream)
-  );
+  const stream = createStreamableValue<unknown>();
+  void (async () => {
+    try {
+      for await (const partialObject of partialObjectStream) {
+        stream.update(partialObject);
+      }
+      stream.done();
+    } catch (error) {
+      logError("Recipe provider stream failed", error, {});
+      stream.error(toRecipeGenerationError(error));
+    }
+  })();
+
   return stream.value;
 }
