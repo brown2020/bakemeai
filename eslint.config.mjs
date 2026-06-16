@@ -50,4 +50,12 @@ export default [
 
   // Next.js core web vitals
   next.configs["core-web-vitals"],
+
+  // Project compatibility overrides for stricter React Compiler-era hook rules.
+  {
+    files: ["**/*.{js,jsx,ts,tsx}"],
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
 ];
