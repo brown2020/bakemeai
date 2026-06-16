@@ -131,7 +131,6 @@ export function AuthListener(): React.ReactElement | null {
        * (e.g., invalid Firebase config, network unreachable).
        */
       logError("Firebase authentication initialization failed", error);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Initialization error handling
       setInitError(
         "Authentication system unavailable. Please refresh the page."
       );
