@@ -7,14 +7,15 @@
   slipped in, no unrelated files changed.
 - Stop condition: Each approved feature is committed and pushed, or blocked with
   evidence.
-- Attempts: PIP-001 1/3; PIP-002 1/3; PIP-003 1/3
-- Result: PIP-001, PIP-002, and PIP-003 implemented
+- Attempts: PIP-001 1/3; PIP-002 1/3; PIP-003 1/3; PIP-004 1/3
+- Result: PIP-001, PIP-002, PIP-003, and PIP-004 implemented
 
 ## Feature
 
 - PIP-001 saved-library serving adjustment.
 - PIP-002 session generation history.
 - PIP-003 server-side generation rate limit.
+- PIP-004 refine from saved recipe.
 
 ## Changes Made
 
@@ -37,6 +38,10 @@
 - Gated authenticated recipe generation at 8 requests per 60 seconds before
   starting an OpenAI stream.
 - Documented the server-side rate limit in `AGENTS.md`.
+- Added `buildSavedRecipeRefinePrompt` to create capped editable prompts from
+  saved recipe metadata.
+- Added a saved-detail "Refine" action that preloads `/generate` in specific
+  recipe mode without mutating the original saved document.
 
 ## Verification
 
@@ -55,6 +60,11 @@
 - `npm run lint` passed.
 - `NEXT_PUBLIC_FIREBASE_API_KEY=placeholder NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=placeholder.firebaseapp.com NEXT_PUBLIC_FIREBASE_PROJECT_ID=placeholder NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=placeholder.appspot.com NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123 NEXT_PUBLIC_FIREBASE_APP_ID=placeholder OPENAI_API_KEY=placeholder npm run build`
   passed after PIP-003.
+- `npx vitest run src/lib/utils/saved-recipe-refine.test.ts src/lib/utils/saved-recipe.test.ts`
+  passed.
+- `npm run lint` passed.
+- `NEXT_PUBLIC_FIREBASE_API_KEY=placeholder NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=placeholder.firebaseapp.com NEXT_PUBLIC_FIREBASE_PROJECT_ID=placeholder NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=placeholder.appspot.com NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123 NEXT_PUBLIC_FIREBASE_APP_ID=placeholder OPENAI_API_KEY=placeholder npm run build`
+  passed after PIP-004.
 
 ## Commit And Push
 
