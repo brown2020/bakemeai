@@ -7,13 +7,14 @@
   slipped in, no unrelated files changed.
 - Stop condition: Each approved feature is committed and pushed, or blocked with
   evidence.
-- Attempts: PIP-001 1/3; PIP-002 1/3
-- Result: PIP-001 and PIP-002 implemented
+- Attempts: PIP-001 1/3; PIP-002 1/3; PIP-003 1/3
+- Result: PIP-001, PIP-002, and PIP-003 implemented
 
 ## Feature
 
 - PIP-001 saved-library serving adjustment.
 - PIP-002 session generation history.
+- PIP-003 server-side generation rate limit.
 
 ## Changes Made
 
@@ -32,6 +33,10 @@
   and dedupe repeated results.
 - Captured complete streamed recipes into history after generation completes.
 - Added a `/generate` recent generations panel with restore and clear actions.
+- Added a dependency-light in-memory fixed-window rate limiter utility.
+- Gated authenticated recipe generation at 8 requests per 60 seconds before
+  starting an OpenAI stream.
+- Documented the server-side rate limit in `AGENTS.md`.
 
 ## Verification
 
@@ -45,6 +50,11 @@
 - `npm run lint` passed.
 - `NEXT_PUBLIC_FIREBASE_API_KEY=placeholder NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=placeholder.firebaseapp.com NEXT_PUBLIC_FIREBASE_PROJECT_ID=placeholder NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=placeholder.appspot.com NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123 NEXT_PUBLIC_FIREBASE_APP_ID=placeholder OPENAI_API_KEY=placeholder npm run build`
   passed after PIP-002.
+- `npx vitest run src/lib/utils/rate-limit.test.ts src/lib/utils/error-handler.test.ts`
+  passed.
+- `npm run lint` passed.
+- `NEXT_PUBLIC_FIREBASE_API_KEY=placeholder NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=placeholder.firebaseapp.com NEXT_PUBLIC_FIREBASE_PROJECT_ID=placeholder NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=placeholder.appspot.com NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123 NEXT_PUBLIC_FIREBASE_APP_ID=placeholder OPENAI_API_KEY=placeholder npm run build`
+  passed after PIP-003.
 
 ## Commit And Push
 
