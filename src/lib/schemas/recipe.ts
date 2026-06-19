@@ -79,6 +79,8 @@ export const recipeSchema = z.object({
   content: z.string().min(1, "Content is required"),
   createdAt: requiredTimestampSchema,
   ingredients: z.array(z.string()).optional(),
+  instructions: z.array(z.string()).optional(),
+  tips: z.array(z.string()).optional(),
   preparationTime: z.string().optional(),
   cookingTime: z.string().optional(),
   servings: z.number().int().positive().optional(),
