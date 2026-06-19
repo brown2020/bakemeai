@@ -78,4 +78,8 @@
 
 ## Commit And Push
 
-- Pending.
+- `8508edd` `feat: add saved recipe serving scaling` pushed to `origin/dev`.
+- `c75e03f` `feat: add session recipe history` pushed to `origin/dev`.
+- `519075d` `feat: rate limit recipe generation` pushed to `origin/dev`.
+- `a3c2b95` `feat: refine from saved recipes` pushed to `origin/dev`.
+- `dc1b933` `feat: filter saved recipes by metadata` pushed to `origin/dev`.

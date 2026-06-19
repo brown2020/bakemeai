@@ -91,20 +91,22 @@ Components → Hooks → Services → DB / Server Actions (AI)
 2. **Profile** — Dietary tags, allergies, disliked ingredients, cuisines, experience, default serving size → fed into AI system prompt.
 3. **Post-signup onboarding** — `ProfileOnboardingBanner` on `/generate` when no `userProfiles/{uid}` doc exists; skip persisted per-user in localStorage (`useProfileOnboarding`).
 4. **Generate** — Two modes (`specific` | `ingredients`); streaming structured JSON; debounced submit (`UI_TIMING.AI_GENERATION_DEBOUNCE`); AbortController cancels stale streams. Server action **requires an authenticated user** before calling OpenAI.
-5. **Regenerate / refine** — Optional tweak field + Regenerate button on `RecipeDisplay`; reuses inputs via `appendTweakToPrompt` and resets save state (`useRecipeGeneration.handleRegenerate`).
-6. **Serving-size adjustment** — `NumberInput` (1–12) + `scaleRecipeServings` deterministically rescales ingredients/calories on `/generate` (`useRecipeServingScale`); generate page only, not saved detail.
-7. **Nutrition panel** — `NutritionSummaryPanel` renders calories/macros above markdown on generate + saved detail when `extractNutritionSummary` finds data; `saveRecipe` persists `calories`/`macros` top-level when present.
-8. **Save** — Validates `completeRecipeStructureSchema` before Firestore write; markdown derived via `convertToMarkdown`.
-9. **Saved library** — List, search (title/ingredients), detail panel, optimistic delete with rollback (`saved/page.tsx`).
-10. **Print / export** — `PrintRecipeButton` on generate (after stream completes) + saved detail; `@media print` rules in `globals.css` isolate `.recipe-printable`.
-11. **Copy to clipboard** — `CopyRecipeButton` + `buildRecipeCopyText` (`lib/utils/recipe-copy.ts`) copy the displayed recipe as markdown (incl. macros) with inline feedback, on generate + saved detail.
-12. **Static pages** — Landing, about, privacy, terms, support.
-13. **Route protection** — `proxy.ts` soft-gates `/generate`, `/profile`, `/saved`; Firestore rules are the real security boundary.
+5. **Regenerate / refine** — Optional tweak field + Regenerate button on `RecipeDisplay`; reuses inputs via `appendTweakToPrompt` and resets save state (`useRecipeGeneration.handleRegenerate`). Saved detail can also prefill `/generate` with an editable variation prompt.
+6. **Session generation history** — `/generate` keeps the last 5 complete generated recipes in memory only; selecting one restores display/save state; clear action and sign-out reset it.
+7. **Serving-size adjustment** — `NumberInput` (1–12) + `scaleRecipeServings` deterministically rescales ingredients/calories on `/generate` (`useRecipeServingScale`) and in saved detail (`useSavedRecipeServingScale`); saved detail can explicitly save a scaled copy.
+8. **Nutrition panel** — `NutritionSummaryPanel` renders calories/macros above markdown on generate + saved detail when `extractNutritionSummary` finds data; `saveRecipe` persists `calories`/`macros` top-level when present.
+9. **Save** — Validates `completeRecipeStructureSchema` before Firestore write; markdown derived via `convertToMarkdown`.
+10. **Saved library** — List, search (title/ingredients), difficulty/cuisine filters, detail panel, optimistic delete with rollback (`saved/page.tsx`).
+11. **Print / export** — `PrintRecipeButton` on generate (after stream completes) + saved detail; `@media print` rules in `globals.css` isolate `.recipe-printable`.
+12. **Copy to clipboard** — `CopyRecipeButton` + `buildRecipeCopyText` (`lib/utils/recipe-copy.ts`) copy the displayed recipe as markdown (incl. macros) with inline feedback, on generate + saved detail.
+13. **Static pages** — Landing, about, privacy, terms, support.
+14. **Route protection** — `proxy.ts` soft-gates `/generate`, `/profile`, `/saved`; Firestore rules are the real security boundary.
+15. **Generation rate limit** — Authenticated server action calls are capped in memory per user before OpenAI is called.
 
 **Partial / unused (inferred)**:
 - Firebase Storage initialized + rules exist; no upload UI.
 - `user-profile-store` used only via `useUserProfile`; profile page uses `useFirestoreQuery` directly instead.
-- Legacy saved recipes created before nutrition persistence have data only in markdown body; the panel reads top-level fields, so older recipes may not show it.
+- Legacy saved recipes without complete structured fields may not show saved-detail serving controls or metadata filters, but nutrition falls back to markdown parsing where possible.
 
 ---
 
@@ -220,8 +222,8 @@ Race patterns in use: AbortController (generation, auth token fetch), version re
 
 Vitest is configured (`vitest.config.ts`, `node` environment, glob `src/**/*.test.ts`, `@` alias). `npm run test` runs once and is CI-safe — never use watch mode.
 
-Current coverage is **pure-function / static-invariant unit tests only** (13 suites, 61 tests), colocated next to their source:
-`jwt`, `route-match`, `navigation`, `onboarding`, `recipe-prompt`, `recipe-servings`, `nutrition`, `print-recipe`, `recipe-copy`, `markdown`, `error-handler`, `firestore`, plus `proxy` (asserts `config.matcher` stays in sync with the route constants).
+Current coverage is **pure-function / static-invariant unit tests only** (19 files, 97 tests), colocated next to their source:
+`jwt`, `route-match`, `navigation`, `onboarding`, `recipe-prompt`, `recipe-servings`, `saved-recipe`, `saved-recipe-refine`, `recipe-history`, `recipe-library`, `rate-limit`, `nutrition`, `print-recipe`, `recipe-copy`, `markdown`, `error-handler`, `firestore`, plus `proxy` (asserts `config.matcher` stays in sync with the route constants).
 
 When extending tests, keep targeting deterministic boundaries first: `lib/utils/`, `lib/schemas/`, store selectors. Firebase, the OpenAI server action, and React components are **not** unit-tested — do not add tests that require network, Firebase, or a browser/component runner unless the task explicitly asks for that infrastructure. Cover new pure utilities with a colocated `*.test.ts`.
 
