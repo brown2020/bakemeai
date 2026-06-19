@@ -1,10 +1,16 @@
 "use client";
 
+import { useCallback } from "react";
+import { useRouter } from "next/navigation";
+
 import { PageLayout } from "@/components/PageLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useRecipeStore } from "@/lib/store/recipe-store";
+import type { Recipe } from "@/lib/schemas/recipe";
+import { buildSavedRecipeRefinePrompt } from "@/lib/utils/saved-recipe-refine";
 import { useSavedRecipes } from "@/hooks/useSavedRecipes";
 
 import { RecipeSearch } from "./components/RecipeSearch";
@@ -14,7 +20,9 @@ import { EmptyState } from "./components/EmptyState";
 import { LoadingSkeleton } from "./components/LoadingSkeleton";
 
 export default function Saved() {
+  const router = useRouter();
   const { user } = useAuthStore();
+  const { setMode, setInput, setIngredients } = useRecipeStore();
   const {
     recipes,
     filteredRecipes,
@@ -34,6 +42,16 @@ export default function Saved() {
   } = useSavedRecipes({
     userId: user?.uid,
   });
+
+  const handleRefineRecipe = useCallback(
+    (recipe: Recipe): void => {
+      setMode("specific");
+      setInput(buildSavedRecipeRefinePrompt(recipe));
+      setIngredients("");
+      router.push("/generate");
+    },
+    [router, setIngredients, setInput, setMode]
+  );
 
   if (!user) {
     return (
@@ -86,6 +104,7 @@ export default function Saved() {
                   recipe={selectedRecipe}
                   userId={user.uid}
                   onScaledCopySaved={refreshRecipes}
+                  onRefineRecipe={handleRefineRecipe}
                 />
               </ErrorBoundary>
             </div>

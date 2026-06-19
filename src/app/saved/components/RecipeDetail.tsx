@@ -1,6 +1,7 @@
 "use client";
 
 import { memo } from "react";
+import { RefreshCw } from "lucide-react";
 
 import type { Recipe } from "@/lib/schemas/recipe";
 import { Button } from "@/components/Button";
@@ -14,6 +15,7 @@ interface RecipeDetailProps {
   recipe: Recipe | null;
   userId?: string;
   onScaledCopySaved?: () => Promise<void> | void;
+  onRefineRecipe?: (recipe: Recipe) => void;
 }
 
 /**
@@ -30,6 +32,7 @@ export const RecipeDetail = memo(function RecipeDetail({
   recipe,
   userId,
   onScaledCopySaved,
+  onRefineRecipe,
 }: RecipeDetailProps) {
   const {
     body,
@@ -89,6 +92,16 @@ export const RecipeDetail = memo(function RecipeDetail({
         </div>
       )}
       <div className="no-print mt-4 flex flex-wrap items-center gap-2">
+        {onRefineRecipe && (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => onRefineRecipe(recipe)}
+          >
+            <RefreshCw className="mr-2 h-4 w-4 shrink-0" aria-hidden="true" />
+            Refine
+          </Button>
+        )}
         <RecipeExportActions
           title={recipe.title}
           content={copyContent}
