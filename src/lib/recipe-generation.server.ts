@@ -11,6 +11,8 @@ import {
   ERROR_MESSAGES,
   convertRecipeGenerationErrorToMessage,
 } from "@/lib/utils/error-handler";
+import type { RateLimitBucket } from "@/lib/utils/rate-limit";
+import { consumeRateLimit } from "@/lib/utils/rate-limit";
 import { logError } from "@/lib/utils/logger";
 import { requireAuthenticatedUserId } from "@/lib/utils/server-auth";
 
@@ -20,6 +22,11 @@ import { getRecipeSystemPrompt } from "./prompts";
 /** Max prompt length — allows wrapped templates over raw input limits. */
 const MAX_SERVER_PROMPT_LENGTH =
   FORM_VALIDATION.TEXTAREA_MAX_LENGTH + 500;
+const RECIPE_GENERATION_RATE_LIMIT = {
+  maxRequests: 8,
+  windowMs: 60_000,
+} as const;
+const recipeGenerationRateLimitBuckets = new Map<string, RateLimitBucket>();
 
 function assertOpenAiConfigured(): void {
   if (!process.env.OPENAI_API_KEY) {
@@ -37,6 +44,21 @@ function toRecipeGenerationError(error: unknown): AppError {
     convertRecipeGenerationErrorToMessage(error),
     "RECIPE_PROVIDER_ERROR"
   );
+}
+
+function assertRecipeGenerationRateLimit(userId: string): void {
+  const result = consumeRateLimit(
+    recipeGenerationRateLimitBuckets,
+    userId,
+    RECIPE_GENERATION_RATE_LIMIT
+  );
+
+  if (!result.allowed) {
+    throw new AppError(ERROR_MESSAGES.RECIPE.RATE_LIMIT, "RATE_LIMITED", {
+      userId,
+      resetAt: result.resetAt,
+    });
+  }
 }
 
 /**
@@ -73,8 +95,7 @@ export async function generateRecipe(
   isIngredientBased: boolean,
   userProfile?: SerializableUserProfile | null
 ) {
-  await requireAuthenticatedUserId();
-  assertOpenAiConfigured();
+  const userId = await requireAuthenticatedUserId();
 
   const trimmedPrompt = prompt.trim();
   if (
@@ -86,6 +107,9 @@ export async function generateRecipe(
       "INVALID_PROMPT"
     );
   }
+
+  assertRecipeGenerationRateLimit(userId);
+  assertOpenAiConfigured();
 
   let partialObjectStream: AsyncIterable<unknown>;
   try {

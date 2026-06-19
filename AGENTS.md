@@ -194,11 +194,11 @@ Constants: `src/lib/constants/auth.ts` (`PRIVATE_ROUTES`, `AUTH_PAGES`).
 
 **Security**: Proxy validates JWT **expiry only** (no signature — Firebase Admin is unavailable on Edge). Real enforcement has two layers:
 - **Data**: Firestore rules (`userId === request.auth.uid`); default-deny on everything else.
-- **AI cost**: `generateRecipe` calls `requireAuthenticatedUserId()` (`lib/utils/server-auth.ts`), which reads the auth cookie and verifies it via the Firebase Identity Toolkit REST API (unsigned expiry fallback only in `development` when the API key is absent). Unauthenticated calls throw before OpenAI is hit.
+- **AI cost**: `generateRecipe` calls `requireAuthenticatedUserId()` (`lib/utils/server-auth.ts`), which reads the auth cookie and verifies it via the Firebase Identity Toolkit REST API (unsigned expiry fallback only in `development` when the API key is absent). Unauthenticated calls throw before OpenAI is hit. Authenticated calls then pass through an in-memory per-user generation limiter (`8` requests per `60` seconds per server instance) before OpenAI is hit.
 
 **Return URLs**: All post-auth redirects (`?redirect=`) must pass through `getSafeRedirectPath` / `isSafeRedirectPath` (`lib/utils/navigation.ts`), which rejects absolute URLs, protocol-relative `//`, and backslash paths to prevent open redirects. Never `router.push` a raw redirect param.
 
-Remaining hardening (rate limiting, per-user quotas) is product work — see `spec.md`.
+Remaining hardening (durable cross-instance quotas, billing, abuse analytics) is product work — see `spec.md`.
 
 ---
 
