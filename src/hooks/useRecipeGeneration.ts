@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useRef, useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { useRecipeStore } from "@/lib/store/recipe-store";

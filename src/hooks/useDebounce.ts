@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef, useCallback } from "react";
 
 import { logError } from "@/lib/utils/logger";
