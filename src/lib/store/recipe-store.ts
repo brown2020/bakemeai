@@ -22,6 +22,7 @@ import type {
   ParsedRecipe,
   RecipeMode,
 } from "@/lib/schemas/recipe";
+import { addRecipeToGenerationHistory } from "@/lib/utils/recipe-history";
 import { formatRecipeBodyAsMarkdown } from "@/lib/utils/markdown";
 
 interface RecipeState {
@@ -37,6 +38,9 @@ interface RecipeState {
   ingredients: string;
   mode: RecipeMode | null;
 
+  // Session-only generated recipe snapshots (not persisted)
+  generationHistory: RecipeStructure[];
+
   // Saving State
   isSaving: boolean;
   saveError: string | null;
@@ -49,6 +53,8 @@ interface RecipeState {
   setStructuredRecipe: (recipe: RecipeStructure | null) => void;
   setGenerating: (isGenerating: boolean) => void;
   setGenerationError: (error: string | null) => void;
+  addGenerationHistoryEntry: (recipe: RecipeStructure) => void;
+  clearGenerationHistory: () => void;
   setIsSaving: (isSaving: boolean) => void;
   setSaveError: (error: string | null) => void;
   setSaved: (saved: boolean) => void;
@@ -76,6 +82,7 @@ export const useRecipeStore = create<RecipeState>()(
       input: "",
       ingredients: "",
       mode: null,
+      generationHistory: [],
       isSaving: false,
       saveError: null,
       saved: false,
@@ -108,6 +115,19 @@ export const useRecipeStore = create<RecipeState>()(
 
       setGenerationError: (error: string | null) => {
         set({ generationError: error });
+      },
+
+      addGenerationHistoryEntry: (recipe: RecipeStructure) => {
+        set((state) => ({
+          generationHistory: addRecipeToGenerationHistory(
+            state.generationHistory,
+            recipe
+          ),
+        }));
+      },
+
+      clearGenerationHistory: () => {
+        set({ generationHistory: [] });
       },
 
       setIsSaving: (isSaving: boolean) => {
@@ -149,6 +169,7 @@ export const useRecipeStore = create<RecipeState>()(
           input: "",
           ingredients: "",
           mode: null,
+          generationHistory: [],
           isSaving: false,
           saveError: null,
           saved: false,
@@ -161,6 +182,7 @@ export const useRecipeStore = create<RecipeState>()(
           ingredients: "",
           mode: null,
           structuredRecipe: null,
+          generationHistory: [],
           generationError: null,
           saved: false,
           saveError: null,
