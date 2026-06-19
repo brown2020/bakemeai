@@ -2,7 +2,7 @@
 
 **Authoritative product document.** Architecture and agent conventions live in [`AGENTS.md`](AGENTS.md). End-user setup remains in [`README.md`](README.md).
 
-**Last reviewed**: 2026-06-06 (from full codebase inspection on `dev` branch)
+**Last reviewed**: 2026-06-19 (from product-improvement run on `dev` branch)
 
 ---
 
@@ -66,25 +66,26 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 | Recipe generation (specific dish) | Shipped | Zod-validated input, streaming UI |
 | Recipe generation (ingredients) | Shipped | Same pipeline, different prompt |
 | Regenerate with optional tweak | Shipped | On `/generate` after first result |
-| Serving size adjustment | Shipped | Deterministic scale on `/generate` (1–12 servings) |
+| Serving size adjustment | Shipped | Deterministic scale on `/generate` and saved detail (1–12 servings); saved detail can save a scaled copy |
 | AI personalization | Shipped | Profile injected into system prompt |
 | Difficulty + times + servings | Shipped | In schema, markdown, and saved docs |
 | Tips | Shipped | Optional in generation output |
 | Nutrition (calories / macros) | Shipped | `NutritionSummaryPanel` on generate + saved detail; persisted top-level on new saves; legacy saved markdown is parsed on read |
 | Authenticated generation | Shipped | `requireAuthenticatedUserId()` gates the server action before OpenAI |
+| Server-side generation rate limit | Shipped | In-memory per-user cap (8 requests / 60 seconds / server instance) before OpenAI |
 | Save recipe | Shipped | Requires complete structured fields |
-| Saved library | Shipped | Search, detail, delete with optimistic UI |
+| Saved library | Shipped | Search, difficulty/cuisine filters, detail, delete with optimistic UI |
 | Route protection (UX) | Shipped | `proxy.ts` cookie/JWT expiry check |
 | Firestore security | Shipped | Default-deny; per-user ownership |
 | Firebase Storage | Not used | SDK + rules exist; no UI |
 | Copy recipe to clipboard | Shipped | `CopyRecipeButton` (markdown incl. macros) on generate + saved detail |
 | Recipe sharing (public link) | Not shipped | Clipboard copy only; no public URLs |
 | Print / export | Shipped | Print button on generate + saved detail; `@media print` layout |
-| Regenerate from saved | Not shipped | Regenerate on `/generate` only |
-| Serving scaling | Partial | Adjust on `/generate` only; not in saved library |
+| Regenerate from saved | Shipped | Saved detail can prefill `/generate` with an editable variation prompt |
+| Serving scaling | Shipped | Adjust on `/generate`; saved detail supports display scaling and explicit scaled copy save |
 | Shopping list | Not shipped | README aspirational only |
 | Meal planning | Not shipped | README aspirational only |
-| Automated tests | Partial | 13 Vitest suites (61 tests) over pure utils + the proxy matcher invariant: `jwt`, `route-match`, `navigation`, `onboarding`, `recipe-prompt`, `recipe-servings`, `nutrition`, `print-recipe`, `recipe-copy`, `markdown`, `error-handler`, `firestore`, `proxy` |
+| Automated tests | Partial | 19 Vitest files (97 tests) over pure utils + the proxy matcher invariant |
 | CI pipeline | Not shipped | No `.github/workflows` in repo |
 
 ### Current user flows (detail)
@@ -133,10 +134,9 @@ See [`AGENTS.md`](AGENTS.md) for layer diagram and file map.
 
 ### Known limitations
 
-- **No rate limiting** beyond the client-side generate debounce (`UI_TIMING.AI_GENERATION_DEBOUNCE`); the server action gates on auth but not on volume.
-- **No usage quotas** or billing for end users.
+- **Rate limiting is in-memory per server instance**; there are no durable cross-instance usage quotas or end-user billing controls yet.
 - **Saved recipes** store markdown `content` plus structured fields; legacy recipes may lack optional metadata (schema uses `.passthrough()`).
-- **Serving scaling is generate-only** — saved recipes cannot be rescaled from the library yet.
+- **Saved-detail scaling depends on structured fields** — older markdown-only saved recipes may not expose scaling controls.
 - **Profile onboarding**: First-run banner on `/generate`; skip stored per user in localStorage until profile is saved.
 - **Accessibility**: Some patterns present (`aria-live` on recipe display); no audit recorded.
 
@@ -158,81 +158,19 @@ Each item is sized for **one focused commit sequence on `dev`** (a single PR-siz
 | Authenticated AI generation | `requireAuthenticatedUserId()` gates `generateRecipe` before OpenAI |
 | Copy recipe to clipboard | `CopyRecipeButton` + `buildRecipeCopyText` (markdown incl. macros) on generate + saved detail |
 | Legacy nutrition backfill | Saved detail parses nutrition from legacy markdown content when top-level nutrition fields are missing |
+| Saved-library serving adjustment | Saved detail can rescale a modern structured recipe and save a scaled copy |
+| Session generation history | `/generate` keeps the last 5 complete generated recipes in memory only |
+| Server-side generation rate limit | Authenticated generation is capped before OpenAI is called |
+| Refine from saved recipe | Saved detail can open `/generate` with an editable variation prompt |
+| Saved-library metadata filters | Saved library filters by difficulty and cuisine alongside text search |
 
 ---
 
-### Milestone 1 — Serving-size adjustment in the saved library
+### Next
 
-**User value**: Rescale a saved recipe to tonight's headcount without regenerating or re-paying for AI — completes the half-shipped scaling feature so it works everywhere a recipe is shown.
-
-**Intent**: Surface the existing `NumberInput` + `scaleRecipeServings` controls on `RecipeDetail` (saved view), mirroring `RecipeDisplay`. Scaling is display-only by default; offer an explicit "Save scaled copy" rather than mutating the original document.
-
-**Acceptance criteria**:
-- Saved detail shows a servings control (1–12) defaulting to the recipe's stored servings.
-- Adjusting servings rescales ingredients/calories using the same util as generate.
-- Original saved document is unchanged unless the user explicitly saves a scaled copy.
-
-**Depends on**: `useRecipeServingScale` / `scaleRecipeServings` (already tested).
-
----
-
-### Milestone 2 — Session generation history
-
-**User value**: Generate a few variations and pick the best before saving, instead of losing the previous result on each regenerate.
-
-**Intent**: Keep an in-memory (session-scoped, not localStorage-persisted) list of the last N `structuredRecipe` snapshots while on `/generate`. Let the user select a prior snapshot to restore the display and save it.
-
-**Acceptance criteria**:
-- Up to 5 recent generations are listed while on `/generate`.
-- Selecting one restores the display and Save works on the selected snapshot.
-- History clears on sign-out and via an explicit "Clear history"; never persisted long-term.
-
-**Depends on**: Recipe-store extension (keep AI output out of `persist`/localStorage — see State Management in `AGENTS.md`).
-
----
-
-### Milestone 3 — Server-side generation rate limit
-
-**User value**: Protects the product's OpenAI budget (and therefore its availability) from runaway or abusive use now that generation is auth-gated but unbounded.
-
-**Intent**: Add a per-user request cap in `requireAuthenticatedUserId()`'s caller / the server action (e.g. short-window counter keyed by uid). Surface the existing rate-limit error path to the user. Keep it minimal and dependency-light; no new infra beyond what the action already has access to.
-
-**Acceptance criteria**:
-- A signed-in user exceeding the window receives the existing rate-limit error and no OpenAI call is made.
-- Normal usage is unaffected.
-- The limit is documented in `AGENTS.md` security notes.
-
-**Depends on**: `server-auth.ts`, `ERROR_MESSAGES.RECIPE.RATE_LIMIT`.
-
----
-
-### Milestone 4 — Refine from saved recipe
-
-**User value**: Reuse a saved recipe as a starting point for a fresh variation instead of retyping the dish and context from scratch.
-
-**Intent**: Add a saved-library action that opens `/generate` with the saved recipe's title, ingredients, and notes prepared as an editable prompt. The original saved document remains unchanged; users choose whether to generate and save a new result.
-
-**Acceptance criteria**:
-- Saved detail exposes a clear refine/regenerate action.
-- The action sends the user to `/generate` with a useful editable starting prompt.
-- The original saved recipe is not mutated.
-
-**Depends on**: `recipe-store` input/mode state and saved recipe structured fields.
-
----
-
-### Milestone 5 — Saved-library metadata filters
-
-**User value**: Find the right saved recipe faster as the library grows, especially by difficulty or cuisine when users know what kind of recipe they want.
-
-**Intent**: Extend saved-library search with structured metadata filters while preserving the current title/ingredient text search.
-
-**Acceptance criteria**:
-- Saved recipes can be filtered by at least difficulty and cuisine when metadata exists.
-- Text search and metadata filters compose predictably.
-- Filtering behavior is covered by deterministic utility tests.
-
-**Depends on**: `recipeSchema` metadata fields and `filterRecipesBySearch`.
+No approved active roadmap items remain after the 2026-06-19 product-improvement
+run. Future candidates should be proposed through the product-improvement
+workflow before implementation.
 
 ---
 

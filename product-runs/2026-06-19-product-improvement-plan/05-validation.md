@@ -20,6 +20,9 @@
 | `npx vitest run src/lib/utils/recipe-library.test.ts` | Passed | PIP-005 focused saved-library filter coverage. |
 | `npm run lint` | Passed | PIP-005 feature phase. |
 | `npm run build` | Passed | PIP-005 with placeholder Firebase/OpenAI env values. |
+| `npm run test` | Passed | Final full unit suite: 19 files, 97 tests. |
+| `npm run lint` | Passed | Final lint gate. |
+| `npm run build` | Passed | Final production build with placeholder Firebase/OpenAI env values. |
 
 ## Targeted Checks
 
@@ -28,6 +31,7 @@
 - PIP-003 limiter and error-handler tests passed.
 - PIP-004 saved-refine prompt tests passed.
 - PIP-005 saved-library filter tests passed.
+- Final full unit suite passed.
 
 ## Broader Gates
 
@@ -36,6 +40,7 @@
 - PIP-003 lint and production build passed.
 - PIP-004 lint and production build passed.
 - PIP-005 lint and production build passed.
+- Final lint and production build passed.
 
 ## Baseline Failures
 

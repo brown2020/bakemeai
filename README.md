@@ -165,8 +165,8 @@ We welcome contributions! Here's how to get started:
 
 - Adding more dietary preference options
 - Improving mobile responsiveness
-- Serving-size adjustment in the saved library (see `spec.md` Milestone 1)
-- Legacy nutrition backfill on read (see `spec.md` Milestone 2)
+- Expanding saved-library filter and sort options
+- Improving durable usage quota tracking
 - Expanding unit-test coverage of `lib/utils/`
 - Improving accessibility (a11y)
 
