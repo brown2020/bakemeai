@@ -1,7 +1,6 @@
 import { memo, useCallback, useMemo } from "react";
 import type { Recipe } from "@/lib/schemas/recipe";
-import { MarkdownRenderer } from "@/components/MarkdownRenderer";
-import { NutritionSummaryPanel } from "@/components/NutritionSummaryPanel";
+import { RecipeContent } from "@/components/RecipeContent";
 import { PrintRecipeButton } from "@/components/PrintRecipeButton";
 import { CopyRecipeButton } from "@/components/CopyRecipeButton";
 import { extractNutritionSummary } from "@/lib/utils/nutrition";
@@ -57,13 +56,13 @@ export const RecipeDetail = memo(function RecipeDetail({ recipe }: RecipeDetailP
 
   return (
     <div className="p-4 sm:p-6 bg-white rounded-lg shadow-sm border border-surface-200">
-      <div className="recipe-printable">
-        <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 break-words">
-          {recipe.title}
-        </h2>
-        {nutrition && <NutritionSummaryPanel summary={nutrition} />}
-        <MarkdownRenderer content={body} />
-      </div>
+      <RecipeContent
+        title={recipe.title}
+        content={body}
+        nutrition={nutrition}
+        titleClassName="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 break-words"
+        contentClassName=""
+      />
       <div className="no-print mt-4 flex flex-wrap items-center gap-2">
         <PrintRecipeButton ariaLabel={`Print ${recipe.title}`} />
         <CopyRecipeButton
