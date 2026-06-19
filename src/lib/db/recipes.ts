@@ -92,6 +92,8 @@ export async function saveRecipe({
       content,
       createdAt: serverTimestamp(),
       ingredients: structuredData.ingredients,
+      instructions: structuredData.instructions,
+      ...(structuredData.tips != null ? { tips: structuredData.tips } : {}),
       preparationTime: structuredData.preparationTime,
       cookingTime: structuredData.cookingTime,
       servings: structuredData.servings,
