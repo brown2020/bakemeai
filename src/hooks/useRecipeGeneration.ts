@@ -4,44 +4,17 @@ import { useRecipeStore } from "@/lib/store/recipe-store";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { SerializableUserProfile } from "@/lib/schemas/user";
 import type { RecipeMode } from "@/lib/schemas/recipe";
-import {
-  specificRecipeInputSchema,
-  ingredientsRecipeInputSchema,
-} from "@/lib/schemas/recipe";
-import { RECIPE_PROMPTS } from "@/app/generate/constants";
 import { generateRecipeWithStreaming } from "@/lib/services/recipe-service";
 import {
   appendTweakToPrompt,
+  buildRecipePrompt,
+  canSubmitRecipeGeneration,
+  getRecipeInputForMode,
+  validateRecipeInput,
   validateTweak,
 } from "@/lib/utils/recipe-prompt";
 import { UI_TIMING } from "@/lib/constants/ui";
 import { ERROR_MESSAGES } from "@/lib/utils/error-handler";
-
-/**
- * Checks if enough time has passed since last submission for rate limiting.
- */
-function canSubmit(lastSubmitTime: number, debounceMs: number): boolean {
-  return Date.now() - lastSubmitTime >= debounceMs;
-}
-
-/**
- * Validates recipe input based on mode.
- */
-function validateInput(input: string, mode: RecipeMode): string | null {
-  const schema =
-    mode === "specific"
-      ? specificRecipeInputSchema
-      : ingredientsRecipeInputSchema;
-
-  const validation = schema.safeParse(input);
-  return validation.success ? null : validation.error.issues[0].message;
-}
-
-function buildPrompt(input: string, mode: RecipeMode): string {
-  const promptFn =
-    mode === "specific" ? RECIPE_PROMPTS.specific : RECIPE_PROMPTS.ingredients;
-  return promptFn(input);
-}
 
 export interface UseRecipeGenerationReturn {
   isGenerating: boolean;
@@ -142,7 +115,12 @@ export function useRecipeGeneration(
     (tweakText: string) => {
       if (!mode) return;
 
-      if (!canSubmit(lastSubmitTimeRef.current, UI_TIMING.AI_GENERATION_DEBOUNCE)) {
+      if (
+        !canSubmitRecipeGeneration(
+          lastSubmitTimeRef.current,
+          UI_TIMING.AI_GENERATION_DEBOUNCE
+        )
+      ) {
         setValidationError(ERROR_MESSAGES.RECIPE.RATE_LIMIT);
         return;
       }
@@ -150,8 +128,8 @@ export function useRecipeGeneration(
       resetSaveState();
       setValidationError(null);
 
-      const promptInput = mode === "specific" ? input : ingredients;
-      const inputValidationError = validateInput(promptInput, mode);
+      const promptInput = getRecipeInputForMode(input, ingredients, mode);
+      const inputValidationError = validateRecipeInput(promptInput, mode);
       if (inputValidationError) {
         setValidationError(inputValidationError);
         return;
@@ -164,7 +142,10 @@ export function useRecipeGeneration(
       }
 
       lastSubmitTimeRef.current = Date.now();
-      const prompt = appendTweakToPrompt(buildPrompt(promptInput, mode), tweakText);
+      const prompt = appendTweakToPrompt(
+        buildRecipePrompt(promptInput, mode),
+        tweakText
+      );
       debouncedGeneration(prompt, mode === "ingredients");
     },
     [mode, input, ingredients, resetSaveState, debouncedGeneration]
