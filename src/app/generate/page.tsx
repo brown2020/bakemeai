@@ -13,10 +13,12 @@ import { useProfileOnboarding } from "@/hooks/useProfileOnboarding";
 import { useRecipeGeneration } from "@/hooks/useRecipeGeneration";
 import { useRecipeServingScale } from "@/hooks/useRecipeServingScale";
 import { useRecipeSave } from "@/hooks/useRecipeSave";
+import type { RecipeStructure } from "@/lib/schemas/recipe";
 
 import { ModeSelector } from "./components/ModeSelector";
 import { RecipeForm } from "./components/RecipeForm";
 import { RecipeDisplay } from "./components/RecipeDisplay";
+import { GenerationHistory } from "./components/GenerationHistory";
 import { ErrorMessage } from "./components/ErrorMessage";
 
 export default function Generate() {
@@ -35,7 +37,17 @@ export default function Generate() {
     error: profileError,
   });
 
-  const { structuredRecipe, mode, setMode, resetRecipe } = useRecipeStore();
+  const {
+    structuredRecipe,
+    generationHistory,
+    mode,
+    setMode,
+    setStructuredRecipe,
+    setGenerationError,
+    resetRecipe,
+    resetSaveState,
+    clearGenerationHistory,
+  } = useRecipeStore();
 
   // Custom hook for generation logic
   const {
@@ -76,6 +88,15 @@ export default function Generate() {
     resetRecipe();
   }, [setMode, resetRecipe]);
 
+  const handleSelectHistoryRecipe = useCallback(
+    (recipe: RecipeStructure) => {
+      setStructuredRecipe(recipe);
+      setGenerationError(null);
+      resetSaveState();
+    },
+    [setStructuredRecipe, setGenerationError, resetSaveState]
+  );
+
   // Select display recipe - no memoization needed as selector is pure and cheap
   const displayRecipe = selectDisplayRecipe(structuredRecipe);
 
@@ -107,6 +128,13 @@ export default function Generate() {
 
             {validationError && <ErrorMessage message={validationError} />}
             {generationError && <ErrorMessage message={generationError} />}
+
+            <GenerationHistory
+              recipes={generationHistory}
+              selectedRecipe={structuredRecipe}
+              onSelectRecipe={handleSelectHistoryRecipe}
+              onClearHistory={clearGenerationHistory}
+            />
 
             {displayRecipe && (
               <ErrorBoundary variant="feature" featureName="Recipe Display">

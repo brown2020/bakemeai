@@ -7,12 +7,13 @@
   slipped in, no unrelated files changed.
 - Stop condition: Each approved feature is committed and pushed, or blocked with
   evidence.
-- Attempts: PIP-001 1/3
-- Result: PIP-001 implemented
+- Attempts: PIP-001 1/3; PIP-002 1/3
+- Result: PIP-001 and PIP-002 implemented
 
 ## Feature
 
 - PIP-001 saved-library serving adjustment.
+- PIP-002 session generation history.
 
 ## Changes Made
 
@@ -25,6 +26,12 @@
   action.
 - Exposed `refreshRecipes` from `useSavedRecipes` so the library can reload
   after saving a scaled copy.
+- Added session-only generation history to `recipe-store`, outside the persisted
+  `partialize` slice.
+- Added `addRecipeToGenerationHistory` utility to cap history at five snapshots
+  and dedupe repeated results.
+- Captured complete streamed recipes into history after generation completes.
+- Added a `/generate` recent generations panel with restore and clear actions.
 
 ## Verification
 
@@ -33,6 +40,11 @@
 - `npm run lint` passed.
 - `NEXT_PUBLIC_FIREBASE_API_KEY=placeholder NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=placeholder.firebaseapp.com NEXT_PUBLIC_FIREBASE_PROJECT_ID=placeholder NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=placeholder.appspot.com NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123 NEXT_PUBLIC_FIREBASE_APP_ID=placeholder OPENAI_API_KEY=placeholder npm run build`
   passed.
+- `npx vitest run src/lib/utils/recipe-history.test.ts src/lib/utils/recipe-prompt.test.ts`
+  passed.
+- `npm run lint` passed.
+- `NEXT_PUBLIC_FIREBASE_API_KEY=placeholder NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=placeholder.firebaseapp.com NEXT_PUBLIC_FIREBASE_PROJECT_ID=placeholder NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=placeholder.appspot.com NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123 NEXT_PUBLIC_FIREBASE_APP_ID=placeholder OPENAI_API_KEY=placeholder npm run build`
+  passed after PIP-002.
 
 ## Commit And Push
 

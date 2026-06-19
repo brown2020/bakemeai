@@ -5,8 +5,9 @@ import type { FormEvent } from "react";
 import { useRecipeStore } from "@/lib/store/recipe-store";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { SerializableUserProfile } from "@/lib/schemas/user";
-import type { RecipeMode } from "@/lib/schemas/recipe";
+import type { RecipeMode, RecipeStructure } from "@/lib/schemas/recipe";
 import { generateRecipeWithStreaming } from "@/lib/services/recipe-service";
+import { completeRecipeStructureSchema } from "@/lib/schemas/recipe";
 import {
   appendTweakToPrompt,
   buildRecipePrompt,
@@ -58,6 +59,7 @@ export function useRecipeGeneration(
     setStructuredRecipe,
     setGenerating,
     setGenerationError,
+    addGenerationHistoryEntry,
     resetSaveState,
   } = useRecipeStore();
 
@@ -79,13 +81,18 @@ export function useRecipeGeneration(
         setGenerationError(null);
         resetSaveState();
 
+        let latestRecipe: RecipeStructure | null = null;
+
         try {
           await generateRecipeWithStreaming(
             prompt,
             isIngredientsMode,
             userProfile,
             (recipe) => {
-              if (!signal.aborted) setStructuredRecipe(recipe);
+              if (!signal.aborted) {
+                latestRecipe = recipe;
+                setStructuredRecipe(recipe);
+              }
             },
             (errorMessage) => {
               if (!signal.aborted) setGenerationError(errorMessage);
@@ -98,6 +105,13 @@ export function useRecipeGeneration(
           }
         } finally {
           if (!signal.aborted) {
+            const completeRecipe =
+              latestRecipe == null
+                ? null
+                : completeRecipeStructureSchema.safeParse(latestRecipe);
+            if (completeRecipe?.success) {
+              addGenerationHistoryEntry(completeRecipe.data);
+            }
             setGenerating(false);
           }
         }
@@ -106,6 +120,7 @@ export function useRecipeGeneration(
         setGenerating,
         setStructuredRecipe,
         setGenerationError,
+        addGenerationHistoryEntry,
         resetSaveState,
         userProfile,
       ]
