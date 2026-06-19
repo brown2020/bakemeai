@@ -31,6 +31,13 @@ export default function Saved() {
     deleteError,
     searchTerm,
     setSearchTerm,
+    difficultyFilter,
+    setDifficultyFilter,
+    cuisineFilter,
+    setCuisineFilter,
+    difficultyOptions,
+    cuisineOptions,
+    clearFilters,
     selectedRecipe,
     selectedRecipeId,
     selectRecipe,
@@ -85,6 +92,13 @@ export default function Saved() {
             <RecipeSearch
               searchTerm={searchTerm}
               onSearchChange={setSearchTerm}
+              difficultyFilter={difficultyFilter}
+              onDifficultyChange={setDifficultyFilter}
+              cuisineFilter={cuisineFilter}
+              onCuisineChange={setCuisineFilter}
+              difficultyOptions={difficultyOptions}
+              cuisineOptions={cuisineOptions}
+              onClearFilters={clearFilters}
             />
           </ErrorBoundary>
 

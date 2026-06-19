@@ -29,7 +29,7 @@ export const RecipeList = memo(function RecipeList({
   if (recipes.length === 0) {
     return (
       <p className="text-gray-500 text-center py-4">
-        No recipes match your search.
+        No recipes match your filters.
       </p>
     );
   }

@@ -7,8 +7,9 @@
   slipped in, no unrelated files changed.
 - Stop condition: Each approved feature is committed and pushed, or blocked with
   evidence.
-- Attempts: PIP-001 1/3; PIP-002 1/3; PIP-003 1/3; PIP-004 1/3
-- Result: PIP-001, PIP-002, PIP-003, and PIP-004 implemented
+- Attempts: PIP-001 1/3; PIP-002 1/3; PIP-003 1/3; PIP-004 1/3;
+  PIP-005 1/3
+- Result: All approved feature builds implemented
 
 ## Feature
 
@@ -16,6 +17,7 @@
 - PIP-002 session generation history.
 - PIP-003 server-side generation rate limit.
 - PIP-004 refine from saved recipe.
+- PIP-005 saved-library metadata filters.
 
 ## Changes Made
 
@@ -42,6 +44,10 @@
   saved recipe metadata.
 - Added a saved-detail "Refine" action that preloads `/generate` in specific
   recipe mode without mutating the original saved document.
+- Extended saved-library filtering to combine text search, difficulty, and
+  cuisine.
+- Added metadata option extraction for difficulty/cuisine dropdowns.
+- Updated the saved search UI with metadata menus and a clear action.
 
 ## Verification
 
@@ -65,6 +71,10 @@
 - `npm run lint` passed.
 - `NEXT_PUBLIC_FIREBASE_API_KEY=placeholder NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=placeholder.firebaseapp.com NEXT_PUBLIC_FIREBASE_PROJECT_ID=placeholder NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=placeholder.appspot.com NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123 NEXT_PUBLIC_FIREBASE_APP_ID=placeholder OPENAI_API_KEY=placeholder npm run build`
   passed after PIP-004.
+- `npx vitest run src/lib/utils/recipe-library.test.ts` passed.
+- `npm run lint` passed.
+- `NEXT_PUBLIC_FIREBASE_API_KEY=placeholder NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=placeholder.firebaseapp.com NEXT_PUBLIC_FIREBASE_PROJECT_ID=placeholder NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=placeholder.appspot.com NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123 NEXT_PUBLIC_FIREBASE_APP_ID=placeholder OPENAI_API_KEY=placeholder npm run build`
+  passed after PIP-005.
 
 ## Commit And Push
 
