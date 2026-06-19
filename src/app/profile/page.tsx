@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect, useCallback, FormEvent } from "react";
+import { Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { PageLayout } from "@/components/PageLayout";
@@ -12,21 +12,15 @@ import { PageSkeleton } from "@/components/ui/PageSkeleton";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ProfileOnboardingBanner } from "@/components/ProfileOnboardingBanner";
 import { useAuthStore } from "@/lib/store/auth-store";
-import { useFirestoreQuery } from "@/hooks/useFirestoreQuery";
-import { useUserProfileStore } from "@/lib/store/user-profile-store";
-import { getUserProfile, saveUserProfile } from "@/lib/db";
-import type { UserProfileInput } from "@/lib/schemas/user";
-import type { CookingExperience } from "@/lib/constants/domain";
+import { useProfileForm } from "@/hooks/useProfileForm";
 import {
   DIETARY_OPTIONS,
   CUISINE_OPTIONS,
   EXPERIENCE_LEVELS,
 } from "@/lib/constants/domain";
 import { PROFILE_WELCOME_QUERY } from "@/lib/constants/onboarding";
-import { UI_TIMING, NUMBER_INPUT } from "@/lib/constants/ui";
-import { convertErrorToMessage, ERROR_MESSAGES } from "@/lib/utils/error-handler";
+import { NUMBER_INPUT } from "@/lib/constants/ui";
 import { isProfileWelcomeSearchParam } from "@/lib/utils/onboarding";
-import { logError } from "@/lib/utils/logger";
 
 function ProfilePageContent() {
   const router = useRouter();
@@ -36,97 +30,26 @@ function ProfilePageContent() {
   );
 
   const { user } = useAuthStore();
-  const { setUserProfile } = useUserProfileStore();
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [profile, setProfile] = useState<UserProfileInput>({
-    dietary: [],
-    allergies: [],
-    dislikedIngredients: [],
-    cookingExperience: "beginner",
-    servingSize: NUMBER_INPUT.SERVING_SIZE_DEFAULT,
-    preferredCuisines: [],
-  });
+  const handleWelcomeComplete = useCallback(() => {
+    router.push("/generate");
+  }, [router]);
 
   const {
-    data: loadedProfile,
+    profile,
+    setProfileField,
+    toggleArrayItem,
+    handleSubmit,
+    loadedProfile,
     isLoading,
-    error: loadError,
-  } = useFirestoreQuery({
-    queryFn: getUserProfile,
+    loadError,
+    saving,
+    saveError,
+    saveSuccess,
+  } = useProfileForm({
     userId: user?.uid,
-    errorMessage: "Failed to load profile. Please refresh the page.",
+    isWelcomeFlow,
+    onWelcomeComplete: handleWelcomeComplete,
   });
-
-  useEffect(() => {
-    if (loadedProfile) {
-      setProfile({
-        dietary: loadedProfile.dietary,
-        allergies: loadedProfile.allergies,
-        dislikedIngredients: loadedProfile.dislikedIngredients,
-        cookingExperience: loadedProfile.cookingExperience,
-        servingSize: loadedProfile.servingSize,
-        preferredCuisines: loadedProfile.preferredCuisines,
-      });
-    }
-  }, [loadedProfile]);
-
-  const handleSubmit = useCallback(
-    async (e: FormEvent) => {
-      e.preventDefault();
-      if (!user) return;
-
-      setSaving(true);
-      setSaveError(null);
-      setSaveSuccess(false);
-      try {
-        await saveUserProfile(user.uid, profile);
-        setUserProfile({ id: user.uid, ...profile });
-
-        if (isWelcomeFlow) {
-          router.push("/generate");
-          return;
-        }
-
-        setSaveSuccess(true);
-        setTimeout(
-          () => setSaveSuccess(false),
-          UI_TIMING.SUCCESS_MESSAGE_DURATION
-        );
-      } catch (error) {
-        logError("Error saving user profile", error, { userId: user?.uid });
-        const message = convertErrorToMessage(
-          error,
-          ERROR_MESSAGES.PROFILE.SAVE_FAILED
-        );
-        setSaveError(message);
-      } finally {
-        setSaving(false);
-      }
-    },
-    [user, profile, isWelcomeFlow, router, setUserProfile]
-  );
-
-  const toggleArrayItem = useCallback(
-    (
-      field:
-        | "dietary"
-        | "allergies"
-        | "dislikedIngredients"
-        | "preferredCuisines",
-      value: string
-    ): void => {
-      setProfile((prev) => {
-        const current = prev[field] as string[];
-        const next = current.includes(value)
-          ? current.filter((item) => item !== value)
-          : [...current, value];
-        return { ...prev, [field]: next };
-      });
-    },
-    []
-  );
 
   if (isLoading) {
     return (
@@ -166,9 +89,7 @@ function ProfilePageContent() {
             <TagInput
               label="Allergies"
               value={profile.allergies}
-              onChange={(allergies) =>
-                setProfile((prev) => ({ ...prev, allergies }))
-              }
+              onChange={(allergies) => setProfileField("allergies", allergies)}
               placeholder="e.g., peanuts, shellfish (comma separated)"
             />
 
@@ -176,7 +97,7 @@ function ProfilePageContent() {
               label="Ingredients You Dislike"
               value={profile.dislikedIngredients}
               onChange={(dislikedIngredients) =>
-                setProfile((prev) => ({ ...prev, dislikedIngredients }))
+                setProfileField("dislikedIngredients", dislikedIngredients)
               }
               placeholder="e.g., cilantro, olives (comma separated)"
             />
@@ -201,10 +122,7 @@ function ProfilePageContent() {
               onChange={(label) => {
                 const level = EXPERIENCE_LEVELS.find((l) => l.label === label);
                 if (level) {
-                  setProfile((prev) => ({
-                    ...prev,
-                    cookingExperience: level.value as CookingExperience,
-                  }));
+                  setProfileField("cookingExperience", level.value);
                 }
               }}
               variant="rounded"
@@ -214,7 +132,7 @@ function ProfilePageContent() {
               label="Default Serving Size"
               value={profile.servingSize}
               onChange={(servingSize) =>
-                setProfile((prev) => ({ ...prev, servingSize }))
+                setProfileField("servingSize", servingSize)
               }
               min={NUMBER_INPUT.SERVING_SIZE_MIN}
               max={NUMBER_INPUT.SERVING_SIZE_MAX}
