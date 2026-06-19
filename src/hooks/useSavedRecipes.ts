@@ -9,7 +9,8 @@ import type { Recipe } from "@/lib/schemas/recipe";
 import { ERROR_MESSAGES, convertErrorToMessage } from "@/lib/utils/error-handler";
 import { logError } from "@/lib/utils/logger";
 import {
-  filterRecipesBySearch,
+  filterRecipes,
+  getRecipeMetadataOptions,
   sortRecipesByCreatedAtDesc,
 } from "@/lib/utils/recipe-library";
 
@@ -25,6 +26,13 @@ interface UseSavedRecipesReturn {
   deleteError: string | null;
   searchTerm: string;
   setSearchTerm: (value: string) => void;
+  difficultyFilter: string;
+  setDifficultyFilter: (value: string) => void;
+  cuisineFilter: string;
+  setCuisineFilter: (value: string) => void;
+  difficultyOptions: string[];
+  cuisineOptions: string[];
+  clearFilters: () => void;
   selectedRecipe: Recipe | null;
   selectedRecipeId: string | null;
   selectRecipe: (recipe: Recipe) => void;
@@ -42,6 +50,8 @@ export function useSavedRecipes({
   userId,
 }: UseSavedRecipesOptions): UseSavedRecipesReturn {
   const [searchTerm, setSearchTerm] = useState("");
+  const [difficultyFilter, setDifficultyFilter] = useState("");
+  const [cuisineFilter, setCuisineFilter] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
   const [recipeToDelete, setRecipeToDelete] = useState<Recipe | null>(null);
@@ -59,8 +69,23 @@ export function useSavedRecipes({
   });
 
   const filteredRecipes = useMemo(
-    () => filterRecipesBySearch(recipes, searchTerm),
-    [recipes, searchTerm]
+    () =>
+      filterRecipes(recipes, {
+        searchTerm,
+        difficulty: difficultyFilter,
+        cuisine: cuisineFilter,
+      }),
+    [cuisineFilter, difficultyFilter, recipes, searchTerm]
+  );
+
+  const difficultyOptions = useMemo(
+    () => getRecipeMetadataOptions(recipes, "difficulty"),
+    [recipes]
+  );
+
+  const cuisineOptions = useMemo(
+    () => getRecipeMetadataOptions(recipes, "cuisine"),
+    [recipes]
   );
 
   const selectedRecipe = useMemo(
@@ -78,6 +103,12 @@ export function useSavedRecipes({
 
   const cancelDeleteRecipe = useCallback((): void => {
     setRecipeToDelete(null);
+  }, []);
+
+  const clearFilters = useCallback((): void => {
+    setSearchTerm("");
+    setDifficultyFilter("");
+    setCuisineFilter("");
   }, []);
 
   const confirmDeleteRecipe = useCallback(async (): Promise<void> => {
@@ -131,6 +162,13 @@ export function useSavedRecipes({
     deleteError,
     searchTerm,
     setSearchTerm,
+    difficultyFilter,
+    setDifficultyFilter,
+    cuisineFilter,
+    setCuisineFilter,
+    difficultyOptions,
+    cuisineOptions,
+    clearFilters,
     selectedRecipe,
     selectedRecipeId,
     selectRecipe,
