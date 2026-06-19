@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useRef } from "react";
 import { useRecipeStore } from "@/lib/store/recipe-store";
 import { saveRecipeToDatabase } from "@/lib/services/recipe-service";

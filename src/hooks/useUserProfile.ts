@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect } from "react";
 import { useUserProfileStore } from "@/lib/store/user-profile-store";
 import { getUserProfile } from "@/lib/db";

@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Recipe store - manages recipe generation and saving state.
  *
