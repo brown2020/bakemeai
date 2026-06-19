@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo } from "react";
 import { RefreshCw } from "lucide-react";
 
 import { RecipeDisplayProps } from "../types";
@@ -6,11 +6,9 @@ import { Button } from "@/components/Button";
 import { Input } from "@/components/ui/Input";
 import { NumberInput } from "@/components/ui/NumberInput";
 import { RecipeContent } from "@/components/RecipeContent";
-import { PrintRecipeButton } from "@/components/PrintRecipeButton";
-import { CopyRecipeButton } from "@/components/CopyRecipeButton";
+import { RecipeExportActions } from "@/components/RecipeExportActions";
 import { FORM_VALIDATION, NUMBER_INPUT } from "@/lib/constants/ui";
 import { extractNutritionSummary } from "@/lib/utils/nutrition";
-import { buildRecipeCopyText } from "@/lib/utils/recipe-copy";
 import { CARD_STYLES } from "../constants";
 
 /**
@@ -33,16 +31,6 @@ export const RecipeDisplay = memo(function RecipeDisplay({
   saveError,
 }: RecipeDisplayProps) {
   const nutrition = extractNutritionSummary(parsedRecipe.structuredData);
-
-  const getCopyText = useCallback(
-    () =>
-      buildRecipeCopyText({
-        title: parsedRecipe.title,
-        content: parsedRecipe.content,
-        nutrition,
-      }),
-    [parsedRecipe.title, parsedRecipe.content, nutrition]
-  );
 
   return (
     <div
@@ -106,8 +94,11 @@ export const RecipeDisplay = memo(function RecipeDisplay({
             >
               {saved ? "Saved!" : isSaving ? "Saving..." : "Save Recipe"}
             </Button>
-            <PrintRecipeButton />
-            <CopyRecipeButton getText={getCopyText} />
+            <RecipeExportActions
+              title={parsedRecipe.title}
+              content={parsedRecipe.content}
+              nutrition={nutrition}
+            />
             {saveError && (
               <p id="save-error" className="text-sm text-red-600" role="alert">
                 {saveError}
