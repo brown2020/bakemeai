@@ -1,12 +1,19 @@
-import { memo, useMemo } from "react";
+"use client";
+
+import { memo } from "react";
+
 import type { Recipe } from "@/lib/schemas/recipe";
+import { Button } from "@/components/Button";
 import { RecipeContent } from "@/components/RecipeContent";
 import { RecipeExportActions } from "@/components/RecipeExportActions";
-import { extractNutritionSummary } from "@/lib/utils/nutrition";
-import { stripLeadingTitleHeading } from "@/lib/utils/markdown";
+import { NumberInput } from "@/components/ui/NumberInput";
+import { useSavedRecipeServingScale } from "@/hooks/useSavedRecipeServingScale";
+import { NUMBER_INPUT } from "@/lib/constants/ui";
 
 interface RecipeDetailProps {
   recipe: Recipe | null;
+  userId?: string;
+  onScaledCopySaved?: () => Promise<void> | void;
 }
 
 /**
@@ -19,18 +26,28 @@ interface RecipeDetailProps {
  * - Only needs to re-render when selected recipe actually changes
  * - Prevents expensive markdown re-parsing on unrelated updates
  */
-export const RecipeDetail = memo(function RecipeDetail({ recipe }: RecipeDetailProps) {
-  const nutrition = useMemo(
-    () => (recipe ? extractNutritionSummary(recipe) : null),
-    [recipe]
-  );
-
-  // Saved content begins with `# <title>` (from convertToMarkdown); strip it so
-  // the title isn't rendered twice alongside the heading below.
-  const body = useMemo(
-    () => (recipe ? stripLeadingTitleHeading(recipe.content, recipe.title) : ""),
-    [recipe]
-  );
+export const RecipeDetail = memo(function RecipeDetail({
+  recipe,
+  userId,
+  onScaledCopySaved,
+}: RecipeDetailProps) {
+  const {
+    body,
+    copyContent,
+    nutrition,
+    targetServings,
+    setTargetServings,
+    canScale,
+    isScaled,
+    saveScaledCopy,
+    isSavingScaledCopy,
+    saveScaledCopyError,
+    saveScaledCopySuccess,
+  } = useSavedRecipeServingScale({
+    recipe,
+    userId,
+    onScaledCopySaved,
+  });
 
   if (!recipe) {
     return (
@@ -49,15 +66,47 @@ export const RecipeDetail = memo(function RecipeDetail({ recipe }: RecipeDetailP
         titleClassName="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 break-words"
         contentClassName=""
       />
+      {canScale && (
+        <div className="no-print mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+          <NumberInput
+            label="Servings"
+            value={targetServings}
+            onChange={setTargetServings}
+            min={NUMBER_INPUT.SERVING_SIZE_MIN}
+            max={NUMBER_INPUT.SERVING_SIZE_MAX}
+            className="w-full sm:w-32"
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={saveScaledCopy}
+            disabled={!isScaled || isSavingScaledCopy}
+            isLoading={isSavingScaledCopy}
+            className="w-full sm:w-auto"
+          >
+            Save scaled copy
+          </Button>
+        </div>
+      )}
       <div className="no-print mt-4 flex flex-wrap items-center gap-2">
         <RecipeExportActions
           title={recipe.title}
-          content={recipe.content}
+          content={copyContent}
           nutrition={nutrition}
           printAriaLabel={`Print ${recipe.title}`}
           copyAriaLabel={`Copy ${recipe.title} to clipboard`}
         />
       </div>
+      {saveScaledCopyError && (
+        <p className="no-print mt-3 text-sm text-red-600" role="alert">
+          {saveScaledCopyError}
+        </p>
+      )}
+      {saveScaledCopySuccess && (
+        <p className="no-print mt-3 text-sm text-green-700" role="status">
+          Scaled copy saved.
+        </p>
+      )}
     </div>
   );
 });

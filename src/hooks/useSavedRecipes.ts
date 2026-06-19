@@ -32,6 +32,7 @@ interface UseSavedRecipesReturn {
   requestDeleteRecipe: (recipe: Recipe) => void;
   cancelDeleteRecipe: () => void;
   confirmDeleteRecipe: () => Promise<void>;
+  refreshRecipes: () => Promise<void>;
 }
 
 /**
@@ -137,5 +138,6 @@ export function useSavedRecipes({
     requestDeleteRecipe,
     cancelDeleteRecipe,
     confirmDeleteRecipe,
+    refreshRecipes: refetch,
   };
 }

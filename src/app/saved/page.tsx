@@ -30,6 +30,7 @@ export default function Saved() {
     requestDeleteRecipe,
     cancelDeleteRecipe,
     confirmDeleteRecipe,
+    refreshRecipes,
   } = useSavedRecipes({
     userId: user?.uid,
   });
@@ -81,7 +82,11 @@ export default function Saved() {
 
             <div className="lg:col-span-2 min-h-[50vh] lg:min-h-[calc(100vh-16rem)]">
               <ErrorBoundary variant="feature" featureName="Recipe Detail">
-                <RecipeDetail recipe={selectedRecipe} />
+                <RecipeDetail
+                  recipe={selectedRecipe}
+                  userId={user.uid}
+                  onScaledCopySaved={refreshRecipes}
+                />
               </ErrorBoundary>
             </div>
           </div>
