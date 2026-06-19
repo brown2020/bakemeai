@@ -5,15 +5,17 @@
 | Command | Result | Notes |
 | --- | --- | --- |
 | `npm run lint` | Passed | Proposal phase docs only; no code behavior changed. |
+| `npx vitest run src/lib/utils/saved-recipe.test.ts src/lib/utils/recipe-servings.test.ts` | Passed | PIP-001 focused utility coverage. |
+| `npm run lint` | Passed | PIP-001 feature phase. |
+| `npm run build` | Passed | PIP-001 with placeholder Firebase/OpenAI env values. |
 
 ## Targeted Checks
 
-- Not run. No feature implementation has been approved yet.
+- PIP-001 utility tests passed.
 
 ## Broader Gates
 
-- Not run. `npm run test` and `npm run build` are deferred until approved
-  feature implementation changes code or product docs.
+- PIP-001 lint and production build passed.
 
 ## Baseline Failures
 
