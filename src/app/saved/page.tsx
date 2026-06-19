@@ -1,18 +1,11 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-
 import { PageLayout } from "@/components/PageLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAuthStore } from "@/lib/store/auth-store";
-import { useFirestoreQuery } from "@/hooks/useFirestoreQuery";
-import { getUserRecipes } from "@/lib/db";
-import { deleteRecipeFromDatabase } from "@/lib/services/recipe-service";
-import type { Recipe } from "@/lib/schemas/recipe";
-import { convertErrorToMessage, ERROR_MESSAGES } from "@/lib/utils/error-handler";
-import { logError } from "@/lib/utils/logger";
+import { useSavedRecipes } from "@/hooks/useSavedRecipes";
 
 import { RecipeSearch } from "./components/RecipeSearch";
 import { RecipeList } from "./components/RecipeList";
@@ -22,93 +15,24 @@ import { LoadingSkeleton } from "./components/LoadingSkeleton";
 
 export default function Saved() {
   const { user } = useAuthStore();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [recipeToDelete, setRecipeToDelete] = useState<Recipe | null>(null);
-
   const {
-    data: recipes,
+    recipes,
+    filteredRecipes,
     isLoading,
-    error: loadError,
-    setData: setRecipes,
-    refetch,
-  } = useFirestoreQuery({
-    queryFn: getUserRecipes,
+    loadError,
+    deleteError,
+    searchTerm,
+    setSearchTerm,
+    selectedRecipe,
+    selectedRecipeId,
+    selectRecipe,
+    recipeToDelete,
+    requestDeleteRecipe,
+    cancelDeleteRecipe,
+    confirmDeleteRecipe,
+  } = useSavedRecipes({
     userId: user?.uid,
-    errorMessage: "Failed to load recipes. Please refresh the page.",
   });
-
-  // Memoize filtered recipes for performance with empty array fallback
-  const filteredRecipes = useMemo((): Recipe[] => {
-    if (!recipes) return [];
-    const searchLower = searchTerm.toLowerCase();
-    return recipes.filter(
-      (recipe) =>
-        recipe.title.toLowerCase().includes(searchLower) ||
-        (recipe.ingredients?.some((ingredient) =>
-          ingredient.toLowerCase().includes(searchLower)
-        ) ??
-          false)
-    );
-  }, [recipes, searchTerm]);
-
-  const handleDeleteClick = useCallback((recipe: Recipe): void => {
-    setRecipeToDelete(recipe);
-  }, []);
-
-  const handleDeleteConfirm = useCallback(async (): Promise<void> => {
-    if (!recipeToDelete) return;
-
-    const recipeId = recipeToDelete.id;
-    // Store deleted recipe for potential rollback if both delete and refetch fail
-    const deletedRecipe = recipeToDelete;
-
-    setDeleteError(null);
-
-    // Close dialog first
-    setRecipeToDelete(null);
-
-    // Clear selected recipe if it's the one being deleted
-    setSelectedRecipe((prev) => (prev?.id === recipeId ? null : prev));
-
-    // Optimistic update: remove recipe from local state immediately
-    setRecipes((currentRecipes) => {
-      if (!currentRecipes) return [];
-      return currentRecipes.filter((r) => r.id !== recipeId);
-    });
-
-    try {
-      await deleteRecipeFromDatabase(recipeId);
-    } catch (error) {
-      // Service layer already logs the error
-      const message = convertErrorToMessage(
-        error,
-        ERROR_MESSAGES.RECIPE.DELETE_FAILED
-      );
-      setDeleteError(message);
-
-      // Try to refetch from server to restore actual state
-      try {
-        await refetch();
-      } catch (refetchError) {
-        // Both delete and refetch failed - manual rollback from stored recipe
-        logError("Error refetching after failed delete", refetchError, {
-          recipeId,
-        });
-        setRecipes((currentRecipes) => {
-          if (!currentRecipes) return [deletedRecipe];
-          // Re-insert deleted recipe and sort by creation date (newest first)
-          return [...currentRecipes, deletedRecipe].sort(
-            (a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)
-          );
-        });
-        setDeleteError(
-          `${message} The page may be out of sync. Please refresh to see the current state.`
-        );
-      }
-    }
-  }, [recipeToDelete, setRecipes, refetch]);
 
   if (!user) {
     return (
@@ -149,9 +73,9 @@ export default function Saved() {
             <ErrorBoundary variant="feature" featureName="Recipe List">
               <RecipeList
                 recipes={filteredRecipes}
-                selectedRecipeId={selectedRecipe?.id ?? null}
-                onSelectRecipe={setSelectedRecipe}
-                onDeleteRecipe={handleDeleteClick}
+                selectedRecipeId={selectedRecipeId}
+                onSelectRecipe={selectRecipe}
+                onDeleteRecipe={requestDeleteRecipe}
               />
             </ErrorBoundary>
 
@@ -166,8 +90,8 @@ export default function Saved() {
 
       <ConfirmDialog
         isOpen={recipeToDelete !== null}
-        onClose={() => setRecipeToDelete(null)}
-        onConfirm={handleDeleteConfirm}
+        onClose={cancelDeleteRecipe}
+        onConfirm={confirmDeleteRecipe}
         title="Delete Recipe"
         message={`Are you sure you want to delete "${recipeToDelete?.title}"? This action cannot be undone.`}
         confirmLabel="Delete"
