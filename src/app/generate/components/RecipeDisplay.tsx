@@ -5,8 +5,7 @@ import { RecipeDisplayProps } from "../types";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/ui/Input";
 import { NumberInput } from "@/components/ui/NumberInput";
-import { MarkdownRenderer } from "@/components/MarkdownRenderer";
-import { NutritionSummaryPanel } from "@/components/NutritionSummaryPanel";
+import { RecipeContent } from "@/components/RecipeContent";
 import { PrintRecipeButton } from "@/components/PrintRecipeButton";
 import { CopyRecipeButton } from "@/components/CopyRecipeButton";
 import { FORM_VALIDATION, NUMBER_INPUT } from "@/lib/constants/ui";
@@ -53,20 +52,12 @@ export const RecipeDisplay = memo(function RecipeDisplay({
       aria-live="polite"
       aria-busy={isGenerating}
     >
-      <div className="recipe-printable">
-        {parsedRecipe.title && (
-          <h2 className="text-xl font-medium" id="recipe-title">
-            {parsedRecipe.title}
-          </h2>
-        )}
-        {nutrition && <NutritionSummaryPanel summary={nutrition} />}
-        <div
-          className="mt-4"
-          aria-labelledby={parsedRecipe.title ? "recipe-title" : undefined}
-        >
-          <MarkdownRenderer content={parsedRecipe.content} />
-        </div>
-      </div>
+      <RecipeContent
+        title={parsedRecipe.title}
+        content={parsedRecipe.content}
+        nutrition={nutrition}
+        titleId="recipe-title"
+      />
       {!isGenerating && (
         <div className="no-print mt-4 space-y-4">
           {canScaleServings && (
