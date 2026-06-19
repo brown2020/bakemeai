@@ -206,6 +206,36 @@ Each item is sized for **one focused commit sequence on `dev`** (a single PR-siz
 
 ---
 
+### Milestone 4 — Refine from saved recipe
+
+**User value**: Reuse a saved recipe as a starting point for a fresh variation instead of retyping the dish and context from scratch.
+
+**Intent**: Add a saved-library action that opens `/generate` with the saved recipe's title, ingredients, and notes prepared as an editable prompt. The original saved document remains unchanged; users choose whether to generate and save a new result.
+
+**Acceptance criteria**:
+- Saved detail exposes a clear refine/regenerate action.
+- The action sends the user to `/generate` with a useful editable starting prompt.
+- The original saved recipe is not mutated.
+
+**Depends on**: `recipe-store` input/mode state and saved recipe structured fields.
+
+---
+
+### Milestone 5 — Saved-library metadata filters
+
+**User value**: Find the right saved recipe faster as the library grows, especially by difficulty or cuisine when users know what kind of recipe they want.
+
+**Intent**: Extend saved-library search with structured metadata filters while preserving the current title/ingredient text search.
+
+**Acceptance criteria**:
+- Saved recipes can be filtered by at least difficulty and cuisine when metadata exists.
+- Text search and metadata filters compose predictably.
+- Filtering behavior is covered by deterministic utility tests.
+
+**Depends on**: `recipeSchema` metadata fields and `filterRecipesBySearch`.
+
+---
+
 ### Deferred (not next — README aspirational)
 
 These are **not** current roadmap commitments unless product scope expands:
