@@ -11,24 +11,27 @@
 
 ## Current State
 
-- Phase: Findings Backlog
-- Task: T-004
+- Phase: Execute Fixes and Improvements
+- Task: T-005
 - Status: Ready for commit-push checkpoint
-- Last command: npm run lint
-- Last result: Passed after findings report edits
-- Last pushed commit: 35d0574
-- Branch sync: dev matches origin/dev after baseline checkpoint push
-- Working tree: Dirty with owned findings report/ledger changes only
-- Next action: Inspect diff, commit findings backlog, dry-run push, push origin dev
+- Last command: npm run build
+- Last result: Passed after profile lifecycle fix; lint and tests also passed. Final npm run lint after report edits passed.
+- Last pushed commit: 877b7c0
+- Branch sync: dev matches origin/dev after findings checkpoint push
+- Working tree: Dirty with owned source and execution-report changes only
+- Next action: Inspect diff, commit profile lifecycle fix, dry-run push, push origin dev
 
 ## Dirty File Classification
 
 | Path | Classification | Owner/Reason |
 | --- | --- | --- |
-| agent-runs/2026-06-20-codebase-pass/02-baseline-validation.md | Safe-to-commit | Record pushed baseline checkpoint |
-| agent-runs/2026-06-20-codebase-pass/03-findings-backlog.md | Safe-to-commit | Findings backlog and architecture scorecard |
+| src/hooks/useUserProfile.ts | In-scope source | T-005 profile lifecycle stale-response guard and no-user clearing |
+| src/components/AuthListener.tsx | In-scope source | T-005 clear profile store on auth sign-out event |
+| src/components/Navbar.tsx | In-scope source | T-005 clear profile store on explicit sign-out |
+| agent-runs/2026-06-20-codebase-pass/03-findings-backlog.md | Safe-to-commit | Record pushed findings checkpoint |
+| agent-runs/2026-06-20-codebase-pass/04-execute-fixes-and-improvements.md | Safe-to-commit | T-005 execution report |
 | agent-runs/2026-06-20-codebase-pass/run-state.md | Safe-to-commit | Current phase state |
-| agent-runs/2026-06-20-codebase-pass/task-queue.md | Safe-to-commit | Findings and next executable task |
+| agent-runs/2026-06-20-codebase-pass/task-queue.md | Safe-to-commit | T-005 status and next phase |
 
 ## Blockers
 
