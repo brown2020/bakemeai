@@ -23,6 +23,17 @@ import { FORM_VALIDATION } from "../constants/ui";
  */
 export type RecipeMode = "specific" | "ingredients";
 
+const recipeDifficultySchema = z.enum(["Easy", "Moderate", "Advanced"]);
+
+function normalizeStreamingDifficulty(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+
+  const trimmed = value.trim();
+  return recipeDifficultySchema.safeParse(trimmed).success
+    ? trimmed
+    : undefined;
+}
+
 // ============================================================================
 // INPUT VALIDATION
 // ============================================================================
@@ -116,7 +127,12 @@ export const recipeStructureSchema = z.object({
   preparationTime: z.string().optional(),
   cookingTime: z.string().optional(),
   servings: z.number().optional(),
-  difficulty: z.enum(["Easy", "Moderate", "Advanced"]).optional(),
+  difficulty: z
+    .preprocess(
+      normalizeStreamingDifficulty,
+      recipeDifficultySchema.optional()
+    )
+    .optional(),
   ingredients: z.array(z.string()).optional(),
   instructions: z.array(z.string()).optional(),
   tips: z.array(z.string()).optional(),
@@ -142,7 +158,7 @@ export const completeRecipeStructureSchema = z.object({
   preparationTime: z.string(),
   cookingTime: z.string(),
   servings: z.number(),
-  difficulty: z.enum(["Easy", "Moderate", "Advanced"]),
+  difficulty: recipeDifficultySchema,
   ingredients: z.array(z.string()).min(1, "Recipe must have at least one ingredient"),
   instructions: z.array(z.string()).min(1, "Recipe must have at least one instruction"),
   tips: z.array(z.string()).optional(),
