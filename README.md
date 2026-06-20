@@ -31,7 +31,7 @@
 | Backend | [Firebase](https://firebase.google.com/) 12, [js-cookie](https://github.com/js-cookie/js-cookie) 3 | Auth, Firestore, auth-cookie management |
 | UI | [Tailwind CSS](https://tailwindcss.com/) 4, `@tailwindcss/typography`, [Lucide React](https://lucide.dev/), [class-variance-authority](https://cva.style/), [react-markdown](https://github.com/remarkjs/react-markdown) | Styling, icons, variants, recipe markdown |
 | State | [Zustand](https://zustand-demo.pmnd.rs/) 5 | Global state (persists recipe inputs only) |
-| Tests | [Vitest](https://vitest.dev/) 3 | Unit tests for pure utilities |
+| Tests | [Vitest](https://vitest.dev/) 4 | Unit tests for pure utilities |
 
 ## 📁 Project Structure
 

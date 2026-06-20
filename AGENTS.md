@@ -27,7 +27,7 @@ Help home cooks turn what they have (or what they crave) into actionable recipes
 | Validation | Zod 4 | Schemas in `src/lib/schemas/` |
 | Lint | ESLint 10 flat config | No Prettier npm script |
 | Package manager | **npm** (`package-lock.json`, `.npmrc` `legacy-peer-deps=true`) | Do not switch managers |
-| Tests | Vitest 3 (`node` env, `src/**/*.test.ts`) | Pure-util unit tests only; no E2E/component runner |
+| Tests | Vitest 4 (`node` env, `src/**/*.test.ts`) | Pure-util unit tests only; no E2E/component runner |
 
 **Not present**: REST API routes (`src/app/api/`), CI workflows (`.github/`), background jobs/cron/queues, E2E/browser tests. The only server entry point is the `generateRecipe` server action.
 
