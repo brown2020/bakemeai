@@ -16,9 +16,9 @@ package.json scripts, pushed preflight checkpoint cb64634, local dependency tree
 
 - Branch: dev
 - Upstream: origin/dev
-- Commit: pending
-- Pushed to: pending
-- Sync status: clean/synced before baseline; dirty with owned report/ledger changes before checkpoint
+- Commit: 35d0574
+- Pushed to: origin/dev
+- Sync status: clean/synced after push
 
 ## Loop
 
@@ -34,7 +34,7 @@ package.json scripts, pushed preflight checkpoint cb64634, local dependency tree
 - Current phase: Baseline Validation
 - Current task: T-003
 - Last pushed commit: cb64634
-- Next action: commit/push baseline report, then build findings backlog
+- Next action: build findings backlog
 - Blockers: none
 
 ## Commands Run
@@ -93,12 +93,12 @@ Quality gates:
 
 ## Commit-Push Checkpoint
 
-- Status inspected: pending
-- Diff checked: pending
-- Files staged: pending
-- Dry-run push: pending
-- Push: pending
-- Post-push sync: pending
+- Status inspected: git status --short --branch showed only owned report changes before staging
+- Diff checked: git diff --check and git diff --cached --check passed
+- Files staged: baseline report, preflight report, run-state, task-queue
+- Dry-run push: passed
+- Push: pushed 35d0574 to origin/dev
+- Post-push sync: git fetch origin; git status --short --branch showed dev matches origin/dev
 
 ## Stabilization
 
@@ -116,4 +116,4 @@ The npm audit advisory is nested inside Next's dependency tree; npm's force fix 
 
 ## Recommended Next Step
 
-Commit/push the baseline report, then create the findings backlog with the audit issue and architecture/lean-code scorecard.
+Create the findings backlog with the audit issue and architecture/lean-code scorecard.
