@@ -16,9 +16,9 @@ git log, pushed commit list, T-005 source files with line numbers, execution/cle
 
 - Branch: dev
 - Upstream: origin/dev
-- Commit: pending
-- Pushed to: pending
-- Sync status: clean/synced before review; dirty with owned review report/ledger changes before checkpoint
+- Commit: 5a9a4f4
+- Pushed to: origin/dev
+- Sync status: clean/synced after push
 
 ## Loop
 
@@ -34,7 +34,7 @@ git log, pushed commit list, T-005 source files with line numbers, execution/cle
 - Current phase: Review
 - Current task: T-007
 - Last pushed commit: ccec3dc
-- Next action: commit/push review report, then run stabilization
+- Next action: run stabilization
 - Blockers: none
 
 ## Commands Run
@@ -90,12 +90,12 @@ Review evidence:
 
 ## Commit-Push Checkpoint
 
-- Status inspected: pending
-- Diff checked: pending
-- Files staged: pending
-- Dry-run push: pending
-- Push: pending
-- Post-push sync: pending
+- Status inspected: git status --short --branch showed only owned review report/ledger changes
+- Diff checked: git diff --check and git diff --cached --check passed
+- Files staged: review report, cleanup report, run-state, task-queue
+- Dry-run push: passed
+- Push: pushed 5a9a4f4 to origin/dev
+- Post-push sync: git fetch origin; git status --short --branch showed dev matches origin/dev
 
 ## Stabilization
 
@@ -113,4 +113,4 @@ The profile lifecycle fix lacks component-level race tests because the repo does
 
 ## Recommended Next Step
 
-Run lint, commit/push the review report, then run stabilization and final completion gates.
+Run stabilization and final completion gates.
