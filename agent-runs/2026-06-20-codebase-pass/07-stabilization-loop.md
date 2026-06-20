@@ -16,9 +16,9 @@ Ran stabilization after review: rechecked lint, unit tests, production build, re
 
 - Branch: dev
 - Upstream: origin/dev
-- Commit: pending
-- Pushed to: pending
-- Sync status: clean/synced before stabilization; dirty with owned stabilization report/ledger changes before checkpoint
+- Commit: 98c34bd
+- Pushed to: origin/dev
+- Sync status: clean/synced after push
 
 ## Loop
 
@@ -34,7 +34,7 @@ Ran stabilization after review: rechecked lint, unit tests, production build, re
 - Current phase: Stabilization Loop
 - Current task: T-008
 - Last pushed commit: 5a9a4f4
-- Next action: commit/push stabilization report, then final integrator report
+- Next action: final integrator report
 - Blockers: none
 
 ## Commands Run
@@ -86,12 +86,12 @@ npm run build
 
 ## Commit-Push Checkpoint
 
-- Status inspected: pending
-- Diff checked: pending
-- Files staged: pending
-- Dry-run push: pending
-- Push: pending
-- Post-push sync: pending
+- Status inspected: git status --short --branch showed only owned stabilization report/ledger changes
+- Diff checked: git diff --check and git diff --cached --check passed
+- Files staged: stabilization report, review report, run-state, task-queue
+- Dry-run push: passed
+- Push: pushed 98c34bd to origin/dev
+- Post-push sync: git fetch origin; git status --short --branch showed dev matches origin/dev
 
 ## Stabilization
 
@@ -109,4 +109,4 @@ The moderate audit advisory remains as a documented dependency risk; it is not i
 
 ## Recommended Next Step
 
-Commit/push stabilization report, then write the final integrator report.
+Write the final integrator report.
