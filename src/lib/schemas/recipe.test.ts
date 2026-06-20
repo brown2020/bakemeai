@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   completeRecipeStructureSchema,
+  recipeStructureSchema,
   recipeSchema,
 } from "@/lib/schemas/recipe";
 import type { Recipe } from "@/lib/schemas/recipe";
@@ -60,5 +61,46 @@ describe("completeRecipeStructureSchema", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it("keeps final recipe difficulty validation strict", () => {
+    const result = completeRecipeStructureSchema.safeParse({
+      title: "Vegetable Soup",
+      preparationTime: "10 mins",
+      cookingTime: "20 mins",
+      servings: 4,
+      difficulty: "Intermediate",
+      ingredients: ["2 cups broth"],
+      instructions: ["Warm the broth."],
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("recipeStructureSchema", () => {
+  it("tolerates transient invalid difficulty strings while streaming", () => {
+    const result = recipeStructureSchema.safeParse({
+      title: "Chocolate Chip Cookies",
+      difficulty: "Inter",
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data).toEqual({
+      title: "Chocolate Chip Cookies",
+      difficulty: undefined,
+    });
+  });
+
+  it("keeps valid streamed difficulty values", () => {
+    const result = recipeStructureSchema.safeParse({
+      title: "Chocolate Chip Cookies",
+      difficulty: "Easy",
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.difficulty).toBe("Easy");
   });
 });
