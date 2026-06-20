@@ -16,9 +16,9 @@ package.json, package-lock.json, 03-findings-backlog.md, npm outdated output, np
 
 - Branch: dev
 - Upstream: origin/dev
-- Commit: pending
-- Pushed to: pending
-- Sync status: clean/synced before cleanup; dirty with owned cleanup report/ledger changes before checkpoint
+- Commit: ccec3dc
+- Pushed to: origin/dev
+- Sync status: clean/synced after push
 
 ## Loop
 
@@ -34,7 +34,7 @@ package.json, package-lock.json, 03-findings-backlog.md, npm outdated output, np
 - Current phase: Package and Dead-Code Cleanup
 - Current task: T-006
 - Last pushed commit: 1af55d3
-- Next action: commit/push cleanup report, then run review
+- Next action: run review
 - Blockers: none
 
 ## Commands Run
@@ -81,12 +81,12 @@ npm audit --audit-level=moderate
 
 ## Commit-Push Checkpoint
 
-- Status inspected: pending
-- Diff checked: pending
-- Files staged: pending
-- Dry-run push: pending
-- Push: pending
-- Post-push sync: pending
+- Status inspected: git status --short --branch showed only owned cleanup report/ledger changes
+- Diff checked: git diff --check and git diff --cached --check passed
+- Files staged: cleanup report, execution report, run-state, task-queue
+- Dry-run push: passed
+- Push: pushed ccec3dc to origin/dev
+- Post-push sync: git fetch origin; git status --short --branch showed dev matches origin/dev
 
 ## Stabilization
 
@@ -104,4 +104,4 @@ The moderate PostCSS advisory remains until Next exposes a safe non-force resolu
 
 ## Recommended Next Step
 
-Run lint, commit/push this cleanup report, then review the run diff.
+Review the run diff.
