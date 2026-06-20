@@ -16,9 +16,9 @@ Executed T-005, the highest-priority finding from the backlog: profile lifecycle
 
 - Branch: dev
 - Upstream: origin/dev
-- Commit: pending
-- Pushed to: pending
-- Sync status: clean/synced before execution; dirty with owned T-005 source/report changes before checkpoint
+- Commit: 1af55d3
+- Pushed to: origin/dev
+- Sync status: clean/synced after push
 
 ## Loop
 
@@ -34,7 +34,7 @@ Executed T-005, the highest-priority finding from the backlog: profile lifecycle
 - Current phase: Execute Fixes and Improvements
 - Current task: T-005
 - Last pushed commit: 877b7c0
-- Next action: commit/push execution checkpoint, then run package/dead-code cleanup phase
+- Next action: run package/dead-code cleanup phase
 - Blockers: none
 
 ## Commands Run
@@ -88,12 +88,12 @@ npm run build
 
 ## Commit-Push Checkpoint
 
-- Status inspected: pending
-- Diff checked: pending
-- Files staged: pending
-- Dry-run push: pending
-- Push: pending
-- Post-push sync: pending
+- Status inspected: git status --short --branch showed owned T-005 source/report changes
+- Diff checked: git diff --check and git diff --cached --check passed
+- Files staged: T-005 source files and execution reports
+- Dry-run push: passed
+- Push: pushed 1af55d3 to origin/dev
+- Post-push sync: git fetch origin; git status --short --branch showed dev matches origin/dev
 
 ## Stabilization
 
@@ -111,4 +111,4 @@ There is no React hook test harness in this repo, so stale-profile behavior was 
 
 ## Recommended Next Step
 
-Run final lint after report edits, commit/push the T-005 fix, then execute package/dead-code cleanup by documenting safe deferrals.
+Execute package/dead-code cleanup by documenting safe deferrals.
