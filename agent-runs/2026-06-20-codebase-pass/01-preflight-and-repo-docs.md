@@ -16,9 +16,9 @@ AGENTS.md, spec.md, README.md, src/app/README.md, src/lib/README.md, package.jso
 
 - Branch: dev
 - Upstream: origin/dev
-- Commit: pending
-- Pushed to: pending
-- Sync status: clean/synced at start; dirty with owned docs/report changes before checkpoint
+- Commit: cb64634
+- Pushed to: origin/dev
+- Sync status: clean/synced after push
 
 ## Loop
 
@@ -27,14 +27,14 @@ AGENTS.md, spec.md, README.md, src/app/README.md, src/lib/README.md, package.jso
 - Verify gate: plan/state/queue have concrete gates; docs changes cite package/source evidence; lint passes before push
 - Stop condition: plan, state, queue, docs, and report are pushed or a real Git/check blocker is recorded
 - Attempt: 1/1 planning, 1/2 docs sweep
-- Result: lint passed; pending commit-push checkpoint
+- Result: pushed
 
 ## Run State
 
 - Current phase: Preflight and Repo Docs
 - Current task: T-002
 - Last pushed commit: 0f1b2d4
-- Next action: inspect diff, commit and push docs/report checkpoint
+- Next action: baseline validation
 - Blockers: none
 
 ## Commands Run
@@ -97,12 +97,12 @@ rg -n "Vitest|vitest|Tests|test" AGENTS.md README.md spec.md src/app/README.md s
 
 ## Commit-Push Checkpoint
 
-- Status inspected: pending after lint
-- Diff checked: pending
-- Files staged: pending
-- Dry-run push: pending
-- Push: pending
-- Post-push sync: pending
+- Status inspected: git status --short --branch showed only owned docs/run-report changes before staging
+- Diff checked: git diff --check and git diff --cached --check passed
+- Files staged: AGENTS.md, README.md, agent-runs/2026-06-20-codebase-pass/
+- Dry-run push: passed
+- Push: pushed cb64634 to origin/dev
+- Post-push sync: git fetch origin; git status --short --branch showed dev matches origin/dev
 
 ## Stabilization
 
@@ -120,4 +120,4 @@ Baseline checks have not run yet. Build may require placeholder environment valu
 
 ## Recommended Next Step
 
-Inspect the docs/report diff, then commit and push the preflight docs checkpoint.
+Run baseline validation.

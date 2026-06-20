@@ -11,23 +11,24 @@
 
 ## Current State
 
-- Phase: Preflight and Repo Docs
-- Task: T-002
+- Phase: Baseline Validation
+- Task: T-003
 - Status: Ready for commit-push checkpoint
 - Last command: npm run lint
-- Last result: Passed
-- Last pushed commit: 0f1b2d4
-- Branch sync: dev matches origin/dev after fetch, fast-forward pull, and dry-run push
-- Working tree: Dirty with owned preflight docs/run-report changes only
-- Next action: Inspect diff, commit docs/report checkpoint, dry-run push, push origin dev
+- Last result: Passed after baseline report edits; earlier audit found 2 moderate vulnerabilities in Next's nested postcss dependency
+- Last pushed commit: cb64634
+- Branch sync: dev matches origin/dev after preflight checkpoint push
+- Working tree: Dirty with owned baseline report/ledger changes only
+- Next action: Inspect diff, commit baseline report, dry-run push, push origin dev
 
 ## Dirty File Classification
 
 | Path | Classification | Owner/Reason |
 | --- | --- | --- |
-| AGENTS.md | Safe-to-commit | Repo guidance docs sweep; update Vitest major version from package.json |
-| README.md | Safe-to-commit | Repo docs sweep; update Vitest major version from package.json |
-| agent-runs/2026-06-20-codebase-pass/* | Safe-to-commit | Current codebase-improvement run reports and ledger |
+| agent-runs/2026-06-20-codebase-pass/01-preflight-and-repo-docs.md | Safe-to-commit | Record pushed preflight checkpoint |
+| agent-runs/2026-06-20-codebase-pass/02-baseline-validation.md | Safe-to-commit | Baseline validation report |
+| agent-runs/2026-06-20-codebase-pass/run-state.md | Safe-to-commit | Current phase state |
+| agent-runs/2026-06-20-codebase-pass/task-queue.md | Safe-to-commit | Baseline status and audit follow-up |
 
 ## Blockers
 
