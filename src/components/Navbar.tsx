@@ -9,6 +9,7 @@ import { NavLink } from "@/components/ui/NavLink";
 import { UserMenu } from "@/components/UserMenu";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useRecipeStore } from "@/lib/store/recipe-store";
+import { useUserProfileStore } from "@/lib/store/user-profile-store";
 import { auth } from "@/lib/firebase";
 import { clearAuthCookie } from "@/lib/utils/auth-cookies";
 import { logError } from "@/lib/utils/logger";
@@ -24,11 +25,15 @@ export const Navbar = memo(function Navbar() {
   const resetUserInput = useRecipeStore(
     (state) => state.resetUserInput
   );
+  const clearUserProfile = useUserProfileStore(
+    (state) => state.clearUserProfile
+  );
 
   const handleSignOut = useCallback(async () => {
     // Clear client state/cookies immediately to ensure proxy.ts sees a signed-out request.
     clearAuthCookie();
     resetUserInput();
+    clearUserProfile();
 
     try {
       await auth.signOut();
@@ -39,7 +44,7 @@ export const Navbar = memo(function Navbar() {
       // Force a full navigation to drop any prefetched/cached protected route payloads.
       window.location.assign("/login");
     }
-  }, [resetUserInput]);
+  }, [resetUserInput, clearUserProfile]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white shadow-xs z-50">

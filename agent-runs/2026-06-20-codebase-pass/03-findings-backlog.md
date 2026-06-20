@@ -16,9 +16,9 @@ AGENTS.md, spec.md, package.json, baseline report, source searches, high-risk so
 
 - Branch: dev
 - Upstream: origin/dev
-- Commit: pending
-- Pushed to: pending
-- Sync status: clean/synced before findings; dirty with owned findings report/ledger changes before checkpoint
+- Commit: 877b7c0
+- Pushed to: origin/dev
+- Sync status: clean/synced after push
 
 ## Loop
 
@@ -34,7 +34,7 @@ AGENTS.md, spec.md, package.json, baseline report, source searches, high-risk so
 - Current phase: Findings Backlog
 - Current task: T-004
 - Last pushed commit: 35d0574
-- Next action: commit/push backlog, then execute T-005
+- Next action: execute T-005
 - Blockers: none
 
 ## Commands Run
@@ -108,12 +108,12 @@ Findings are backed by source inspection/search and baseline command output. `np
 
 ## Commit-Push Checkpoint
 
-- Status inspected: pending
-- Diff checked: pending
-- Files staged: pending
-- Dry-run push: pending
-- Push: pending
-- Post-push sync: pending
+- Status inspected: git status --short --branch showed only owned report changes before staging
+- Diff checked: git diff --check and git diff --cached --check passed
+- Files staged: findings report, baseline report, run-state, task-queue
+- Dry-run push: passed
+- Push: pushed 877b7c0 to origin/dev
+- Post-push sync: git fetch origin; git status --short --branch showed dev matches origin/dev
 
 ## Stabilization
 
@@ -131,4 +131,4 @@ The package audit issue depends on Next's nested dependency and npm currently su
 
 ## Recommended Next Step
 
-Commit/push the backlog, then execute T-005 to repair profile lifecycle state.
+Execute T-005 to repair profile lifecycle state.

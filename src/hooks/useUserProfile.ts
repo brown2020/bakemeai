@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useUserProfileStore } from "@/lib/store/user-profile-store";
 import { getUserProfile } from "@/lib/db";
 import { convertErrorToMessage, ERROR_MESSAGES } from "@/lib/utils/error-handler";
@@ -21,15 +21,26 @@ export function useUserProfile(userId?: string) {
     setUserProfile,
     setLoading,
     setError,
+    clearUserProfile,
   } = useUserProfileStore();
+  const requestVersionRef = useRef(0);
 
   const fetchUserProfile = useCallback(
-    async (uid: string) => {
+    async (
+      uid: string,
+      currentVersion: number,
+      clearBeforeFetch: boolean = false
+    ) => {
       setLoading(true);
       setError(null);
+      if (clearBeforeFetch) {
+        setUserProfile(null);
+      }
 
       try {
         const profile = await getUserProfile(uid);
+        if (currentVersion !== requestVersionRef.current) return;
+
         if (profile) {
           // Strip Firestore Timestamp - it's not serializable for server actions
           const { updatedAt: _, ...serializableProfile } = profile;
@@ -38,11 +49,15 @@ export function useUserProfile(userId?: string) {
           setUserProfile(null);
         }
       } catch (err) {
+        if (currentVersion !== requestVersionRef.current) return;
+
         logError("Error loading user profile", err, { userId: uid });
         const message = convertErrorToMessage(err, ERROR_MESSAGES.PROFILE.LOAD_FAILED);
         setError(message);
       } finally {
-        setLoading(false);
+        if (currentVersion === requestVersionRef.current) {
+          setLoading(false);
+        }
       }
     },
     [setUserProfile, setLoading, setError]
@@ -50,15 +65,25 @@ export function useUserProfile(userId?: string) {
 
   // Auto-fetch when userId changes
   useEffect(() => {
-    if (userId) {
-      fetchUserProfile(userId);
+    const currentVersion = ++requestVersionRef.current;
+
+    if (!userId) {
+      clearUserProfile();
+      return;
     }
-  }, [userId, fetchUserProfile]);
+
+    void fetchUserProfile(userId, currentVersion, true);
+  }, [userId, fetchUserProfile, clearUserProfile]);
 
   return {
     userProfile,
     isLoading,
     error,
-    refetch: userId ? () => fetchUserProfile(userId) : undefined,
+    refetch: userId
+      ? () => {
+          const currentVersion = ++requestVersionRef.current;
+          return fetchUserProfile(userId, currentVersion);
+        }
+      : undefined,
   };
 }

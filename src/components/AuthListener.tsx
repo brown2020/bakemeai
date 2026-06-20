@@ -7,6 +7,7 @@ import { clearAuthCookie } from "@/lib/utils/auth-cookies";
 import { setUserAuthToken } from "@/lib/utils/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useRecipeStore } from "@/lib/store/recipe-store";
+import { useUserProfileStore } from "@/lib/store/user-profile-store";
 import { toSerializableAuthUser } from "@/lib/schemas/auth";
 import { logError } from "@/lib/utils/logger";
 
@@ -59,6 +60,9 @@ async function syncAuthToken(
 export function AuthListener(): React.ReactElement | null {
   const { setUser, setLoading } = useAuthStore();
   const { resetUserInput } = useRecipeStore();
+  const clearUserProfile = useUserProfileStore(
+    (state) => state.clearUserProfile
+  );
   const controllerRef = useRef<AbortController | null>(null);
   const versionRef = useRef(0);
   const [initError, setInitError] = useState<string | null>(null);
@@ -104,6 +108,7 @@ export function AuthListener(): React.ReactElement | null {
           // User signed out: clear all auth state immediately
           clearAuthCookie();
           resetUserInput();
+          clearUserProfile();
           setLoading(false);
           return;
         }
@@ -142,7 +147,7 @@ export function AuthListener(): React.ReactElement | null {
       controllerRef.current?.abort();
       unsubscribe();
     };
-  }, [setUser, setLoading, resetUserInput]);
+  }, [setUser, setLoading, resetUserInput, clearUserProfile]);
 
   if (initError) {
     return (
