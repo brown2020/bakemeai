@@ -11,24 +11,24 @@
 
 ## Current State
 
-- Phase: Baseline Validation
-- Task: T-003
+- Phase: Findings Backlog
+- Task: T-004
 - Status: Ready for commit-push checkpoint
 - Last command: npm run lint
-- Last result: Passed after baseline report edits; earlier audit found 2 moderate vulnerabilities in Next's nested postcss dependency
-- Last pushed commit: cb64634
-- Branch sync: dev matches origin/dev after preflight checkpoint push
-- Working tree: Dirty with owned baseline report/ledger changes only
-- Next action: Inspect diff, commit baseline report, dry-run push, push origin dev
+- Last result: Passed after findings report edits
+- Last pushed commit: 35d0574
+- Branch sync: dev matches origin/dev after baseline checkpoint push
+- Working tree: Dirty with owned findings report/ledger changes only
+- Next action: Inspect diff, commit findings backlog, dry-run push, push origin dev
 
 ## Dirty File Classification
 
 | Path | Classification | Owner/Reason |
 | --- | --- | --- |
-| agent-runs/2026-06-20-codebase-pass/01-preflight-and-repo-docs.md | Safe-to-commit | Record pushed preflight checkpoint |
-| agent-runs/2026-06-20-codebase-pass/02-baseline-validation.md | Safe-to-commit | Baseline validation report |
+| agent-runs/2026-06-20-codebase-pass/02-baseline-validation.md | Safe-to-commit | Record pushed baseline checkpoint |
+| agent-runs/2026-06-20-codebase-pass/03-findings-backlog.md | Safe-to-commit | Findings backlog and architecture scorecard |
 | agent-runs/2026-06-20-codebase-pass/run-state.md | Safe-to-commit | Current phase state |
-| agent-runs/2026-06-20-codebase-pass/task-queue.md | Safe-to-commit | Baseline status and audit follow-up |
+| agent-runs/2026-06-20-codebase-pass/task-queue.md | Safe-to-commit | Findings and next executable task |
 
 ## Blockers
 
