@@ -5,8 +5,13 @@ import { signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { auth, googleProvider } from "@/lib/firebase";
 import { setUserAuthToken } from "@/lib/utils/auth";
-import { convertErrorToMessage, ERROR_MESSAGES } from "@/lib/utils/error-handler";
-import { logError } from "@/lib/utils/logger";
+import {
+  convertErrorToMessage,
+  ERROR_MESSAGES,
+  getErrorCode,
+  isKnownFirebaseAuthError,
+} from "@/lib/utils/error-handler";
+import { logError, logWarning } from "@/lib/utils/logger";
 
 interface UseGoogleAuthReturn {
   signInWithGoogle: () => Promise<void>;
@@ -33,8 +38,15 @@ export function useGoogleAuth(redirectTo: string = "/"): UseGoogleAuthReturn {
       await setUserAuthToken(userCredential.user);
       router.push(redirectTo);
     } catch (err) {
-      logError("Google sign-in failed", err, { redirectTo });
-      const errorMessage = convertErrorToMessage(err, ERROR_MESSAGES.AUTH.SIGN_IN_FAILED);
+      const errorMessage = convertErrorToMessage(
+        err,
+        ERROR_MESSAGES.AUTH.SIGN_IN_FAILED
+      );
+      if (isKnownFirebaseAuthError(err)) {
+        logWarning("Google sign-in rejected", { code: getErrorCode(err) });
+      } else {
+        logError("Google sign-in failed", err, { redirectTo });
+      }
       setError(errorMessage);
     } finally {
       setIsLoading(false);

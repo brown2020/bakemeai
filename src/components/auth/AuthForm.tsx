@@ -16,6 +16,7 @@ import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { Input } from "@/components/ui/Input";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { Button } from "@/components/Button";
 import { setUserAuthToken } from "@/lib/utils/auth";
@@ -160,6 +161,7 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
         await signUpWithEmailVerification(state.email, state.password);
         dispatch({ type: "submitSuccess", verificationSent: true });
       }
+      // Session cookie is set inside sign-in/sign-up helpers before navigate.
       router.push(safeRedirectTo);
     } catch (err) {
       const errorMessage = convertErrorToMessage(
@@ -213,9 +215,8 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
             }
           />
 
-          <Input
+          <PasswordInput
             label="Password"
-            type="password"
             required
             autoComplete={isLogin ? "current-password" : "new-password"}
             value={state.password}

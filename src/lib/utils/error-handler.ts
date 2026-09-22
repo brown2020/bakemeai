@@ -91,6 +91,11 @@ const FIREBASE_ERROR_MESSAGES: Record<string, string> = {
   "auth/too-many-requests": ERROR_MESSAGES.AUTH.TOO_MANY_REQUESTS,
   "auth/user-disabled": ERROR_MESSAGES.AUTH.USER_DISABLED,
   "auth/network-request-failed": ERROR_MESSAGES.AUTH.NETWORK_ERROR,
+  "auth/invalid-email": ERROR_MESSAGES.AUTH.INVALID_CREDENTIAL,
+  "auth/missing-password": ERROR_MESSAGES.AUTH.WEAK_PASSWORD,
+  "auth/popup-closed-by-user": "Sign-in was cancelled. Please try again.",
+  "auth/cancelled-popup-request": "Sign-in was cancelled. Please try again.",
+  "auth/popup-blocked": "Pop-up was blocked. Allow pop-ups and try again.",
 };
 
 const RECIPE_PROVIDER_ERROR_CODES = new Set([

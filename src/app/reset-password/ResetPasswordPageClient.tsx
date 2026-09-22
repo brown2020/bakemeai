@@ -7,8 +7,12 @@ import { PageLayout } from "@/components/PageLayout";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/ui/Input";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
-import { convertErrorToMessage } from "@/lib/utils/error-handler";
-import { logError } from "@/lib/utils/logger";
+import {
+  convertErrorToMessage,
+  getErrorCode,
+  isKnownFirebaseAuthError,
+} from "@/lib/utils/error-handler";
+import { logError, logWarning } from "@/lib/utils/logger";
 
 export function ResetPasswordPageClient() {
   const [email, setEmail] = useState("");
@@ -27,11 +31,15 @@ export function ResetPasswordPageClient() {
       setStatus("success");
     } catch (error) {
       setStatus("error");
-      logError("Password reset failed", error, { email });
       const message = convertErrorToMessage(
         error,
         "Failed to send reset email. Please try again."
       );
+      if (isKnownFirebaseAuthError(error)) {
+        logWarning("Password reset rejected", { code: getErrorCode(error) });
+      } else {
+        logError("Password reset failed", error, { email });
+      }
       setErrorMessage(message);
     }
   };
