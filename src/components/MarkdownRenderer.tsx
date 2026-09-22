@@ -49,15 +49,17 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
  * Consistent markdown component styling across the app.
  */
 const markdownComponents = {
+  // Demote markdown headings so pages that already provide an h1 (PageLayout)
+  // do not violate axe heading-order.
   h1: ({ children }: { children?: ReactNode }) => (
-    <h1 className="text-lg sm:text-xl font-semibold mt-4 sm:mt-6 mb-3 sm:mb-4">
-      {children}
-    </h1>
-  ),
-  h2: ({ children }: { children?: ReactNode }) => (
-    <h2 className="text-base sm:text-lg font-semibold mt-4 sm:mt-6 mb-2 sm:mb-3">
+    <h2 className="text-lg sm:text-xl font-semibold mt-4 sm:mt-6 mb-3 sm:mb-4">
       {children}
     </h2>
+  ),
+  h2: ({ children }: { children?: ReactNode }) => (
+    <h3 className="text-base sm:text-lg font-semibold mt-4 sm:mt-6 mb-2 sm:mb-3">
+      {children}
+    </h3>
   ),
   ul: ({ children }: { children?: ReactNode }) => (
     <ul className="list-disc pl-6 space-y-2">{children}</ul>
