@@ -29,7 +29,7 @@ Help home cooks turn what they have (or what they crave) into actionable recipes
 | Package manager | **npm** (`package-lock.json`, `.npmrc` `legacy-peer-deps=true`) | Do not switch managers |
 | Tests | Vitest 4 (`node` env, `src/**/*.test.ts`) | Pure-util unit tests only; no E2E/component runner |
 
-**Not present**: REST API routes (`src/app/api/`), CI workflows (`.github/`), background jobs/cron/queues, E2E/browser tests. The only server entry point is the `generateRecipe` server action.
+**Not present**: REST API routes (`src/app/api/`), background jobs/cron/queues, E2E/browser tests. **CI**: GitHub Actions [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (lint → test → build on `dev`/`main` and PRs). Ops runbook: [`docs/OPERATIONS.md`](docs/OPERATIONS.md). The only server entry point is the `generateRecipe` server action.
 
 ---
 
@@ -127,13 +127,15 @@ There is no `npm run typecheck` (type errors surface via `next build`) and no Pr
 
 ## Canonical Validation (CI-safe, non-interactive)
 
-Run before committing:
+Run before committing (same gate as GitHub Actions CI):
 
 ```bash
 npm run lint
 npm run test
 npm run build
 ```
+
+CI workflow: `.github/workflows/ci.yml`. Failure drills, monitoring, and rollback: [`docs/OPERATIONS.md`](docs/OPERATIONS.md).
 
 **Rules**:
 - Never use watch mode, headed browsers, or interactive prompts.

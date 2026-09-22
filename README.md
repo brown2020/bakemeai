@@ -174,7 +174,7 @@ We welcome contributions! Here's how to get started:
 
 Product direction, feature inventory, and prioritized milestones live in **[`spec.md`](spec.md)** — the authoritative product document.
 
-Agent and architecture guidance for contributors and autonomous tools: **[`AGENTS.md`](AGENTS.md)**.
+Agent and architecture guidance for contributors and autonomous tools: **[`AGENTS.md`](AGENTS.md)**. Operations (CI, failure drills, monitoring, rollback): **[`docs/OPERATIONS.md`](docs/OPERATIONS.md)**.
 
 ## 📝 License
 
