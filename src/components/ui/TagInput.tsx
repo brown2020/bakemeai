@@ -41,7 +41,7 @@ function parseTags(input: string, maxItemLength: number): string[] {
  */
 export function TagInput({
   label,
-  value,
+  value: _value,
   onChange,
   placeholder = "Enter values separated by commas",
   maxLength = FORM_VALIDATION.TEXTAREA_MAX_LENGTH,
