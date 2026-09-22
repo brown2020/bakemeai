@@ -37,7 +37,7 @@ export const RecipeCard = memo(function RecipeCard({
         aria-label={`View recipe: ${recipe.title}`}
         aria-pressed={isSelected}
       >
-        <h3 className="font-medium text-base break-words">{recipe.title}</h3>
+        <h2 className="font-medium text-base break-words">{recipe.title}</h2>
         {recipe.ingredients && recipe.ingredients.length > 0 && (
           <div className="text-sm text-gray-700 mt-2 break-words">
             {recipe.ingredients

@@ -13,9 +13,9 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Company Info */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">
+            <p className="text-lg font-semibold text-gray-900 mb-3">
               Bake.me
-            </h3>
+            </p>
             <p className="text-sm text-gray-600">
               AI-powered recipe generation for home cooks. Create personalized
               recipes based on your ingredients and preferences.
@@ -24,9 +24,9 @@ export function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">
+            <p className="text-lg font-semibold text-gray-900 mb-3">
               Company
-            </h3>
+            </p>
             <ul className="space-y-2">
               <li>
                 <Link
@@ -49,7 +49,7 @@ export function Footer() {
 
           {/* Legal Links */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Legal</h3>
+            <p className="text-lg font-semibold text-gray-900 mb-3">Legal</p>
             <ul className="space-y-2">
               <li>
                 <Link

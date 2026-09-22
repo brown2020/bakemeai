@@ -76,12 +76,14 @@ export function ConfirmDialog({
       aria-labelledby="dialog-title"
       aria-describedby="dialog-description"
     >
-      <h2
+      <p
         id="dialog-title"
+        role="heading"
+        aria-level={2}
         className="text-xl font-semibold text-gray-900 mb-2"
       >
         {title}
-      </h2>
+      </p>
       <p id="dialog-description" className="text-gray-600 mb-6">
         {message}
       </p>
