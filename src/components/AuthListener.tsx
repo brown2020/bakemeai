@@ -11,143 +11,90 @@ import { useUserProfileStore } from "@/lib/store/user-profile-store";
 import { toSerializableAuthUser } from "@/lib/schemas/auth";
 import { logError } from "@/lib/utils/logger";
 
-/**
- * Syncs user auth token to cookie with race condition protection.
- *
- * RACE CONDITION HANDLING:
- * Uses version tracking + abort controller to handle rapid auth state changes:
- * - versionRef: Incremented on each auth event, invalidates stale operations
- * - AbortController: Cancels pending async operations from previous events
- * - Double-check before state updates: Ensures only the latest event updates state
- *
- * Why needed: If user signs out then back in quickly, we don't want the signout
- * token operation to complete after the new signin, wiping the fresh token.
- */
+function clearSignedOutSession(): void {
+  clearAuthCookie();
+  useAuthStore.getState().setUser(null);
+  useAuthStore.getState().setLoading(false);
+  useRecipeStore.getState().resetUserInput();
+  useUserProfileStore.getState().clearUserProfile();
+}
+
 async function syncAuthToken(
   user: User,
   currentVersion: number,
   versionRef: React.MutableRefObject<number>,
-  controller: AbortController,
-  setLoading: (loading: boolean) => void
+  controller: AbortController
 ): Promise<void> {
   const uid = user.uid;
 
   try {
     await setUserAuthToken(user);
-
-    // Guard: Check if this operation is stale (newer auth event occurred)
     if (currentVersion !== versionRef.current) return;
     if (controller.signal.aborted) return;
   } catch (error) {
-    // Guard: Ignore abort errors and stale operations
     if (currentVersion !== versionRef.current) return;
     if (controller.signal.aborted) return;
-
     logError("Failed to set auth token", error, { uid });
   } finally {
-    // Only update loading state if this is still the current operation
     if (currentVersion === versionRef.current && !controller.signal.aborted) {
-      setLoading(false);
+      useAuthStore.getState().setLoading(false);
     }
   }
+}
+
+function handleAuthUserChanged(
+  user: User | null,
+  currentVersion: number,
+  versionRef: React.MutableRefObject<number>,
+  controller: AbortController
+): Promise<void> {
+  if (!user) {
+    clearSignedOutSession();
+    return Promise.resolve();
+  }
+
+  useAuthStore.getState().setUser(toSerializableAuthUser(user));
+  return syncAuthToken(user, currentVersion, versionRef, controller);
 }
 
 /**
  * Authentication listener component.
  * Monitors Firebase auth state changes and syncs auth cookies.
- * Must be mounted in the root layout to track auth across the entire app.
  */
 export function AuthListener(): React.ReactElement | null {
-  const { setUser, setLoading } = useAuthStore();
-  const { resetUserInput } = useRecipeStore();
-  const clearUserProfile = useUserProfileStore(
-    (state) => state.clearUserProfile
-  );
   const controllerRef = useRef<AbortController | null>(null);
   const versionRef = useRef(0);
   const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
-    /*
-     * Initialize unsubscribe as no-op function to ensure cleanup always works.
-     *
-     * Why: If onIdTokenChanged throws during initialization, cleanup would fail
-     * without this because unsubscribe would be undefined.
-     */
     let unsubscribe: () => void = () => {};
 
     try {
-      unsubscribe = onIdTokenChanged(auth, async (user) => {
-        /*
-         * Increment version to invalidate previous operations.
-         *
-         * Failure scenario prevented:
-         * 1. User signs in → version becomes 1, starts token fetch
-         * 2. User immediately signs out → version becomes 2
-         * 3. Old token fetch (version 1) completes
-         * 4. Without version check: stale token would be set, user stays "logged in"
-         * 5. With version check: stale operation detects version mismatch and aborts
-         */
+      unsubscribe = onIdTokenChanged(auth, (user) => {
         const currentVersion = ++versionRef.current;
-
-        /*
-         * Cancel any pending token operations from previous auth events.
-         *
-         * Why AbortController: Provides a standard way to cancel async operations
-         * like fetch() calls. When aborted, any in-flight getIdToken() requests
-         * will be cancelled, preventing unnecessary work.
-         */
         controllerRef.current?.abort();
         const controller = new AbortController();
         controllerRef.current = controller;
-
-        // Convert Firebase User to serializable type for store
-        setUser(user ? toSerializableAuthUser(user) : null);
-
-        if (!user) {
-          // User signed out: clear all auth state immediately
-          clearAuthCookie();
-          resetUserInput();
-          clearUserProfile();
-          setLoading(false);
-          return;
-        }
-
-        /*
-         * User signed in: fetch and store auth token.
-         *
-         * This is async, so we pass version and controller to detect if this
-         * operation becomes stale before it completes (see syncAuthToken guards).
-         */
-        await syncAuthToken(
+        void handleAuthUserChanged(
           user,
           currentVersion,
           versionRef,
-          controller,
-          setLoading
+          controller
         );
       });
     } catch (error) {
-      /*
-       * Initialization failure handling.
-       *
-       * This catch block handles Firebase SDK initialization errors, not runtime
-       * auth state changes. If we reach here, the entire auth system is broken
-       * (e.g., invalid Firebase config, network unreachable).
-       */
       logError("Firebase authentication initialization failed", error);
+      useAuthStore.getState().setLoading(false);
       setInitError(
         "Authentication system unavailable. Please refresh the page."
       );
-      setLoading(false);
     }
 
     return () => {
-      // Cleanup: cancel in-flight operations and unsubscribe from auth changes
       controllerRef.current?.abort();
       unsubscribe();
     };
-  }, [setUser, setLoading, resetUserInput, clearUserProfile]);
+  }, []);
 
   if (initError) {
     return (

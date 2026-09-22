@@ -1,6 +1,6 @@
 import type { Recipe } from "@/lib/schemas/recipe";
 
-export interface RecipeLibraryFilters {
+interface RecipeLibraryFilters {
   searchTerm?: string;
   difficulty?: string;
   cuisine?: string;

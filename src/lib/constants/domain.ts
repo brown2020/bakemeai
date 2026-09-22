@@ -45,4 +45,4 @@ export const EXPERIENCE_LEVELS = [
   { value: "advanced", label: "Advanced" },
 ] as const;
 
-export type CookingExperience = (typeof EXPERIENCE_LEVELS)[number]["value"];
+type CookingExperience = (typeof EXPERIENCE_LEVELS)[number]["value"];

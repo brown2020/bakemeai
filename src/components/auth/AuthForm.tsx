@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useReducer, FormEvent } from "react";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -8,6 +8,7 @@ import {
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence,
+  type User,
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -36,31 +37,97 @@ interface AuthFormProps {
   redirectTo?: string;
 }
 
+type AuthFormState = {
+  email: string;
+  password: string;
+  error: string;
+  rememberMe: boolean;
+  verificationSent: boolean;
+  isSubmitting: boolean;
+};
+
+type AuthFormAction =
+  | { type: "setEmail"; value: string }
+  | { type: "setPassword"; value: string }
+  | { type: "setRememberMe"; value: boolean }
+  | { type: "submitStart" }
+  | { type: "submitFailure"; error: string }
+  | { type: "submitSuccess"; verificationSent?: boolean }
+  | { type: "submitEnd" };
+
+const initialAuthFormState: AuthFormState = {
+  email: "",
+  password: "",
+  error: "",
+  rememberMe: false,
+  verificationSent: false,
+  isSubmitting: false,
+};
+
+function authFormReducer(
+  state: AuthFormState,
+  action: AuthFormAction
+): AuthFormState {
+  switch (action.type) {
+    case "setEmail":
+      return { ...state, email: action.value };
+    case "setPassword":
+      return { ...state, password: action.value };
+    case "setRememberMe":
+      return { ...state, rememberMe: action.value };
+    case "submitStart":
+      return { ...state, error: "", isSubmitting: true };
+    case "submitFailure":
+      return { ...state, error: action.error, isSubmitting: false };
+    case "submitSuccess":
+      return {
+        ...state,
+        verificationSent: action.verificationSent ?? state.verificationSent,
+        isSubmitting: false,
+      };
+    case "submitEnd":
+      return { ...state, isSubmitting: false };
+    default:
+      return state;
+  }
+}
+
+/** Persistence must complete before email/password sign-in. */
+function signInWithEmailPersistence(
+  email: string,
+  password: string,
+  rememberMe: boolean
+): Promise<User> {
+  return setPersistence(
+    auth,
+    rememberMe ? browserLocalPersistence : browserSessionPersistence
+  )
+    .then(() => signInWithEmailAndPassword(auth, email, password))
+    .then(async (userCredential) => {
+      await setUserAuthToken(userCredential.user);
+      return userCredential.user;
+    });
+}
+
+/** Create account, persist session cookie, then send verification. */
+function signUpWithEmailVerification(
+  email: string,
+  password: string
+): Promise<User> {
+  return createUserWithEmailAndPassword(auth, email, password).then(
+    async (userCredential) => {
+      await setUserAuthToken(userCredential.user);
+      await sendEmailVerification(userCredential.user);
+      return userCredential.user;
+    }
+  );
+}
+
 /**
  * Unified authentication form for login and signup flows.
- *
- * Design decision: Single component handles both modes to maximize code reuse.
- * The forms share 80%+ of UI/logic (inputs, validation, Google auth, error handling).
- * Mode-specific differences (remember-me checkbox, email verification) are handled
- * via simple conditionals rather than duplicating the entire form structure.
- *
- * Features:
- * - Email/password authentication
- * - Google OAuth integration
- * - Remember-me persistence (login only)
- * - Email verification (signup only)
- * - Consistent error handling and display
- *
- * @param mode - Whether this is a login or signup form
- * @param redirectTo - Optional path to redirect to after successful auth
  */
 export function AuthForm({ mode, redirectTo }: AuthFormProps) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
-  const [verificationSent, setVerificationSent] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [state, dispatch] = useReducer(authFormReducer, initialAuthFormState);
   const router = useRouter();
 
   const safeRedirectTo = getSafeRedirectPath(redirectTo);
@@ -79,36 +146,22 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError("");
-    setIsSubmitting(true);
+    dispatch({ type: "submitStart" });
 
     try {
       if (isLogin) {
-        // Login flow with persistence
-        await setPersistence(
-          auth,
-          rememberMe ? browserLocalPersistence : browserSessionPersistence
+        await signInWithEmailPersistence(
+          state.email,
+          state.password,
+          state.rememberMe
         );
-        const userCredential = await signInWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-        await setUserAuthToken(userCredential.user);
+        dispatch({ type: "submitSuccess" });
       } else {
-        // Signup flow with email verification
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-        await setUserAuthToken(userCredential.user);
-        await sendEmailVerification(userCredential.user);
-        setVerificationSent(true);
+        await signUpWithEmailVerification(state.email, state.password);
+        dispatch({ type: "submitSuccess", verificationSent: true });
       }
       router.push(safeRedirectTo);
     } catch (err) {
-      // Convert to user-friendly message
       const errorMessage = convertErrorToMessage(
         err,
         isLogin
@@ -121,16 +174,16 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
           code: getErrorCode(err),
         });
       } else {
-        logError(`${isLogin ? "Sign in" : "Sign up"} failed`, err, { email });
+        logError(`${isLogin ? "Sign in" : "Sign up"} failed`, err, {
+          email: state.email,
+        });
       }
 
-      setError(errorMessage);
-    } finally {
-      setIsSubmitting(false);
+      dispatch({ type: "submitFailure", error: errorMessage });
     }
   };
 
-  const displayError = error || googleError;
+  const displayError = state.error || googleError;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -141,7 +194,7 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
 
         {displayError && <ErrorMessage message={displayError} />}
 
-        {verificationSent && (
+        {state.verificationSent && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
             Verification email sent! Please check your inbox.
           </div>
@@ -153,8 +206,10 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
             type="email"
             required
             autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={state.email}
+            onChange={(e) =>
+              dispatch({ type: "setEmail", value: e.target.value })
+            }
           />
 
           <Input
@@ -162,8 +217,10 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
             type="password"
             required
             autoComplete={isLogin ? "current-password" : "new-password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={state.password}
+            onChange={(e) =>
+              dispatch({ type: "setPassword", value: e.target.value })
+            }
           />
 
           {isLogin && (
@@ -173,8 +230,13 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
                   id="remember-me"
                   type="checkbox"
                   className="h-4 w-4 text-blue-600 border-gray-300 rounded-sm"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
+                  checked={state.rememberMe}
+                  onChange={(e) =>
+                    dispatch({
+                      type: "setRememberMe",
+                      value: e.target.checked,
+                    })
+                  }
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm">
                   Remember me
@@ -191,7 +253,11 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
             </div>
           )}
 
-          <Button type="submit" isLoading={isSubmitting} className="w-full">
+          <Button
+            type="submit"
+            isLoading={state.isSubmitting}
+            className="w-full"
+          >
             {submitLabel}
           </Button>
         </form>
@@ -201,9 +267,7 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
             <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">
-              Or continue with
-            </span>
+            <span className="px-2 bg-white text-gray-500">Or continue with</span>
           </div>
         </div>
 

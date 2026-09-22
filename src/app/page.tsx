@@ -2,6 +2,14 @@ import Image from "next/image";
 import { HeroCTA } from "@/components/HeroCTA";
 import { LightningIcon, CakeIcon, HeartIcon } from "@/components/icons/FeatureIcons";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Bake.me",
+  description: "AI-powered recipe generation platform",
+};
+
+
 const features = [
   {
     title: "AI-Powered Recipe Generation",

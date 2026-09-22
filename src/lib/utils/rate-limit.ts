@@ -1,4 +1,4 @@
-export interface RateLimitConfig {
+interface RateLimitConfig {
   maxRequests: number;
   windowMs: number;
 }
@@ -8,7 +8,7 @@ export interface RateLimitBucket {
   windowStart: number;
 }
 
-export interface RateLimitResult {
+interface RateLimitResult {
   allowed: boolean;
   remaining: number;
   resetAt: number;

@@ -1,5 +1,13 @@
 import { PageLayout } from "@/components/PageLayout";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description: "Bake.me privacy policy",
+};
+
+
 export default function Privacy() {
   const lastUpdated = "January 29, 2026";
 

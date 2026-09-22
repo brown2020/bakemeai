@@ -28,13 +28,6 @@ export const NUMBER_INPUT = {
   SERVING_SIZE_DEFAULT: 2,
 } as const;
 
-/** Spacing values in Tailwind units, height in pixels */
-export const LAYOUT = {
-  MAX_CONTAINER_WIDTH: "7xl",
-  SECTION_SPACING: 8,
-  CARD_PADDING: 6,
-  NAVBAR_HEIGHT: 64,
-} as const;
 
 export const RECIPE = {
   PREVIEW_INGREDIENTS_COUNT: 3,

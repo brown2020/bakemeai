@@ -81,24 +81,3 @@ export function logWarning(message: string, context?: LogContext): void {
   }
 }
 
-/**
- * Logs an informational message with optional context information.
- * @param message - Info message
- * @param context - Additional context for debugging
- */
-export function logInfo(message: string, context?: LogContext): void {
-  if (!IS_LOGGING_ENABLED) return;
-
-  if (IS_DEVELOPMENT) {
-    console.info(message, context);
-  } else {
-    console.info(
-      JSON.stringify({
-        level: "info",
-        message,
-        context,
-        timestamp: new Date().toISOString(),
-      })
-    );
-  }
-}

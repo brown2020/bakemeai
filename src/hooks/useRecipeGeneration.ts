@@ -19,7 +19,7 @@ import {
 import { UI_TIMING } from "@/lib/constants/ui";
 import { ERROR_MESSAGES } from "@/lib/utils/error-handler";
 
-export interface UseRecipeGenerationReturn {
+interface UseRecipeGenerationReturn {
   isGenerating: boolean;
   generationError: string | null;
   validationError: string | null;

@@ -53,6 +53,3 @@ export interface RecipeDisplayProps {
   saveError: string;
 }
 
-export interface ErrorMessageProps {
-  message: string;
-}

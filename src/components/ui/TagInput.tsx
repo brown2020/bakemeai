@@ -13,7 +13,6 @@ interface TagInputProps {
   maxItemLength?: number;
 }
 
-const TAG_COMPARE_SEPARATOR = "\u0000";
 
 /**
  * Parses comma-separated text into trimmed, length-validated tags.
@@ -49,23 +48,9 @@ export function TagInput({
   maxItemLength = RECIPE.MAX_TITLE_LENGTH,
 }: TagInputProps) {
   const id = useId();
-  const [text, setText] = useState<string>(() => value.join(", "));
-  const [prevValue, setPrevValue] = useState(value);
-
-  // Reconcile local text during render when the external value changes for a
-  // reason other than the user's current typing (e.g. a loaded profile). Skip
-  // when the parsed text already matches the value, which would otherwise eat
-  // an in-progress separator such as a trailing comma. (Adjusting state during
-  // render is React's recommended alternative to a sync effect.)
-  if (prevValue !== value) {
-    setPrevValue(value);
-    if (
-      parseTags(text, maxItemLength).join(TAG_COMPARE_SEPARATOR) !==
-      value.join(TAG_COMPARE_SEPARATOR)
-    ) {
-      setText(value.join(", "));
-    }
-  }
+  // Local draft starts empty; parents should remount via `key` when the
+  // committed tag list is replaced from outside (e.g. profile load).
+  const [text, setText] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value;

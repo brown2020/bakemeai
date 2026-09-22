@@ -23,7 +23,7 @@ interface FirebaseLookupResponse {
  * Verifies a Firebase ID token via Identity Toolkit REST API.
  * Falls back to unsigned expiry validation only in development when API key is missing.
  */
-export async function verifyFirebaseIdToken(
+async function verifyFirebaseIdToken(
   idToken: string
 ): Promise<string | null> {
   const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;

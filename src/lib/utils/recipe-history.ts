@@ -1,6 +1,6 @@
 import type { RecipeStructure } from "@/lib/schemas/recipe";
 
-export const GENERATION_HISTORY_LIMIT = 5;
+const GENERATION_HISTORY_LIMIT = 5;
 
 function getRecipeHistoryKey(recipe: RecipeStructure): string {
   return JSON.stringify({

@@ -1,6 +1,14 @@
 import { PageLayout } from "@/components/PageLayout";
 import Link from "next/link";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "About Bake.me",
+  description: "Learn about Bake.me AI recipe generation",
+};
+
+
 export default function About() {
   return (
     <PageLayout

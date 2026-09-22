@@ -1,5 +1,13 @@
 import { PageLayout } from "@/components/PageLayout";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms of Service",
+  description: "Bake.me terms of service",
+};
+
+
 export default function Terms() {
   const lastUpdated = "January 29, 2026";
 

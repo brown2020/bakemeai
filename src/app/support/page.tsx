@@ -1,6 +1,14 @@
 import { PageLayout } from "@/components/PageLayout";
 import Link from "next/link";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Support",
+  description: "Get help with Bake.me",
+};
+
+
 export default function Support() {
   return (
     <PageLayout title="Support" subtitle="Get help with Bake.me">

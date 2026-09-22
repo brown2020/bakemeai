@@ -3,7 +3,7 @@
  * Provides consistent error messages and logging across the application.
  */
 
-export interface ErrorContext {
+interface ErrorContext {
   [key: string]: unknown;
 }
 

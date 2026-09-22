@@ -15,7 +15,7 @@ export function matchesRoute(pathname: string, route: string): boolean {
 /**
  * Returns true when pathname matches any route in the list.
  */
-export function matchesAnyRoute(
+function matchesAnyRoute(
   pathname: string,
   routes: readonly string[]
 ): boolean {

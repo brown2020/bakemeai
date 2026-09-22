@@ -1,0 +1,164 @@
+"use client";
+
+import { useCallback } from "react";
+import { useRouter } from "next/navigation";
+
+import { PageLayout } from "@/components/PageLayout";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ProfileOnboardingBanner } from "@/components/ProfileOnboardingBanner";
+import { useRecipeStore, selectDisplayRecipe } from "@/lib/store/recipe-store";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { useProfileOnboarding } from "@/hooks/useProfileOnboarding";
+import { useRecipeGeneration } from "@/hooks/useRecipeGeneration";
+import { useRecipeServingScale } from "@/hooks/useRecipeServingScale";
+import { useRecipeSave } from "@/hooks/useRecipeSave";
+import type { RecipeStructure } from "@/lib/schemas/recipe";
+
+import { ModeSelector } from "./components/ModeSelector";
+import { RecipeForm } from "./components/RecipeForm";
+import { RecipeDisplay } from "./components/RecipeDisplay";
+import { GenerationHistory } from "./components/GenerationHistory";
+import { ErrorMessage } from "./components/ErrorMessage";
+
+export function GeneratePageClient() {
+  const router = useRouter();
+  const { user } = useAuthStore();
+  const userId = user?.uid;
+
+  // Custom hook for user profile (handles fetching automatically)
+  const { userProfile, isLoading: isProfileLoading, error: profileError } =
+    useUserProfile(userId);
+
+  const { shouldShowOnboarding, dismissOnboarding } = useProfileOnboarding({
+    userId,
+    userProfile,
+    isLoading: isProfileLoading,
+    error: profileError,
+  });
+
+  const {
+    structuredRecipe,
+    generationHistory,
+    mode,
+    setMode,
+    setStructuredRecipe,
+    setGenerationError,
+    resetRecipe,
+    resetSaveState,
+    clearGenerationHistory,
+  } = useRecipeStore();
+
+  // Custom hook for generation logic
+  const {
+    isGenerating,
+    generationError,
+    validationError,
+    input,
+    ingredients,
+    tweak,
+    setInput,
+    setIngredients,
+    setTweak,
+    handleGenerate,
+    handleRegenerate,
+  } = useRecipeGeneration(userProfile);
+
+  const {
+    targetServings,
+    setTargetServings,
+    applyServingScale,
+    canScale,
+    isScaled,
+  } = useRecipeServingScale({ structuredRecipe, isGenerating });
+
+  // Custom hook for save logic
+  const { saveRecipe, isSaving, saveError, saved } = useRecipeSave();
+
+  const handleSave = useCallback(async () => {
+    if (userId) {
+      await saveRecipe(userId);
+      // Refresh the router cache to ensure saved recipes are updated
+      router.refresh();
+    }
+  }, [saveRecipe, userId, router]);
+
+  const handleBack = useCallback(() => {
+    setMode(null);
+    resetRecipe();
+  }, [setMode, resetRecipe]);
+
+  const handleSelectHistoryRecipe = useCallback(
+    (recipe: RecipeStructure) => {
+      setStructuredRecipe(recipe);
+      setGenerationError(null);
+      resetSaveState();
+    },
+    [setStructuredRecipe, setGenerationError, resetSaveState]
+  );
+
+  // Select display recipe - no memoization needed as selector is pure and cheap
+  const displayRecipe = selectDisplayRecipe(structuredRecipe);
+
+  return (
+    <PageLayout title="Generate Recipe">
+      <div className="space-y-6">
+        {shouldShowOnboarding && (
+          <ProfileOnboardingBanner onDismiss={dismissOnboarding} />
+        )}
+
+        {!mode ? (
+          <ErrorBoundary variant="feature" featureName="Mode Selection">
+            <ModeSelector onSelectMode={setMode} />
+          </ErrorBoundary>
+        ) : (
+          <>
+            <ErrorBoundary variant="feature" featureName="Recipe Form">
+              <RecipeForm
+                mode={mode}
+                onBack={handleBack}
+                onSubmit={handleGenerate}
+                isLoading={isGenerating}
+                input={input}
+                onInputChange={setInput}
+                ingredients={ingredients}
+                onIngredientsChange={setIngredients}
+              />
+            </ErrorBoundary>
+
+            {validationError && <ErrorMessage message={validationError} />}
+            {generationError && <ErrorMessage message={generationError} />}
+
+            <GenerationHistory
+              recipes={generationHistory}
+              selectedRecipe={structuredRecipe}
+              onSelectRecipe={handleSelectHistoryRecipe}
+              onClearHistory={clearGenerationHistory}
+            />
+
+            {displayRecipe && (
+              <ErrorBoundary variant="feature" featureName="Recipe Display">
+                <RecipeDisplay
+                  parsedRecipe={displayRecipe}
+                  onSave={handleSave}
+                  onRegenerate={handleRegenerate}
+                  tweak={tweak}
+                  onTweakChange={setTweak}
+                  targetServings={targetServings}
+                  onTargetServingsChange={setTargetServings}
+                  onApplyServingScale={applyServingScale}
+                  canScaleServings={canScale}
+                  isServingScalePending={isScaled}
+                  isSaving={isSaving}
+                  saved={saved}
+                  isGenerating={isGenerating}
+                  saveError={saveError || ""}
+                />
+              </ErrorBoundary>
+            )}
+          </>
+        )}
+      </div>
+    </PageLayout>
+  );
+}

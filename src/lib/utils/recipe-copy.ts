@@ -9,7 +9,7 @@
 import type { NutritionSummary } from "./nutrition";
 import { stripLeadingTitleHeading } from "./markdown";
 
-export interface RecipeCopyInput {
+interface RecipeCopyInput {
   /** Recipe title (rendered separately from the markdown body on the generate view). */
   title: string;
   /**

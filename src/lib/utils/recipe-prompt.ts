@@ -18,7 +18,7 @@ const RECIPE_PROMPTS = {
  * Optional tweak text appended when regenerating a recipe.
  * Empty tweak is allowed; non-empty values are length-capped.
  */
-export const recipeTweakSchema = z
+const recipeTweakSchema = z
   .string()
   .trim()
   .max(

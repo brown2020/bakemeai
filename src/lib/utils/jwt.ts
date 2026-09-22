@@ -13,7 +13,7 @@ const BASE64_PADDING_SIZE = 4;
 
 const MILLISECONDS_PER_SECOND = 1000;
 
-export interface FirebaseJwtPayload {
+interface FirebaseJwtPayload {
   exp?: number;
   sub?: string;
   user_id?: string;
@@ -22,7 +22,7 @@ export interface FirebaseJwtPayload {
 /**
  * Decodes base64url JWT payload segment to UTF-8.
  */
-export function base64UrlToUtf8(input: string): string {
+function base64UrlToUtf8(input: string): string {
   const base64 = input.replace(/-/g, "+").replace(/_/g, "/");
   const paddingNeeded =
     (BASE64_PADDING_SIZE - (base64.length % BASE64_PADDING_SIZE)) %

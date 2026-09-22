@@ -72,11 +72,6 @@ export function ConfirmDialog({
       className="fixed inset-0 z-50 m-auto max-w-md w-[calc(100%-2rem)] rounded-lg border-0 bg-white p-6 shadow-xl backdrop:bg-black/50"
       aria-labelledby="dialog-title"
       aria-describedby="dialog-description"
-      onClick={(e) => {
-        if (e.target === dialogRef.current) {
-          dialogRef.current?.close();
-        }
-      }}
     >
       <h2
         id="dialog-title"
