@@ -9,6 +9,10 @@ service cloud.firestore {
       return isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
+    function isBoundedStringList(value, maxItems) {
+      return value is list && value.size() <= maxItems;
+    }
+
     // Deny everything by default.
     match /{document=**} {
       allow read, write: if false;
@@ -17,27 +21,87 @@ service cloud.firestore {
     /**
      * Collection: recipes
      * Ownership: resource.data.userId === request.auth.uid
+     * Creates/updates must only include known fields with basic type/size limits.
      */
     match /recipes/{recipeId} {
+      function recipeKeys() {
+        return [
+          'userId', 'title', 'content', 'createdAt',
+          'ingredients', 'instructions', 'tips',
+          'preparationTime', 'cookingTime', 'servings',
+          'difficulty', 'calories', 'macros', 'cuisine'
+        ];
+      }
+
+      function validRecipeShape() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(recipeKeys())
+          && d.userId is string
+          && d.userId == request.auth.uid
+          && d.title is string
+          && d.title.size() > 0
+          && d.title.size() <= 200
+          && d.content is string
+          && d.content.size() > 0
+          && d.content.size() <= 50000
+          && (!('ingredients' in d) || isBoundedStringList(d.ingredients, 100))
+          && (!('instructions' in d) || isBoundedStringList(d.instructions, 100))
+          && (!('tips' in d) || isBoundedStringList(d.tips, 50))
+          && (!('preparationTime' in d) || (d.preparationTime is string && d.preparationTime.size() <= 50))
+          && (!('cookingTime' in d) || (d.cookingTime is string && d.cookingTime.size() <= 50))
+          && (!('servings' in d) || (d.servings is int && d.servings > 0 && d.servings <= 100))
+          && (!('difficulty' in d) || (d.difficulty is string && d.difficulty.size() <= 40))
+          && (!('cuisine' in d) || (d.cuisine is string && d.cuisine.size() <= 80))
+          && (!('calories' in d) || d.calories == null || (d.calories is number && d.calories >= 0 && d.calories <= 20000))
+          && (!('macros' in d) || d.macros == null || (
+            d.macros is map
+            && d.macros.keys().hasOnly(['protein', 'carbs', 'fat'])
+          ));
+      }
+
       allow read: if isOwnerByUserIdField();
 
-      allow create: if isSignedIn()
-        && request.resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && validRecipeShape();
 
       allow update: if isOwnerByUserIdField()
-        && request.resource.data.userId == request.auth.uid;
+        && validRecipeShape()
+        && request.resource.data.userId == resource.data.userId;
 
       allow delete: if isOwnerByUserIdField();
     }
 
     /**
      * Collection: userProfiles
-     * Document id is the UID.
+     * Document id is the UID. Client writes omit id (doc id is the uid).
      */
     match /userProfiles/{userId} {
-      allow read, create, update, delete: if isSignedIn() && request.auth.uid == userId;
+      function profileKeys() {
+        return [
+          'dietary', 'allergies', 'dislikedIngredients',
+          'cookingExperience', 'servingSize', 'preferredCuisines', 'updatedAt'
+        ];
+      }
+
+      function validProfileShape() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(profileKeys())
+          && isBoundedStringList(d.dietary, 30)
+          && isBoundedStringList(d.allergies, 50)
+          && isBoundedStringList(d.dislikedIngredients, 50)
+          && isBoundedStringList(d.preferredCuisines, 30)
+          && d.cookingExperience in ['beginner', 'intermediate', 'advanced']
+          && d.servingSize is int
+          && d.servingSize >= 1
+          && d.servingSize <= 12;
+      }
+
+      allow read: if isSignedIn() && request.auth.uid == userId;
+
+      allow create, update: if isSignedIn()
+        && request.auth.uid == userId
+        && validProfileShape();
+
+      allow delete: if isSignedIn() && request.auth.uid == userId;
     }
   }
 }
-
-
