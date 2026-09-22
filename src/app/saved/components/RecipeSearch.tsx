@@ -41,16 +41,21 @@ export const RecipeSearch = memo(function RecipeSearch({
   return (
     <div className="mb-6 grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem_12rem_auto] md:items-end">
       <Input
-        type="text"
-        placeholder="Search recipes..."
+        label="Search recipes"
+        type="search"
+        name="recipe-search"
+        autoComplete="off"
+        placeholder="Search recipes…"
         value={searchTerm}
         onChange={(e) => onSearchChange(e.target.value)}
       />
-      <label className="block">
+      <label className="block" htmlFor="saved-difficulty-filter">
         <span className="mb-2 block text-sm font-medium text-gray-700">
           Difficulty
         </span>
         <select
+          id="saved-difficulty-filter"
+          name="difficulty"
           value={difficultyFilter}
           onChange={(e) => onDifficultyChange(e.target.value)}
           className="w-full rounded-lg border p-2 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
@@ -63,11 +68,13 @@ export const RecipeSearch = memo(function RecipeSearch({
           ))}
         </select>
       </label>
-      <label className="block">
+      <label className="block" htmlFor="saved-cuisine-filter">
         <span className="mb-2 block text-sm font-medium text-gray-700">
           Cuisine
         </span>
         <select
+          id="saved-cuisine-filter"
+          name="cuisine"
           value={cuisineFilter}
           onChange={(e) => onCuisineChange(e.target.value)}
           className="w-full rounded-lg border p-2 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500"

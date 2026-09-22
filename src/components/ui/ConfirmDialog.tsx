@@ -99,7 +99,7 @@ export function ConfirmDialog({
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             variant === "danger"
               ? "bg-red-600 text-white hover:bg-red-700"
-              : "bg-blue-600 text-white hover:bg-blue-700"
+              : "bg-primary-700 text-white hover:bg-primary-800"
           }`}
         >
           {confirmLabel}

@@ -54,7 +54,7 @@ export const RecipeDetail = memo(function RecipeDetail({
 
   if (!recipe) {
     return (
-      <div className="h-full flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+      <div className="h-full flex items-center justify-center text-gray-700 bg-gray-50 rounded-lg border border-dashed border-gray-300">
         Select a recipe to view details
       </div>
     );

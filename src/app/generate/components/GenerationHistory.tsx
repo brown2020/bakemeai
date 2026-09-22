@@ -91,7 +91,7 @@ export function GenerationHistory({
                 {getHistoryLabel(recipe, index)}
               </span>
               {meta && (
-                <span className="mt-1 block text-xs text-gray-500">
+                <span className="mt-1 block text-xs text-gray-700">
                   {meta}
                 </span>
               )}

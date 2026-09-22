@@ -28,7 +28,7 @@ export const RecipeList = memo(function RecipeList({
 }: RecipeListProps) {
   if (recipes.length === 0) {
     return (
-      <p className="text-gray-500 text-center py-4">
+      <p className="text-gray-700 text-center py-4">
         No recipes match your filters.
       </p>
     );

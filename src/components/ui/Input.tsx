@@ -14,7 +14,7 @@ type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
 };
 
 const inputBaseClasses =
-  "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors";
+  "w-full px-3 py-2 border border-gray-300 rounded-lg outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:border-primary-500";
 
 /**
  * Shared input component with consistent styling across the app.
@@ -34,9 +34,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           id={inputId}
           className={clsx(inputBaseClasses, error && "border-red-500", className)}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${inputId}-error` : undefined}
           {...props}
         />
-        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+        {error && (
+          <p id={`${inputId}-error`} className="mt-1 text-sm text-red-600" role="alert">
+            {error}
+          </p>
+        )}
       </div>
     );
   }
@@ -62,9 +68,15 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           id={inputId}
           className={clsx(inputBaseClasses, error && "border-red-500", className)}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${inputId}-error` : undefined}
           {...props}
         />
-        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+        {error && (
+          <p id={`${inputId}-error`} className="mt-1 text-sm text-red-600" role="alert">
+            {error}
+          </p>
+        )}
       </div>
     );
   }

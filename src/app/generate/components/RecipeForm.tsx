@@ -28,7 +28,7 @@ export const RecipeForm = memo(function RecipeForm({
       <Button
         variant="ghost"
         onClick={onBack}
-        className="text-primary-600 hover:text-primary-700"
+        className="text-primary-700 hover:text-primary-800"
       >
         ← Choose different option
       </Button>
@@ -38,14 +38,14 @@ export const RecipeForm = memo(function RecipeForm({
           {mode === "specific" ? (
             <FormInput
               label="What would you like to make?"
-              placeholder="e.g., Chocolate chip cookies, Beef stir fry..."
+              placeholder="e.g., Chocolate chip cookies, Beef stir fry…"
               value={input}
               onChange={onInputChange}
             />
           ) : (
             <FormInput
               label="What ingredients do you have?"
-              placeholder="e.g., chicken breast, rice, onions, garlic..."
+              placeholder="e.g., chicken breast, rice, onions, garlic…"
               value={ingredients}
               onChange={onIngredientsChange}
               isTextArea
@@ -59,7 +59,7 @@ export const RecipeForm = memo(function RecipeForm({
           size="lg"
           className="w-full"
         >
-          {isLoading ? "Generating..." : "Generate Recipe"}
+          {isLoading ? "Generating…" : "Generate Recipe"}
         </Button>
       </form>
     </div>

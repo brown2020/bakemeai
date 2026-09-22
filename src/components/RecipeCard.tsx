@@ -39,7 +39,7 @@ export const RecipeCard = memo(function RecipeCard({
       >
         <h3 className="font-medium text-base break-words">{recipe.title}</h3>
         {recipe.ingredients && recipe.ingredients.length > 0 && (
-          <div className="text-sm text-gray-500 mt-2 break-words">
+          <div className="text-sm text-gray-700 mt-2 break-words">
             {recipe.ingredients
               .slice(0, RECIPE.PREVIEW_INGREDIENTS_COUNT)
               .join(", ")}
@@ -51,7 +51,7 @@ export const RecipeCard = memo(function RecipeCard({
       <button
         type="button"
         onClick={onDelete}
-        className="text-red-500 hover:text-red-600 shrink-0 p-1 rounded-full hover:bg-red-50 transition-colors"
+        className="text-red-700 hover:text-red-800 shrink-0 p-1 rounded-full hover:bg-red-50 transition-colors"
         aria-label={`Delete recipe: ${recipe.title}`}
       >
         <Trash2 className="w-4 h-4" />

@@ -26,7 +26,7 @@ function CharCountDisplay({
   return (
     <p
       className={`mt-1 text-sm ${
-        isApproachingLimit ? "text-orange-600 font-medium" : "text-gray-500"
+        isApproachingLimit ? "text-orange-600 font-medium" : "text-gray-700"
       }`}
     >
       {currentLength}/{maxLength} characters

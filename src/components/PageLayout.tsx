@@ -17,7 +17,13 @@ export function PageLayout({
 }: PageLayoutProps) {
   return (
     <main className="min-h-screen bg-surface-50 animate-fade-in">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-white focus:px-3 focus:py-2 focus:shadow"
+      >
+        Skip to main content
+      </a>
+      <div id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {title && (
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-gray-900">{title}</h1>

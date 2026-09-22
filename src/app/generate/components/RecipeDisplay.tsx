@@ -71,7 +71,7 @@ export const RecipeDisplay = memo(function RecipeDisplay({
           )}
           <Input
             label="Tweak this recipe (optional)"
-            placeholder="e.g., make it spicier, serve 2..."
+            placeholder="e.g., make it spicier, serve 2…"
             value={tweak}
             onChange={(e) => onTweakChange(e.target.value)}
             maxLength={FORM_VALIDATION.INPUT_MAX_LENGTH}
@@ -92,7 +92,7 @@ export const RecipeDisplay = memo(function RecipeDisplay({
               className="min-w-[120px]"
               aria-describedby={saveError ? "save-error" : undefined}
             >
-              {saved ? "Saved!" : isSaving ? "Saving..." : "Save Recipe"}
+              {saved ? "Saved!" : isSaving ? "Saving…" : "Save Recipe"}
             </Button>
             <RecipeExportActions
               title={parsedRecipe.title}

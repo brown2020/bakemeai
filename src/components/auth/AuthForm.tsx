@@ -206,6 +206,7 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
             type="email"
             required
             autoComplete="email"
+            spellCheck={false}
             value={state.email}
             onChange={(e) =>
               dispatch({ type: "setEmail", value: e.target.value })
@@ -276,7 +277,7 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
         <div className="text-center">
           <Link
             href={altLinkHref}
-            className="text-blue-500 hover:text-blue-600"
+            className="text-blue-700 hover:text-blue-800"
           >
             {altLinkText}
           </Link>

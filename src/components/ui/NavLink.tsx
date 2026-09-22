@@ -36,8 +36,8 @@ export function NavLink({
       prefetch={prefetch}
       className={`px-2 sm:px-3 py-2 text-sm font-medium rounded-md transition-colors ${
         isActive
-          ? "bg-blue-50 text-blue-600"
-          : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+          ? "bg-blue-50 text-blue-800"
+          : "text-gray-700 hover:text-blue-800 hover:bg-blue-50"
       } ${className}`}
     >
       {icon && <span className="sm:hidden">{icon}</span>}
