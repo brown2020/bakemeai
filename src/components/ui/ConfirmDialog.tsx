@@ -16,9 +16,7 @@ interface ConfirmDialogProps {
 }
 
 /**
- * Accessible confirmation dialog component.
- * WCAG-compliant modal with keyboard navigation, focus management, and escape handling.
- * Replaces native window.confirm with better UX.
+ * Accessible confirmation dialog using the native HTML dialog element.
  */
 export function ConfirmDialog({
   isOpen,
@@ -30,84 +28,85 @@ export function ConfirmDialog({
   cancelLabel = "Cancel",
   variant = "primary",
 }: ConfirmDialogProps) {
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
-  // Focus management for accessibility
   useEffect(() => {
-    if (isOpen && confirmButtonRef.current) {
-      confirmButtonRef.current.focus();
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    if (isOpen) {
+      if (!dialog.open) dialog.showModal();
+      confirmButtonRef.current?.focus();
+    } else if (dialog.open) {
+      dialog.close();
     }
   }, [isOpen]);
 
-  // Close on Escape key
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const handleClose = () => {
+      onCloseRef.current();
     };
 
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-      return () => document.removeEventListener("keydown", handleEscape);
-    }
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
+    dialog.addEventListener("close", handleClose);
+    return () => dialog.removeEventListener("close", handleClose);
+  }, []);
 
   const handleConfirm = async () => {
     try {
       await onConfirm();
-      onClose();
+      dialogRef.current?.close();
     } catch (error) {
-      // Keep the dialog open on failure; the parent surfaces the error message.
-      // Do not rethrow: this runs from an onClick handler, where a rejected
-      // promise would become an unhandled rejection.
       logError("Confirm action failed", error);
     }
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      className="fixed inset-0 z-50 m-auto max-w-md w-[calc(100%-2rem)] rounded-lg border-0 bg-white p-6 shadow-xl backdrop:bg-black/50"
       aria-labelledby="dialog-title"
       aria-describedby="dialog-description"
+      onClick={(e) => {
+        if (e.target === dialogRef.current) {
+          dialogRef.current?.close();
+        }
+      }}
     >
-      <div
-        ref={dialogRef}
-        className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6"
-        onClick={(e) => e.stopPropagation()}
+      <h2
+        id="dialog-title"
+        className="text-xl font-semibold text-gray-900 mb-2"
       >
-        <h2
-          id="dialog-title"
-          className="text-xl font-semibold text-gray-900 mb-2"
+        {title}
+      </h2>
+      <p id="dialog-description" className="text-gray-600 mb-6">
+        {message}
+      </p>
+      <div className="flex gap-3 justify-end">
+        <Button
+          variant="secondary"
+          onClick={() => dialogRef.current?.close()}
         >
-          {title}
-        </h2>
-        <p id="dialog-description" className="text-gray-600 mb-6">
-          {message}
-        </p>
-        <div className="flex gap-3 justify-end">
-          <Button variant="secondary" onClick={onClose}>
-            {cancelLabel}
-          </Button>
-          <button
-            ref={confirmButtonRef}
-            onClick={handleConfirm}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              variant === "danger"
-                ? "bg-red-600 text-white hover:bg-red-700"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-            }`}
-          >
-            {confirmLabel}
-          </button>
-        </div>
+          {cancelLabel}
+        </Button>
+        <button
+          ref={confirmButtonRef}
+          type="button"
+          onClick={handleConfirm}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            variant === "danger"
+              ? "bg-red-600 text-white hover:bg-red-700"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
+        >
+          {confirmLabel}
+        </button>
       </div>
-    </div>
+    </dialog>
   );
 }

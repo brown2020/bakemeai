@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { logError } from "@/lib/utils/logger";
 
+const EMPTY_LOG_CONTEXT: Record<string, unknown> = {};
+
 interface UseFirestoreQueryOptions<T> {
   /** The async function to fetch data from Firestore */
   queryFn: (userId: string) => Promise<T>;
@@ -51,7 +53,7 @@ export function useFirestoreQuery<T>({
   queryFn,
   userId,
   errorMessage,
-  logContext = {},
+  logContext = EMPTY_LOG_CONTEXT,
   enabled = true,
 }: UseFirestoreQueryOptions<T>): UseFirestoreQueryReturn<T> {
   const [data, setData] = useState<T | null>(null);

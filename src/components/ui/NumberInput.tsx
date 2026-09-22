@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { NUMBER_INPUT } from "@/lib/constants/ui";
 
 interface NumberInputProps {
@@ -23,12 +24,15 @@ export function NumberInput({
   max = NUMBER_INPUT.DEFAULT_MAX,
   className = "w-32",
 }: NumberInputProps) {
+  const id = useId();
+
   return (
     <div>
-      <label className="block text-base sm:text-lg font-medium mb-3">
+      <label htmlFor={id} className="block text-base sm:text-lg font-medium mb-3">
         {label}
       </label>
       <input
+        id={id}
         type="number"
         min={min}
         max={max}
@@ -39,8 +43,3 @@ export function NumberInput({
     </div>
   );
 }
-
-
-
-
-

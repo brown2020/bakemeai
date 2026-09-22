@@ -14,11 +14,6 @@ interface RecipeCardProps {
 /**
  * Recipe card component for displaying recipe summaries in a list.
  * Shows recipe title, preview of ingredients, and delete button.
- *
- * Memoization rationale:
- * - Renders inside .map() over potentially hundreds of recipes
- * - Prevents re-renders of unselected cards when selection changes
- * - Significant performance improvement in large recipe collections
  */
 export const RecipeCard = memo(function RecipeCard({
   recipe,
@@ -26,44 +21,23 @@ export const RecipeCard = memo(function RecipeCard({
   onSelect,
   onDelete,
 }: RecipeCardProps) {
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      onSelect();
-    }
-  };
-
   return (
-    <div className="relative">
-      <div
+    <div
+      className={clsx(
+        "relative flex items-start gap-2 rounded-lg border p-3 sm:p-4 transition-colors",
+        isSelected
+          ? "border-blue-500 bg-blue-50"
+          : "border-gray-200 bg-white hover:border-blue-300"
+      )}
+    >
+      <button
+        type="button"
         onClick={onSelect}
-        onKeyDown={handleKeyDown}
-        role="button"
-        tabIndex={0}
-        className={clsx(
-          "w-full text-left p-3 sm:p-4 rounded-lg border transition-colors cursor-pointer",
-          isSelected
-            ? "border-blue-500 bg-blue-50"
-            : "border-gray-200 hover:border-blue-300 bg-white"
-        )}
+        className="min-w-0 flex-1 text-left"
         aria-label={`View recipe: ${recipe.title}`}
         aria-pressed={isSelected}
       >
-        <div className="flex justify-between items-start gap-2">
-          <h3 className="font-medium text-base break-words flex-1">
-            {recipe.title}
-          </h3>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="text-red-500 hover:text-red-600 shrink-0 p-1 rounded-full hover:bg-red-50 transition-colors z-10"
-            aria-label={`Delete recipe: ${recipe.title}`}
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+        <h3 className="font-medium text-base break-words">{recipe.title}</h3>
         {recipe.ingredients && recipe.ingredients.length > 0 && (
           <div className="text-sm text-gray-500 mt-2 break-words">
             {recipe.ingredients
@@ -73,7 +47,15 @@ export const RecipeCard = memo(function RecipeCard({
               "..."}
           </div>
         )}
-      </div>
+      </button>
+      <button
+        type="button"
+        onClick={onDelete}
+        className="text-red-500 hover:text-red-600 shrink-0 p-1 rounded-full hover:bg-red-50 transition-colors"
+        aria-label={`Delete recipe: ${recipe.title}`}
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
     </div>
   );
 });

@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+
 interface ChipSelectProps {
   label: string;
   options: string[];
@@ -11,11 +13,6 @@ interface ChipSelectProps {
 /**
  * Multi-select chip/pill component for selecting multiple options.
  * Supports toggle behavior and visual variants.
- * @param label - Label text displayed above the chips
- * @param options - Array of selectable options
- * @param selected - Array of currently selected option values
- * @param onChange - Handler called when an option is toggled
- * @param variant - Visual style: "pill" (fully rounded) or "rounded" (slightly rounded)
  */
 export function ChipSelect({
   label,
@@ -26,15 +23,16 @@ export function ChipSelect({
 }: ChipSelectProps) {
   const baseClasses = "px-3 py-1.5 text-sm transition-colors";
   const variantClasses = variant === "pill" ? "rounded-full" : "rounded-lg";
+  const selectedSet = useMemo(() => new Set(selected), [selected]);
 
   return (
-    <div>
-      <label className="block text-base sm:text-lg font-medium mb-3">
+    <fieldset className="min-w-0 border-0 p-0 m-0">
+      <legend className="block text-base sm:text-lg font-medium mb-3 px-0">
         {label}
-      </label>
+      </legend>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
-          const isSelected = selected.includes(option);
+          const isSelected = selectedSet.has(option);
           return (
             <button
               key={option}
@@ -52,6 +50,6 @@ export function ChipSelect({
           );
         })}
       </div>
-    </div>
+    </fieldset>
   );
 }

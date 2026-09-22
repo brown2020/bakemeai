@@ -64,11 +64,15 @@ export function useSavedRecipeServingScale({
     recipe?.servings ??
     NUMBER_INPUT.SERVING_SIZE_DEFAULT;
 
-  useEffect(() => {
+  const [activeRecipeId, setActiveRecipeId] = useState<string | null>(
+    recipe?.id ?? null
+  );
+  if ((recipe?.id ?? null) !== activeRecipeId) {
+    setActiveRecipeId(recipe?.id ?? null);
     setTargetServings(defaultServings);
     setSaveScaledCopyError(null);
     setSaveScaledCopySuccess(false);
-  }, [defaultServings, recipe?.id]);
+  }
 
   useEffect(() => {
     return () => {

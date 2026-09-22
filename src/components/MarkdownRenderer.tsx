@@ -48,7 +48,7 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
 /**
  * Consistent markdown component styling across the app.
  */
-export const markdownComponents = {
+const markdownComponents = {
   h1: ({ children }: { children?: ReactNode }) => (
     <h1 className="text-lg sm:text-xl font-semibold mt-4 sm:mt-6 mb-3 sm:mb-4">
       {children}

@@ -23,7 +23,6 @@ export function ProfileOnboardingBanner({
 
   return (
     <section
-      role="region"
       aria-labelledby="profile-onboarding-title"
       className="rounded-lg border border-primary-200 bg-primary-50 p-4 sm:p-5"
     >

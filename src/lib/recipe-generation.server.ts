@@ -66,7 +66,7 @@ function assertRecipeGenerationRateLimit(userId: string): void {
  * Uses .describe() annotations to provide context for the AI model.
  * OpenAI strict schema requires all fields to be required and additionalProperties: false.
  */
-const recipeGenerationSchema = z.object({
+const recipeGenerationSchema = z.strictObject({
   title: z.string().describe("The title of the recipe"),
   preparationTime: z.string().describe("Time needed for preparation (e.g. '15 mins')"),
   cookingTime: z.string().describe("Time needed for cooking (e.g. '45 mins')"),
@@ -76,12 +76,12 @@ const recipeGenerationSchema = z.object({
   instructions: z.array(z.string()).describe("Step-by-step cooking instructions"),
   tips: z.array(z.string()).describe("Helpful cooking tips"),
   calories: z.number().nullable().describe("Approximate calories per serving (use null if unknown)"),
-  macros: z.object({
+  macros: z.strictObject({
     protein: z.string().nullable().describe("Protein per serving (use null if unknown)"),
     carbs: z.string().nullable().describe("Carbs per serving (use null if unknown)"),
     fat: z.string().nullable().describe("Fat per serving (use null if unknown)"),
-  }).strict().nullable().describe("Macronutrients per serving (use null if unknown)"),
-}).strict();
+  }).nullable().describe("Macronutrients per serving (use null if unknown)"),
+});
 
 /**
  * Generates a recipe using AI based on user input and preferences.

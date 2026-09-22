@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { FORM_VALIDATION, RECIPE } from "@/lib/constants/ui";
 
@@ -48,6 +48,7 @@ export function TagInput({
   maxLength = FORM_VALIDATION.TEXTAREA_MAX_LENGTH,
   maxItemLength = RECIPE.MAX_TITLE_LENGTH,
 }: TagInputProps) {
+  const id = useId();
   const [text, setText] = useState<string>(() => value.join(", "));
   const [prevValue, setPrevValue] = useState(value);
 
@@ -80,10 +81,11 @@ export function TagInput({
 
   return (
     <div>
-      <label className="block text-base sm:text-lg font-medium mb-3">
+      <label htmlFor={id} className="block text-base sm:text-lg font-medium mb-3">
         {label}
       </label>
       <input
+        id={id}
         type="text"
         value={text}
         onChange={handleChange}

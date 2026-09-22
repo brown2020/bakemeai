@@ -66,10 +66,18 @@ export function GenerationHistory({
         {recipes.map((recipe, index) => {
           const isSelected = recipe === selectedRecipe;
           const meta = getHistoryMeta(recipe);
+          const key = [
+            recipe.title?.trim() || "untitled",
+            recipe.preparationTime ?? "",
+            recipe.cookingTime ?? "",
+            String(recipe.servings ?? ""),
+            recipe.difficulty ?? "",
+            String(index),
+          ].join("|");
 
           return (
             <button
-              key={`${getHistoryLabel(recipe, index)}-${index}`}
+              key={key}
               type="button"
               onClick={() => onSelectRecipe(recipe)}
               className={`max-w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors ${

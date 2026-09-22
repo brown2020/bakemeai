@@ -81,9 +81,9 @@ export const ingredientsRecipeInputSchema = z
  * BACKWARDS COMPATIBILITY:
  * - All metadata fields are optional to support recipes created before structured data
  * - UI components should handle undefined gracefully
- * - Uses passthrough() to allow legacy fields that may exist in old recipes
+ * - Uses looseObject() to allow legacy fields that may exist in old recipes
  */
-export const recipeSchema = z.object({
+export const recipeSchema = z.looseObject({
   id: z.string(),
   userId: z.string(),
   title: z.string().min(1, "Title is required"),
@@ -106,7 +106,7 @@ export const recipeSchema = z.object({
     })
     .nullable()
     .optional(),
-}).passthrough();
+});
 
 // ============================================================================
 // DERIVED SCHEMAS
