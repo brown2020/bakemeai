@@ -1,4 +1,4 @@
-import type { SerializableUserProfile } from "./schemas/user";
+import type { GenerationProfile } from "./schemas/generation-profile";
 
 /**
  * AI prompt construction utilities.
@@ -13,7 +13,7 @@ import type { SerializableUserProfile } from "./schemas/user";
  */
 export function getRecipeSystemPrompt(
   isIngredientBased: boolean,
-  userProfile?: SerializableUserProfile | null
+  userProfile?: GenerationProfile | null
 ): string {
   const sections: string[] = [];
 
@@ -100,7 +100,7 @@ export function getRecipeSystemPrompt(
  * @returns Array of preference strings (empty array if no preferences)
  */
 function buildUserPreferencesLines(
-  userProfile?: SerializableUserProfile | null
+  userProfile?: GenerationProfile | null
 ): string[] {
   if (!userProfile) return [];
 

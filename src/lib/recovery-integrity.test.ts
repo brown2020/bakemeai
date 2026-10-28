@@ -23,6 +23,11 @@ vi.mock("@ai-sdk/rsc", () => ({
 
 vi.mock("@/lib/utils/server-auth", () => ({
   requireAuthenticatedUserId: vi.fn(async () => "user-recovery-1"),
+  requireGenerationUser: vi.fn(async () => ({
+    uid: "user-recovery-1",
+    emailVerified: true,
+    idToken: "test-token",
+  })),
 }));
 
 vi.mock("@/lib/db", () => ({
@@ -54,6 +59,7 @@ describe("recovery integrity", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.OPENAI_API_KEY = "test-key-not-real";
+    delete process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   });
 
   it("fails OpenAI/provider start without claiming success (interrupted generate)", async () => {
@@ -61,7 +67,10 @@ describe("recovery integrity", () => {
       throw new Error("OpenAI 500 upstream failure");
     });
 
-    await expect(generateRecipe("scrambled eggs recovery fail", false)).rejects.toMatchObject({
+    await expect(
+      generateRecipe("scrambled eggs recovery fail", false)
+    ).resolves.toMatchObject({
+      ok: false,
       code: "RECIPE_PROVIDER_ERROR",
     });
 

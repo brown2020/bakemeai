@@ -3,7 +3,10 @@
  * Separates business operations from state management.
  */
 
-import { generateRecipe } from "@/lib/recipe-generation.server";
+import {
+  cancelRecipeGeneration,
+  generateRecipe,
+} from "@/lib/recipe-generation.server";
 import { readStreamableValue } from "@ai-sdk/rsc";
 import { saveRecipe as saveRecipeToDb, deleteRecipe as deleteRecipeFromDb } from "@/lib/db";
 import type { SerializableUserProfile } from "@/lib/schemas/user";
@@ -44,13 +47,47 @@ export async function generateRecipeWithStreaming(
     if (signal?.aborted) return;
 
     const result = await generateRecipe(prompt, isIngredientsMode, userProfile);
+    if (!result.ok) {
+      onError(result.message);
+      return;
+    }
 
-    for await (const partialObject of readStreamableValue(result)) {
-      // Check for abort before processing each chunk
-      if (signal?.aborted) return;
+    const cancel = () => {
+      void cancelRecipeGeneration(result.generationId);
+    };
+    if (signal?.aborted) {
+      cancel();
+      return;
+    }
+    signal?.addEventListener("abort", cancel);
 
-      if (partialObject != null) {
-        const validationResult = recipeStructureSchema.safeParse(partialObject);
+    try {
+      for await (const partialObject of readStreamableValue(result.stream)) {
+        if (signal?.aborted) return;
+
+        if (!partialObject || typeof partialObject !== "object") continue;
+
+        if (
+          "kind" in partialObject &&
+          partialObject.kind === "error" &&
+          "message" in partialObject &&
+          typeof partialObject.message === "string"
+        ) {
+          onError(partialObject.message);
+          return;
+        }
+
+        if (
+          !("kind" in partialObject) ||
+          partialObject.kind !== "recipe" ||
+          !("recipe" in partialObject)
+        ) {
+          continue;
+        }
+
+        const validationResult = recipeStructureSchema.safeParse(
+          partialObject.recipe
+        );
         if (!validationResult.success) {
           logWarning("Invalid partial recipe data during streaming", {
             errors: validationResult.error.flatten(),
@@ -60,6 +97,8 @@ export async function generateRecipeWithStreaming(
 
         onPartialUpdate(validationResult.data);
       }
+    } finally {
+      signal?.removeEventListener("abort", cancel);
     }
   } catch (error) {
     // Don't report errors for aborted requests
@@ -101,13 +140,13 @@ export async function saveRecipeToDatabase(
     );
   }
 
-  const markdown = convertToMarkdown(structuredRecipe);
-  
+  const markdown = convertToMarkdown(validationResult.data);
+
   try {
     await saveRecipeToDb({
       userId,
       content: markdown,
-      structuredData: structuredRecipe,
+      structuredData: validationResult.data,
     });
   } catch (error) {
     // Re-throw if it's already an AppError from db layer

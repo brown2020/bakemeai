@@ -6,6 +6,7 @@ vi.mock("next/headers", () => ({
 
 import { cookies } from "next/headers";
 import { generateRecipe } from "./recipe-generation.server";
+import { ERROR_MESSAGES } from "./utils/error-handler";
 
 describe("generateRecipe unauthorized deny", () => {
   beforeEach(() => {
@@ -17,8 +18,10 @@ describe("generateRecipe unauthorized deny", () => {
       get: () => undefined,
     } as never);
 
-    await expect(generateRecipe("easy pasta for two", false)).rejects.toMatchObject({
+    await expect(generateRecipe("easy pasta for two", false)).resolves.toEqual({
+      ok: false,
       code: "UNAUTHORIZED",
+      message: ERROR_MESSAGES.AUTH.LOGIN_REQUIRED,
     });
   });
 });
