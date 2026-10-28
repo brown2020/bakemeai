@@ -18,6 +18,7 @@ import {
 } from "@/lib/utils/recipe-prompt";
 import { UI_TIMING } from "@/lib/constants/ui";
 import { ERROR_MESSAGES } from "@/lib/utils/error-handler";
+import { planGenerationCancel } from "@/lib/utils/generation-cancel";
 
 interface UseRecipeGenerationReturn {
   isGenerating: boolean;
@@ -32,6 +33,7 @@ interface UseRecipeGenerationReturn {
   setTweak: (tweak: string) => void;
   handleGenerate: (e: FormEvent) => Promise<void>;
   handleRegenerate: () => void;
+  handleCancel: () => void;
 }
 
 /**
@@ -47,6 +49,7 @@ export function useRecipeGeneration(
   const [tweak, setTweak] = useState("");
   const lastSubmitTimeRef = useRef<number>(0);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const runIdRef = useRef(0);
 
   const {
     isGenerating,
@@ -63,15 +66,11 @@ export function useRecipeGeneration(
     resetSaveState,
   } = useRecipeStore();
 
-  useEffect(() => {
-    return () => {
-      abortControllerRef.current?.abort();
-    };
-  }, []);
-
   const debouncedGeneration = useDebounce(
     useCallback(
-      async (prompt: string, isIngredientsMode: boolean) => {
+      async (prompt: string, isIngredientsMode: boolean, runId: number) => {
+        if (runId !== runIdRef.current) return;
+
         abortControllerRef.current?.abort();
         abortControllerRef.current = new AbortController();
         const signal = abortControllerRef.current.signal;
@@ -89,22 +88,22 @@ export function useRecipeGeneration(
             isIngredientsMode,
             userProfile,
             (recipe) => {
-              if (!signal.aborted) {
-                latestRecipe = recipe;
-                setStructuredRecipe(recipe);
-              }
+              if (signal.aborted || runId !== runIdRef.current) return;
+              latestRecipe = recipe;
+              setStructuredRecipe(recipe);
             },
             (errorMessage) => {
-              if (!signal.aborted) setGenerationError(errorMessage);
+              if (signal.aborted || runId !== runIdRef.current) return;
+              setGenerationError(errorMessage);
             },
             signal
           );
         } catch {
-          if (!signal.aborted) {
+          if (!signal.aborted && runId === runIdRef.current) {
             setGenerationError(ERROR_MESSAGES.RECIPE.GENERATION_FAILED);
           }
         } finally {
-          if (!signal.aborted) {
+          if (runId === runIdRef.current && !signal.aborted) {
             const completeRecipe =
               latestRecipe == null
                 ? null
@@ -127,6 +126,13 @@ export function useRecipeGeneration(
     ),
     UI_TIMING.AI_GENERATION_DEBOUNCE
   );
+
+  useEffect(() => {
+    return () => {
+      debouncedGeneration.cancel();
+      abortControllerRef.current?.abort();
+    };
+  }, [debouncedGeneration]);
 
   const triggerGeneration = useCallback(
     (tweakText: string) => {
@@ -163,9 +169,13 @@ export function useRecipeGeneration(
         buildRecipePrompt(promptInput, mode),
         tweakText
       );
-      debouncedGeneration(prompt, mode === "ingredients");
+      const runId = runIdRef.current + 1;
+      runIdRef.current = runId;
+      setGenerationError(null);
+      setGenerating(true);
+      debouncedGeneration(prompt, mode === "ingredients", runId);
     },
-    [mode, input, ingredients, resetSaveState, debouncedGeneration]
+    [mode, input, ingredients, resetSaveState, debouncedGeneration, setGenerating, setGenerationError]
   );
 
   const handleGenerate = useCallback(
@@ -180,6 +190,15 @@ export function useRecipeGeneration(
     triggerGeneration(tweak);
   }, [triggerGeneration, tweak]);
 
+  const handleCancel = useCallback(() => {
+    const plan = planGenerationCancel();
+    runIdRef.current += 1;
+    if (plan.clearPendingStart) debouncedGeneration.cancel();
+    if (plan.abortInFlight) abortControllerRef.current?.abort();
+    if (plan.stopGenerating) setGenerating(false);
+    setGenerationError(null);
+  }, [debouncedGeneration, setGenerating, setGenerationError]);
+
   return {
     isGenerating,
     generationError,
@@ -193,5 +212,6 @@ export function useRecipeGeneration(
     setTweak,
     handleGenerate,
     handleRegenerate,
+    handleCancel,
   };
 }

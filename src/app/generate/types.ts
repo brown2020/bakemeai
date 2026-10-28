@@ -34,6 +34,7 @@ export interface RecipeFormProps {
   onInputChange: (value: string) => void;
   ingredients: string;
   onIngredientsChange: (value: string) => void;
+  onCancel: () => void;
 }
 
 export interface RecipeDisplayProps {
@@ -51,5 +52,6 @@ export interface RecipeDisplayProps {
   saved: boolean;
   isGenerating: boolean;
   saveError: string;
+  onCancel: () => void;
 }
 

@@ -29,6 +29,7 @@ export const RecipeDisplay = memo(function RecipeDisplay({
   saved,
   isGenerating,
   saveError,
+  onCancel,
 }: RecipeDisplayProps) {
   const nutrition = extractNutritionSummary(parsedRecipe.structuredData);
 
@@ -46,7 +47,13 @@ export const RecipeDisplay = memo(function RecipeDisplay({
         nutrition={nutrition}
         titleId="recipe-title"
       />
-      {!isGenerating && (
+      {isGenerating ? (
+        <div className="no-print mt-4">
+          <Button type="button" variant="secondary" onClick={onCancel}>
+            Cancel
+          </Button>
+        </div>
+      ) : (
         <div className="no-print mt-4 space-y-4">
           {canScaleServings && (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">

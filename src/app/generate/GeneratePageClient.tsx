@@ -62,6 +62,7 @@ export function GeneratePageClient() {
     setTweak,
     handleGenerate,
     handleRegenerate,
+    handleCancel,
   } = useRecipeGeneration(userProfile);
 
   const {
@@ -123,6 +124,7 @@ export function GeneratePageClient() {
                 onInputChange={setInput}
                 ingredients={ingredients}
                 onIngredientsChange={setIngredients}
+                onCancel={handleCancel}
               />
             </ErrorBoundary>
 
@@ -153,6 +155,7 @@ export function GeneratePageClient() {
                   saved={saved}
                   isGenerating={isGenerating}
                   saveError={saveError || ""}
+                  onCancel={handleCancel}
                 />
               </ErrorBoundary>
             )}

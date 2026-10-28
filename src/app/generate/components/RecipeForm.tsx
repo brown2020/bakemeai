@@ -22,6 +22,7 @@ export const RecipeForm = memo(function RecipeForm({
   onInputChange,
   ingredients,
   onIngredientsChange,
+  onCancel,
 }: RecipeFormProps) {
   return (
     <div className="space-y-4">
@@ -53,14 +54,27 @@ export const RecipeForm = memo(function RecipeForm({
           )}
         </div>
 
-        <Button
-          type="submit"
-          isLoading={isLoading}
-          size="lg"
-          className="w-full"
-        >
-          {isLoading ? "Generating…" : "Generate Recipe"}
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button
+            type="submit"
+            isLoading={isLoading}
+            size="lg"
+            className="w-full sm:flex-1"
+          >
+            {isLoading ? "Generating…" : "Generate Recipe"}
+          </Button>
+          {isLoading && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="lg"
+              onClick={onCancel}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+          )}
+        </div>
       </form>
     </div>
   );

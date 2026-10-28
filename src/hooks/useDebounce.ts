@@ -1,58 +1,53 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
+import { createDebouncedCall, type DebouncedCall } from "@/lib/utils/debounce";
 import { logError } from "@/lib/utils/logger";
 
 /**
  * Hook for debouncing function calls to prevent excessive API requests.
- * Useful for rate-limiting expensive operations like AI generation.
- *
- * @param callback - The function to debounce
- * @param delay - Delay in milliseconds before executing the callback
- * @returns Debounced function that can be called multiple times but only executes after delay
- *
- * @example
- * const debouncedGenerate = useDebounce(() => generateRecipe(), 1000);
- * // Multiple rapid calls will only execute once after 1 second
- * debouncedGenerate();
- * debouncedGenerate(); // Cancels previous call
- * debouncedGenerate(); // Only this one will execute
+ * Call `cancel()` to drop a pending invocation.
  */
 export function useDebounce<T extends (...args: never[]) => unknown>(
   callback: T,
   delay: number
-): (...args: Parameters<T>) => void {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+): DebouncedCall<T> {
   const callbackRef = useRef(callback);
+  const delayRef = useRef(delay);
+  const runnerRef = useRef<DebouncedCall<T> | null>(null);
 
   useEffect(() => {
     callbackRef.current = callback;
   }, [callback]);
 
-  // Cleanup timeout on unmount or delay change
   useEffect(() => {
+    delayRef.current = delay;
+    runnerRef.current?.cancel();
+    runnerRef.current = null;
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      runnerRef.current?.cancel();
     };
   }, [delay]);
 
-  return useCallback(
-    (...args: Parameters<T>) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+  return useMemo(() => {
+    const run = ((...args: Parameters<T>) => {
+      if (!runnerRef.current) {
+        runnerRef.current = createDebouncedCall(((...inner: Parameters<T>) => {
+          try {
+            callbackRef.current(...inner);
+          } catch (error) {
+            logError("Debounced callback error", error, {});
+          }
+        }) as T, delayRef.current);
       }
+      runnerRef.current(...args);
+    }) as DebouncedCall<T>;
 
-      timeoutRef.current = setTimeout(() => {
-        try {
-          callbackRef.current(...args);
-        } catch (error) {
-          logError("Debounced callback error", error, {});
-        }
-      }, delay);
-    },
-    [delay]
-  );
+    run.cancel = () => {
+      runnerRef.current?.cancel();
+    };
+
+    return run;
+  }, []);
 }
