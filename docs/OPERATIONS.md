@@ -36,17 +36,20 @@ Local vs CI vs host:
 
 | Operation | Owner | Failure surface |
 | --- | --- | --- |
-| Recipe generate (stream) | `src/lib/recipe-generation.server.ts` | Auth gate → per-user rate limit → OpenAI `streamObject`; errors become `AppError` (`RECIPE_PROVIDER_ERROR` / `RATE_LIMITED` / `OPENAI_API_KEY_MISSING`) via `logError` |
+| Recipe generate (stream) | `src/lib/recipe-generation.server.ts` | Verified-email auth gate → Firestore quota (memory fallback) → OpenAI `streamObject`. Expected failures return `{ ok: false, message, code }` (`UNAUTHORIZED`, `EMAIL_NOT_VERIFIED`, `RATE_LIMITED`, `INVALID_PROFILE`, `RECIPE_PROVIDER_ERROR`, `OPENAI_API_KEY_MISSING`) instead of a thrown error, so production RSC masking cannot hide them. |
 | Recipe save / delete | `src/lib/db/recipes.ts` + `src/lib/services/recipe-service.ts` | Zod complete-schema gate before write; Firestore errors mapped to user-safe `AppError`; optimistic delete rollback on `saved/page.tsx` |
 | Session / route gate | `src/lib/utils/server-auth.ts` + `src/proxy.ts` | Server action verifies cookie via Firebase Identity Toolkit; proxy is expiry-only (not authority) |
 | Client crash isolation | `src/components/ErrorBoundary.tsx`, `src/app/global-error.tsx` | Feature + global boundaries; generate/saved wrap major panels |
 
 ## Rate limits and resource bounds
 
-- Generation: **8 requests / 60s / userId** in-memory per server instance
-  (`RECIPE_GENERATION_RATE_LIMIT` in `recipe-generation.server.ts`).
-- Prompt length capped by `MAX_SERVER_PROMPT_LENGTH`.
-- UI debounce: `UI_TIMING.AI_GENERATION_DEBOUNCE`; streams cancel via `AbortController`.
+- Generation: **8 requests / 60s / userId** in `generationRateLimits/{uid}`
+  (`GENERATION_QUOTA` in `src/lib/utils/generation-quota.ts`). Rules must match.
+  If the project id is unset or rules are not deployed, that instance uses memory.
+- Prompt length capped by `MAX_SERVER_PROMPT_LENGTH`. Profile lists copied into the
+  prompt are capped by `generationProfileSchema`.
+- UI debounce: `UI_TIMING.AI_GENERATION_DEBOUNCE`. The client `AbortController`
+  calls `cancelRecipeGeneration`, which aborts the OpenAI stream on the same instance.
 - No background jobs/queues; unbounded fan-out is not applicable.
 
 ## Failure drills (observed)
@@ -54,7 +57,7 @@ Local vs CI vs host:
 Automated evidence: `src/lib/recovery-integrity.test.ts` (also run in CI).
 
 1. **OpenAI/provider start failure** — mock `streamObject` throws; expect
-   `RECIPE_PROVIDER_ERROR`; Firestore `saveRecipe` must not be called.
+   `{ ok: false, code: "RECIPE_PROVIDER_ERROR" }`; Firestore `saveRecipe` must not be called.
 2. **Firestore save failure** — mock save rejects; expect `RECIPE_SAVE_FAILED`
    (`AppError`); no silent success.
 3. **Concurrent saves** — one write succeeds, contention rejects the other;
@@ -62,7 +65,7 @@ Automated evidence: `src/lib/recovery-integrity.test.ts` (also run in CI).
 4. **Interrupted / incomplete payload** — incomplete structured recipe rejected
    with `RECIPE_VALIDATION_FAILED` before any write.
 5. **Unauthenticated generate** — `src/lib/recipe-generation.deny.test.ts` asserts
-   deny before OpenAI (see also AGENTS.md auth gate notes).
+   `{ ok: false, code: "UNAUTHORIZED" }` before OpenAI (see also AGENTS.md auth gate notes).
 
 Manual smoke (optional after deploy):
 

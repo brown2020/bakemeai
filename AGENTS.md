@@ -101,7 +101,7 @@ Components → Hooks → Services → DB / Server Actions (AI)
 12. **Copy to clipboard** — `CopyRecipeButton` + `buildRecipeCopyText` (`lib/utils/recipe-copy.ts`) copy the displayed recipe as markdown (incl. macros) with inline feedback, on generate + saved detail.
 13. **Static pages** — Landing, about, privacy, terms, support.
 14. **Route protection** — `proxy.ts` soft-gates `/generate`, `/profile`, `/saved`; Firestore rules are the real security boundary.
-15. **Generation rate limit** — Authenticated server action calls are capped in memory per user before OpenAI is called.
+15. **Generation rate limit** — Authenticated, email-verified server action calls are capped at 8 requests / 60 seconds per user in Firestore (`generationRateLimits/{uid}`) before OpenAI is called. If the project id is unset or the rules are not deployed, the action falls back to the in-memory limiter on that instance.
 
 **Partial / unused (inferred)**:
 - Firebase Storage initialized + rules exist; no upload UI.
@@ -190,19 +190,19 @@ Constants: `src/lib/constants/auth.ts` (`PRIVATE_ROUTES`, `AUTH_PAGES`).
 
 | Kind | Paths | Behavior |
 |------|-------|----------|
-| Private | `/generate`, `/profile`, `/saved` | Redirect to `/login?redirect=` if no valid cookie |
-| Auth pages | `/login`, `/signup`, `/reset-password` | Redirect to `/generate` if authenticated |
+| Private | `/generate`, `/profile`, `/saved` | Redirect to `/login?redirect=` only when the auth cookie is absent. An expired cookie is left in place so Firebase can refresh it. |
+| Auth pages | `/login`, `/signup`, `/reset-password` | Redirect to `/generate` only when the cookie is present and unexpired |
 | Public | `/`, `/about`, `/privacy`, `/terms`, `/support` | Open |
 
 **Critical**: `proxy.ts` `config.matcher` must stay in sync with constants (dev drift check logs error).
 
-**Security**: Proxy validates JWT **expiry only** (no signature — Firebase Admin is unavailable on Edge). Real enforcement has two layers:
-- **Data**: Firestore rules (`userId === request.auth.uid`); default-deny on everything else.
-- **AI cost**: `generateRecipe` calls `requireAuthenticatedUserId()` (`lib/utils/server-auth.ts`), which reads the auth cookie and verifies it via the Firebase Identity Toolkit REST API (unsigned expiry fallback only in `development` when the API key is absent). Unauthenticated calls throw before OpenAI is hit. Authenticated calls then pass through an in-memory per-user generation limiter (`8` requests per `60` seconds per server instance) before OpenAI is hit.
+**Security**: The Next.js proxy runs on Node.js and checks JWT **expiry only** (no signature — Firebase Admin is not used). An expired cookie is not deleted. Real enforcement has two layers:
+- **Data**: Firestore rules (`userId === request.auth.uid`); default-deny on everything else. Recipe and profile string lists are length-capped per item. `generationRateLimits/{uid}` writes can only move the shared 8/60s counter.
+- **AI cost**: `generateRecipe` calls `requireGenerationUser()` (`lib/utils/server-auth.ts`), which reads the HttpOnly auth cookie and verifies it via the Firebase Identity Toolkit REST API (unsigned expiry fallback only in `development` when the API key is absent). Unverified email and unauthenticated calls return `{ ok: false }` before OpenAI is hit. Verified calls then pass through the Firestore generation quota (in-memory fallback only when rules or the project id are unavailable). Client disconnects call `cancelRecipeGeneration` so the same instance aborts the OpenAI stream.
 
 **Return URLs**: All post-auth redirects (`?redirect=`) must pass through `getSafeRedirectPath` / `isSafeRedirectPath` (`lib/utils/navigation.ts`), which rejects absolute URLs, protocol-relative `//`, and backslash paths to prevent open redirects. Never `router.push` a raw redirect param.
 
-Remaining hardening (durable cross-instance quotas, billing, abuse analytics) is product work — see `spec.md`.
+Remaining hardening (billing, abuse analytics, and a cross-instance cancel for in-flight streams) is product work — see `spec.md`. The durable quota is inactive until `firestore.rules` and `firestore.indexes.json` are deployed.
 
 ---
 

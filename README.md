@@ -94,8 +94,9 @@ See `.env.example`. Enable Email/Password and Google providers in Firebase Auth;
 ## Firebase
 
 - Client config: `src/lib/firebase.ts`
-- Security rules in-repo: `firestore.rules`, `storage.rules` (also mirrored under `docs/`)
-- Deploy rules with the Firebase CLI when they change
+- Security rules in-repo: `firestore.rules`, `storage.rules`
+- Composite index: `firestore.indexes.json` (`recipes` by `userId` ASC, `createdAt` DESC), wired in `firebase.json`
+- Deploy rules and indexes with the Firebase CLI when they change. Do not treat a code push as a rules deploy. The generation quota stays on the in-memory fallback until `generationRateLimits` rules are live.
 
 ## Scripts
 
@@ -115,7 +116,7 @@ GitHub Actions (`.github/workflows/ci.yml`) on `dev` / `main` and PRs: `npm ci` 
 
 ## Deployment
 
-Deploy as a Next.js app (e.g. Vercel) to [https://bake.me](https://bake.me). Set the env vars above in the host. Deploy Firestore/Storage rules separately when updated. Remote image hosts allowed in `next.config.ts` include Firebase Storage and Google user-content URLs.
+Deploy as a Next.js app (e.g. Vercel) to [https://bake.me](https://bake.me). Set the env vars above in the host. Deploy Firestore rules, the composite index, and Storage rules separately when updated (`firebase deploy --only firestore,storage`). Remote image hosts allowed in `next.config.ts` include Firebase Storage and Google user-content URLs.
 
 ## Contributing
 

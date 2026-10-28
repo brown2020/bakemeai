@@ -72,7 +72,7 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 | Tips | Shipped | Optional in generation output |
 | Nutrition (calories / macros) | Shipped | `NutritionSummaryPanel` on generate + saved detail; persisted top-level on new saves; legacy saved markdown is parsed on read |
 | Authenticated generation | Shipped | `requireAuthenticatedUserId()` gates the server action before OpenAI |
-| Server-side generation rate limit | Shipped | In-memory per-user cap (8 requests / 60 seconds / server instance) before OpenAI |
+| Server-side generation rate limit | Shipped | Firestore per-user cap (8 requests / 60 seconds) before OpenAI, with an in-memory fallback when rules are not deployed. Email must be verified. |
 | Save recipe | Shipped | Requires complete structured fields |
 | Saved library | Shipped | Search, difficulty/cuisine filters, detail, delete with optimistic UI |
 | Route protection (UX) | Shipped | `proxy.ts` cookie/JWT expiry check |
@@ -119,14 +119,14 @@ Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenA
 - **UI**: App Router; most feature pages are client components using hooks + Zustand.
 - **AI**: Single server action `generateRecipe` in `recipe-generation.server.ts`.
 - **Data**: Client Firestore SDK; hooks orchestrate reads/writes; Zod validates reads and save payloads.
-- **Auth**: Client Firebase Auth + HTTP-only-style cookie for edge proxy; Firestore rules enforce data access.
+- **Auth**: Client Firebase Auth + HttpOnly session cookie (max one hour, matching the ID token). The proxy checks expiry for UX only; Firestore rules enforce data access.
 
 See [`AGENTS.md`](AGENTS.md) for layer diagram and file map.
 
 ### Technical constraints
 
-- Edge proxy cannot verify JWT signatures (no Firebase Admin on Edge).
-- Server action `generateRecipe` requires authenticated cookie verified via Firebase REST API.
+- The Next.js proxy cannot verify JWT signatures (no Firebase Admin). It does not delete expired cookies.
+- Server action `generateRecipe` requires a verified ID token (Identity Toolkit) and a verified email before OpenAI. Expected failures return `{ ok: false, message, code }`.
 - Production build requires all `NEXT_PUBLIC_FIREBASE_*` vars; `firebase.ts` throws in production if missing.
 - Firestore query `recipes` by `userId` + `orderBy(createdAt desc)` requires a composite index.
 - AI schema uses OpenAI strict JSON mode (all fields required in generation schema; nulls for unknown nutrition).
@@ -134,7 +134,7 @@ See [`AGENTS.md`](AGENTS.md) for layer diagram and file map.
 
 ### Known limitations
 
-- **Rate limiting is in-memory per server instance**; there are no durable cross-instance usage quotas or end-user billing controls yet.
+- **Rate limiting** is durable only after `generationRateLimits` rules are deployed. Until then, and when the Firebase project id is unset, the cap falls back to memory on each server instance. There are no end-user billing controls yet. Cancelling a stream only aborts the instance that started it.
 - **Saved recipes** store markdown `content` plus structured fields; legacy recipes may lack optional metadata (schema uses `.passthrough()`).
 - **Saved-detail scaling depends on structured fields** — older markdown-only saved recipes may not expose scaling controls.
 - **Profile onboarding**: First-run banner on `/generate`; skip stored per user in localStorage until profile is saved.
