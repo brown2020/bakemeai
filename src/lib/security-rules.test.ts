@@ -29,13 +29,14 @@ describe("firestore and storage rules", () => {
     expect(firestoreRules).toContain(String(GENERATION_QUOTA.clockSkewMs));
   });
 
-  it("requires timestamps and per-item string bounds on writes", () => {
+  it("caps list sizes without unrolling every index", () => {
     expect(firestoreRules).toContain("d.createdAt is timestamp");
     expect(firestoreRules).toContain("d.updatedAt is timestamp");
-    expect(firestoreRules).toContain("itemOk(d.ingredients, 99, 1000)");
-    expect(firestoreRules).toContain("itemOk(d.instructions, 99, 5000)");
-    expect(firestoreRules).toContain("itemOk(d.tips, 49, 2000)");
-    expect(firestoreRules).toContain("itemOk(d.allergies, 49, 200)");
+    expect(firestoreRules).toContain("isBoundedList(d.ingredients, 100)");
+    expect(firestoreRules).toContain("isBoundedList(d.instructions, 100)");
+    expect(firestoreRules).toContain("isBoundedList(d.tips, 50)");
+    expect(firestoreRules).toContain("isBoundedList(d.allergies, 50)");
+    expect(firestoreRules).not.toContain("itemOk(");
   });
 
   it("indexes saved recipes by owner and newest first", () => {

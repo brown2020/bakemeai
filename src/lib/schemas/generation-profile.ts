@@ -10,8 +10,9 @@ function preferenceList(maxItems: number) {
 }
 
 /**
- * Bounds for profile data copied into the recipe system prompt.
- * Caps match the Firestore profile rules (lists and per-item length).
+ * Bounds for profile data copied into the recipe system prompt and written
+ * to Firestore. Rules cap how many items a list may hold. Item length is
+ * enforced here because unrolling every index does not compile.
  */
 export const generationProfileSchema = z.object({
   id: z.string().trim().min(1).max(128).optional(),

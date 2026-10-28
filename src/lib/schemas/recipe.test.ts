@@ -108,6 +108,20 @@ describe("completeRecipeStructureSchema", () => {
     expect(notANumber.success).toBe(false);
   });
 
+  it("rejects an ingredient longer than the save cap", () => {
+    const result = completeRecipeStructureSchema.safeParse({
+      title: "Soup",
+      preparationTime: "10 mins",
+      cookingTime: "20 mins",
+      servings: 2,
+      difficulty: "Easy",
+      ingredients: ["x".repeat(1001)],
+      instructions: ["Simmer."],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it("keeps final recipe difficulty validation strict", () => {
     const result = completeRecipeStructureSchema.safeParse({
       title: "Vegetable Soup",

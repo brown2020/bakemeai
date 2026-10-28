@@ -25,6 +25,7 @@ import type {
   UserProfileInput,
 } from "../schemas/user";
 import { userProfileSchema } from "../schemas/user";
+import { generationProfileSchema } from "../schemas/generation-profile";
 import { COLLECTIONS } from "../constants/domain";
 import { AppError, ERROR_MESSAGES } from "../utils/error-handler";
 import { sanitizeUserInput } from "../utils/sanitize";
@@ -40,16 +41,33 @@ export async function saveUserProfile(
   profile: UserProfileInput
 ): Promise<void> {
   try {
-    // Sanitize user-input arrays to prevent HTML injection in stored data
-    const sanitizedProfile = {
+    const sanitizeList = (values: string[]) => values.map(sanitizeUserInput);
+    const parsed = generationProfileSchema.safeParse({
       ...profile,
-      allergies: profile.allergies.map(sanitizeUserInput),
-      dislikedIngredients: profile.dislikedIngredients.map(sanitizeUserInput),
-      updatedAt: serverTimestamp(),
-    };
+      dietary: sanitizeList(profile.dietary),
+      allergies: sanitizeList(profile.allergies),
+      dislikedIngredients: sanitizeList(profile.dislikedIngredients),
+      preferredCuisines: sanitizeList(profile.preferredCuisines),
+    });
+    if (!parsed.success) {
+      throw new AppError(
+        "Profile preferences are too long or include too many items.",
+        "INVALID_PROFILE_DATA",
+        { userId }
+      );
+    }
 
-    await setDoc(doc(db, COLLECTIONS.USER_PROFILES, userId), sanitizedProfile);
+    await setDoc(doc(db, COLLECTIONS.USER_PROFILES, userId), {
+      dietary: parsed.data.dietary,
+      allergies: parsed.data.allergies,
+      dislikedIngredients: parsed.data.dislikedIngredients,
+      preferredCuisines: parsed.data.preferredCuisines,
+      cookingExperience: parsed.data.cookingExperience,
+      servingSize: parsed.data.servingSize,
+      updatedAt: serverTimestamp(),
+    });
   } catch (error) {
+    if (error instanceof AppError) throw error;
     logError("Failed to save user profile to Firestore", error, { userId });
     throw new AppError(ERROR_MESSAGES.PROFILE.SAVE_FAILED, "PROFILE_SAVE_FAILED", { userId });
   }
