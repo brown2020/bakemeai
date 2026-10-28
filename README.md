@@ -4,15 +4,19 @@ AI-powered recipe generator: describe a dish or list pantry ingredients, stream 
 
 ## Features
 
-Verified from the current codebase:
-
-- **AI recipe generation** — streaming structured recipes via Vercel AI SDK + OpenAI (`gpt-4o`), validated with Zod
+- **AI recipe generation** — streaming structured recipes via the Vercel AI SDK and OpenAI (`gpt-4o`), validated with Zod
+- **Cancel** — stop a generation that is waiting to start or already streaming
 - **Two modes** — generate from a specific dish or from ingredients on hand
-- **Dietary preferences** — profile fields for diet, allergies, dislikes, cuisines, experience level, and serving size
-- **Saved recipes** — private Firestore library with search, detail view, delete, print/copy/export helpers
-- **Auth** — email/password and Google sign-in (Firebase Auth); login, signup, reset-password flows
-- **Nutrition summary** — nutrition panel on generated recipes
-- **Markdown rendering** — recipe content via `react-markdown` + Tailwind typography
+- **Dietary preferences** — diet, allergies, dislikes, cuisines, experience level, and serving size, included in the prompt
+- **Email verification** — generation requires a verified email address
+- **Rate limit** — 8 generations / 60 seconds per user, stored in Firestore, with an in-memory fallback if that store is unavailable
+- **Saved recipes** — private Firestore library with search, difficulty and cuisine filters, detail, and delete
+- **Refine** — tweak and regenerate a result; open a saved recipe in `/generate` as an editable variation
+- **Servings** — scale a generated or saved recipe (1–12) and save a scaled copy
+- **Nutrition** — calories and macros on generate and saved detail
+- **Print and copy** — print layout and copy the recipe as markdown
+- **Session history** — the last few complete generations stay on `/generate` until sign-out
+- **Auth** — email/password and Google (Firebase Auth), plus password reset. The session cookie is HttpOnly and lasts at most one hour
 - **Static pages** — about, privacy, terms, support
 
 ## Tech stack
@@ -22,15 +26,14 @@ Verified from the current codebase:
 | Framework | Next.js 16 (App Router, Server Actions) |
 | UI | React 19, Tailwind CSS 4, Lucide, CVA, clsx |
 | Language | TypeScript 6 |
-| AI | Vercel AI SDK 6, `@ai-sdk/openai`, `@ai-sdk/rsc`, Zod 4 |
-| Backend | Firebase 12 (Auth, Firestore, Storage client SDK) |
+| AI | Vercel AI SDK 7 (`ai`), `@ai-sdk/openai` 4, `@ai-sdk/rsc` 3, Zod 4 |
+| Backend | Firebase 12 client SDK (Auth, Firestore, Storage init only) |
 | State | Zustand 5 |
-| Cookies | js-cookie |
-| Tests | Vitest 4 |
+| Tests | Vitest 5, Vite 8 |
 | Lint | ESLint 10 |
 | Node (CI) | 22 |
 
-`.npmrc` sets `legacy-peer-deps=true`.
+`.npmrc` sets `legacy-peer-deps=true`. Package manager is npm.
 
 ## Project structure
 
@@ -49,7 +52,9 @@ bakemeai/
 │       └── utils/
 ├── .env.example
 ├── firestore.rules
+├── firestore.indexes.json
 ├── storage.rules
+├── firebase.json
 └── .github/workflows/ci.yml
 ```
 
@@ -57,10 +62,10 @@ bakemeai/
 
 ### Prerequisites
 
-- Node.js 22+
+- Node.js 22 (22.12 or newer for the test runner)
 - npm
-- Firebase project (Auth, Firestore; Storage if using avatar/images)
-- OpenAI API key
+- A Firebase project with Auth and Firestore
+- An OpenAI API key
 
 ### Install
 
@@ -70,33 +75,38 @@ cd bakemeai
 git checkout dev
 npm install
 cp .env.example .env.local
-# fill in values — never commit secrets
 npm run dev
 ```
+
+Fill in `.env.local` from `.env.example`. Never commit secret values.
 
 Open [http://localhost:3000](http://localhost:3000).
 
 ## Environment variables
 
-| Name | Purpose | Where to get it |
-|------|---------|-----------------|
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase web SDK | Firebase Console → Project settings → Your apps |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Auth domain | Same |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Project ID | Same |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Storage bucket | Same |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | FCM sender ID | Same |
-| `NEXT_PUBLIC_FIREBASE_APP_ID` | Web app ID | Same |
-| `OPENAI_API_KEY` | Server-side recipe generation | [platform.openai.com](https://platform.openai.com) |
-| `NEXT_PUBLIC_ENABLE_CONSOLE_LOGS` | Optional structured client logs (`true`) | Optional |
+Names only. Values come from Firebase Console and the OpenAI dashboard.
 
-See `.env.example`. Enable Email/Password and Google providers in Firebase Auth; authorize your domains.
+| Name | Purpose |
+|------|---------|
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase web SDK |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Auth domain |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Project ID. Also used by the durable generation quota |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Storage bucket |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | FCM sender ID |
+| `NEXT_PUBLIC_FIREBASE_APP_ID` | Web app ID |
+| `OPENAI_API_KEY` | Server-side recipe generation |
+| `NEXT_PUBLIC_ENABLE_CONSOLE_LOGS` | Optional. Set to `true` for structured client logs |
+
+Enable Email/Password and Google in Firebase Auth and authorize the app domains.
+
+There is no `STRIPE_WEBHOOK_SECRET` or other billing variable. The app does not charge users.
 
 ## Firebase
 
 - Client config: `src/lib/firebase.ts`
-- Security rules in-repo: `firestore.rules`, `storage.rules`
-- Composite index: `firestore.indexes.json` (`recipes` by `userId` ASC, `createdAt` DESC), wired in `firebase.json`
-- Deploy rules and indexes with the Firebase CLI when they change. Do not treat a code push as a rules deploy. The generation quota stays on the in-memory fallback until `generationRateLimits` rules are live.
+- Rules and index in-repo: `firestore.rules`, `firestore.indexes.json`, `storage.rules`, wired by `firebase.json`
+- The composite index is `recipes` by `userId` ascending and `createdAt` descending
+- A code push does not deploy rules. Deploy with the Firebase CLI only when those files change
 
 ## Scripts
 
@@ -106,24 +116,24 @@ See `.env.example`. Enable Email/Password and Google providers in Firebase Auth;
 | `npm run build` | Production build |
 | `npm start` | Serve production build |
 | `npm run lint` | ESLint |
-| `npm test` | Vitest |
+| `npm test` | Vitest, single run |
 
 ## Testing and CI
 
-Vitest covers pure utils (nutrition, rate-limit, JWT helpers, recipe library/history, etc.) and schema/generation deny tests.
+Vitest covers pure utilities (auth, quota, recipes, redirects, rules invariants) and the generation deny/guard paths. It does not drive a browser.
 
-GitHub Actions (`.github/workflows/ci.yml`) on `dev` / `main` and PRs: `npm ci` → lint → test → build. Required secrets: the six `NEXT_PUBLIC_FIREBASE_*` vars. `OPENAI_API_KEY` is needed at runtime for generation, not for the default CI steps.
+GitHub Actions (`.github/workflows/ci.yml`) on `dev`, `main`, and pull requests: `npm ci`, lint, test, build. The workflow needs the six `NEXT_PUBLIC_FIREBASE_*` secrets. `OPENAI_API_KEY` is required to generate recipes at runtime, not for that CI build.
 
 ## Deployment
 
-Deploy as a Next.js app (e.g. Vercel) to [https://bake.me](https://bake.me). Set the env vars above in the host. Deploy Firestore rules, the composite index, and Storage rules separately when updated (`firebase deploy --only firestore,storage`). Remote image hosts allowed in `next.config.ts` include Firebase Storage and Google user-content URLs.
+Deploy the Next.js app (for example on Vercel) and set the environment variable names above in the host. Keep the host on Node 22. Firestore rules, the composite index, and Storage rules are deployed separately.
 
 ## Contributing
 
 - `main` — production
 - `dev` — integration
 
-See [AGENTS.md](./AGENTS.md) and [spec.md](./spec.md). Branch from `dev`.
+See [AGENTS.md](./AGENTS.md), [spec.md](./spec.md), and [roadmap.md](./roadmap.md).
 
 ## License
 

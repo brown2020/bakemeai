@@ -1,193 +1,82 @@
-# Bake.me — Product Specification & Roadmap
+# Bake.me — Product Specification
 
-**Authoritative product document.** Architecture and agent conventions live in [`AGENTS.md`](AGENTS.md). End-user setup remains in [`README.md`](README.md).
+What the app does today. Setup lives in [`README.md`](README.md). Agent conventions live in [`AGENTS.md`](AGENTS.md). Next work lives in [`roadmap.md`](roadmap.md).
 
-**Last reviewed**: 2026-06-19 (from product-improvement run on `dev` branch)
+**Last reviewed**: 2026-10-28
 
----
+## Product
 
-## 1. Product Overview
+Bake.me turns a dish idea or a list of ingredients into a structured recipe that respects the cook's diet, allergies, dislikes, cuisines, experience, and serving size. Signed-in cooks can save recipes to a private library.
 
-### Product promise
+There is no public feed, meal planner, shopping list, or billing.
 
-Bake.me is a personal AI chef: describe what you want to cook or list what you have, and get a structured, personalized recipe you can cook from — then save it to your private library.
+## Stack as built
 
-### Target users
+| Layer | Choice |
+|-------|--------|
+| App | Next.js 16 App Router. One server action, `generateRecipe`. No REST API routes |
+| UI | React 19, Tailwind CSS 4 |
+| Language | TypeScript 6 |
+| AI | Vercel AI SDK 7, `@ai-sdk/openai`, model `gpt-4o`, Zod 4 |
+| Data | Firebase 12 client SDK. Firestore collections `recipes`, `userProfiles`, `generationRateLimits` |
+| Auth | Firebase Auth (email/password and Google) plus an HttpOnly session cookie |
+| Tests | Vitest 5 on Node. CI is GitHub Actions: lint, test, build |
 
-- Home cooks who want inspiration from pantry ingredients.
-- People with dietary restrictions, allergies, or disliked ingredients who need recipes that respect those constraints.
-- Users who want a simple, signed-in experience (not anonymous generation) with a persistent recipe collection.
+## Shipped features
 
-### Core workflows
+| Feature | Behavior |
+|---------|----------|
+| Landing and legal pages | `/`, `/about`, `/privacy`, `/terms`, `/support` |
+| Email/password and Google sign-in | Remember-me. Signup sends a verification email and stays on the page so the notice is visible |
+| Password reset | `/reset-password`. `auth/user-not-found` is shown as success so the form does not reveal whether the address is registered |
+| Profile | `/profile` stores diet, allergies, dislikes, cuisines, experience, and default servings. Tag fields keep saved chips while a new tag is typed |
+| Onboarding | Banner on `/generate` until a profile document exists. Skip is stored per user in localStorage |
+| Generate | `/generate`. Modes: specific dish or ingredients. Structured JSON streams into the page |
+| Cancel | While a generation is pending or streaming, Cancel drops the debounced start and aborts that server instance's OpenAI stream |
+| Regenerate | Optional tweak on the result. A saved recipe can prefill `/generate` |
+| History | Last 5 complete generations stay in memory on `/generate` |
+| Servings | Scale 1–12 on generate and on a saved recipe that has structured fields. A scaled copy can be saved |
+| Nutrition | Calories and macros when the model provides them. Legacy saved markdown is parsed on read |
+| Save | Complete recipes only. Servings are stored as an integer from 1 to 100 |
+| Library | Search, difficulty and cuisine filters, detail, optimistic delete |
+| Print and copy | Print stylesheet and markdown copy on generate and saved detail |
+| Route gate | Private routes redirect to login only when the auth cookie is missing. An expired cookie is left so the client can refresh it |
+| Generation auth | The server action verifies the ID token with Identity Toolkit and requires `emailVerified` before OpenAI |
+| Quota | 8 requests / 60 seconds per user in `generationRateLimits/{uid}`. Memory fallback if the project id is unset or the rules cannot be written |
+| Security headers | CSP, `nosniff`, referrer policy, and frame denial |
+| Rules | Default-deny Firestore and Storage rules. Recipe lists are capped by count. Storage uploads must be images under 5 MB. Owner delete stays allowed |
 
-```mermaid
-flowchart LR
-  A[Sign up / Sign in] --> B[Set cooking preferences]
-  B --> C[Choose generation mode]
-  C --> D[Enter dish or ingredients]
-  D --> E[Stream AI recipe]
-  E --> F{Save?}
-  F -->|Yes| G[Saved library]
-  F -->|No| C
-  G --> H[Search / view / delete]
-```
+## Main flows
 
-1. **Acquire** — Landing page → sign up (email or Google) or sign in.
-2. **Personalize** — Profile: dietary, allergies, dislikes, cuisines, experience, serving size.
-3. **Generate** — Pick mode (specific dish vs. ingredients) → submit → watch recipe stream in.
-4. **Retain** — Save complete recipe to Firestore; browse/search/delete in Saved Recipes.
-5. **Return** — Sign in again; inputs may persist locally; saved recipes load from Firestore.
+**Sign up.** Create an email account or use Google. Email signup shows the verification notice instead of leaving the page. Generation is refused until the email is verified. Google accounts are already verified.
 
-### Product goals
+**First recipe.** Choose a mode, describe the dish or list ingredients, and watch the recipe stream. Cancel stops it. A complete result can be saved. A missing profile shows a skippable onboarding banner.
 
-- **Relevance** — Recipes reflect stated preferences and mode (pantry vs. craving).
-- **Trust** — Clear auth, owned data, sanitized rendering, predictable save behavior.
-- **Speed** — Streaming generation so users see progress immediately.
-- **Simplicity** — Minimal surface area: generate, profile, saved library; no social or meal-planning scope yet.
+**Return visit.** Firebase restores the user. The HttpOnly cookie is rewritten from the ID token and lasts at most one hour. Saved recipes load with `userId` plus `createdAt` descending.
 
----
+**Sign out.** The HttpOnly cookie and legacy client cookies are cleared, recipe inputs reset, and the browser navigates to `/login`.
 
-## 2. Current Application State
+## Data and limits
 
-### What the app does today
+- Recipe writes allow a fixed set of fields. `createdAt` must be a timestamp. Ingredient and instruction lists hold at most 100 items. Tips hold at most 50.
+- The app rejects an ingredient over 1000 characters, an instruction over 5000, or a tip over 2000 before saving. Profile tags are capped at 200 characters. Firestore rules do not re-check each list item, because unrolling every index does not compile.
+- Profile `updatedAt` must be a timestamp. List counts match the generation profile schema.
+- Quota documents store `count` and `windowStart` only. Clients cannot delete them or reset the window early.
+- The saved-recipe query needs the composite index in `firestore.indexes.json`.
 
-Bake.me is a Next.js 16 web application with Firebase Auth + Firestore and OpenAI-powered structured recipe generation via Vercel AI SDK server actions. There are no REST API routes, no mobile app, and no background workers.
+## Security boundaries
 
-### Feature inventory
+- The proxy checks cookie presence and expiry only. It does not verify the signature and does not publish a user id header.
+- Firestore rules are the data boundary. A user can read and write only their own recipes, profile, and quota document.
+- Expected generation failures return `{ ok: false, message, code }` so production does not hide the message.
+- Post-auth `?redirect=` values must pass `getSafeRedirectPath`.
+- Recipe markdown is rendered by `react-markdown` without raw HTML.
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Landing + marketing pages | Shipped | `/`, `/about`, `/privacy`, `/terms`, `/support` |
-| Email/password auth | Shipped | Remember-me, verification email on signup |
-| Google auth | Shipped | Popup flow |
-| Password reset | Shipped | `/reset-password` |
-| Cooking preferences profile | Shipped | `/profile` — chips, tags, serving size |
-| Post-signup profile onboarding | Shipped | Banner on `/generate`; welcome flow at `/profile?welcome=1` |
-| Recipe generation (specific dish) | Shipped | Zod-validated input, streaming UI |
-| Recipe generation (ingredients) | Shipped | Same pipeline, different prompt |
-| Regenerate with optional tweak | Shipped | On `/generate` after first result |
-| Serving size adjustment | Shipped | Deterministic scale on `/generate` and saved detail (1–12 servings); saved detail can save a scaled copy |
-| AI personalization | Shipped | Profile injected into system prompt |
-| Difficulty + times + servings | Shipped | In schema, markdown, and saved docs |
-| Tips | Shipped | Optional in generation output |
-| Nutrition (calories / macros) | Shipped | `NutritionSummaryPanel` on generate + saved detail; persisted top-level on new saves; legacy saved markdown is parsed on read |
-| Authenticated generation | Shipped | `requireAuthenticatedUserId()` gates the server action before OpenAI |
-| Server-side generation rate limit | Shipped | Firestore per-user cap (8 requests / 60 seconds) before OpenAI, with an in-memory fallback when rules are not deployed. Email must be verified. |
-| Save recipe | Shipped | Requires complete structured fields |
-| Saved library | Shipped | Search, difficulty/cuisine filters, detail, delete with optimistic UI |
-| Route protection (UX) | Shipped | `proxy.ts` cookie/JWT expiry check |
-| Firestore security | Shipped | Default-deny; per-user ownership |
-| Firebase Storage | Not used | SDK + rules exist; no UI |
-| Copy recipe to clipboard | Shipped | `CopyRecipeButton` (markdown incl. macros) on generate + saved detail |
-| Recipe sharing (public link) | Not shipped | Clipboard copy only; no public URLs |
-| Print / export | Shipped | Print button on generate + saved detail; `@media print` layout |
-| Regenerate from saved | Shipped | Saved detail can prefill `/generate` with an editable variation prompt |
-| Serving scaling | Shipped | Adjust on `/generate`; saved detail supports display scaling and explicit scaled copy save |
-| Shopping list | Not shipped | README aspirational only |
-| Meal planning | Not shipped | README aspirational only |
-| Automated tests | Partial | 19 Vitest files (97 tests) over pure utils + the proxy matcher invariant |
-| CI pipeline | Not shipped | No `.github/workflows` in repo |
+## Known limits of the current build
 
-### Current user flows (detail)
-
-**Sign up → first generate**
-1. User creates account; verification email sent (signup not blocked if unverified — inferred).
-2. Redirect to `/generate` (or `?redirect=` target).
-3. Mode selector → form → stream → optional save.
-4. New users without a profile see an onboarding prompt on `/generate` (skippable).
-
-**Returning user**
-1. Auth cookie + Firebase session restored via `AuthListener`.
-2. Recipe form inputs may restore from localStorage (`recipe-storage`).
-3. Saved recipes fetched client-side with `getUserRecipes` (composite index required).
-
-**Sign out**
-1. Cookie cleared, recipe inputs reset, full navigation to `/login`.
-
-### Integrations
-
-| Integration | Usage |
-|-------------|--------|
-| OpenAI (`gpt-4o`) | Structured recipe generation via `streamObject` |
-| Firebase Auth | Email/password, Google |
-| Cloud Firestore | `recipes`, `userProfiles` collections |
-| Firebase Storage | Initialized only; rules reserved for `users/{userId}/**` |
-| Vercel (typical) | Next.js deployment; not configured in repo |
-
-### Architecture summary
-
-- **UI**: App Router; most feature pages are client components using hooks + Zustand.
-- **AI**: Single server action `generateRecipe` in `recipe-generation.server.ts`.
-- **Data**: Client Firestore SDK; hooks orchestrate reads/writes; Zod validates reads and save payloads.
-- **Auth**: Client Firebase Auth + HttpOnly session cookie (max one hour, matching the ID token). The proxy checks expiry for UX only; Firestore rules enforce data access.
-
-See [`AGENTS.md`](AGENTS.md) for layer diagram and file map.
-
-### Technical constraints
-
-- The Next.js proxy cannot verify JWT signatures (no Firebase Admin). It does not delete expired cookies.
-- Server action `generateRecipe` requires a verified ID token (Identity Toolkit) and a verified email before OpenAI. Expected failures return `{ ok: false, message, code }`.
-- Production build requires all `NEXT_PUBLIC_FIREBASE_*` vars; `firebase.ts` throws in production if missing.
-- Firestore query `recipes` by `userId` + `orderBy(createdAt desc)` requires a composite index.
-- AI schema uses OpenAI strict JSON mode (all fields required in generation schema; nulls for unknown nutrition).
-- AGPL-3.0 license affects distribution of modified networked services.
-
-### Known limitations
-
-- **Rate limiting** is durable only after `generationRateLimits` rules are deployed. Until then, and when the Firebase project id is unset, the cap falls back to memory on each server instance. There are no end-user billing controls yet. Cancelling a stream only aborts the instance that started it.
-- **Saved recipes** store markdown `content` plus structured fields; legacy recipes may lack optional metadata (schema uses `.passthrough()`).
-- **Saved-detail scaling depends on structured fields** — older markdown-only saved recipes may not expose scaling controls.
-- **Profile onboarding**: First-run banner on `/generate`; skip stored per user in localStorage until profile is saved.
-- **Accessibility**: Some patterns present (`aria-live` on recipe display); no audit recorded.
-
----
-
-## 3. Product Roadmap
-
-Each item is sized for **one focused commit sequence on `dev`** (a single PR-sized change) and ordered by product impact + dependency. Acceptance criteria are testable from a user perspective.
-
-### Recently shipped (do not re-plan)
-
-| Shipped | What |
-|---------|------|
-| Post-signup preference onboarding | `ProfileOnboardingBanner` → `/profile?welcome=1`; first recipe respects diet/allergies |
-| Print-friendly recipe view | `PrintRecipeButton` + `@media print` on generate + saved detail |
-| Regenerate / refine | Optional tweak + Regenerate on `RecipeDisplay` |
-| Serving-size adjustment (generate) | `scaleRecipeServings` 1–12 on `RecipeDisplay` |
-| Nutrition summary panel | `NutritionSummaryPanel` on generate + saved detail; persisted on new saves |
-| Authenticated AI generation | `requireAuthenticatedUserId()` gates `generateRecipe` before OpenAI |
-| Copy recipe to clipboard | `CopyRecipeButton` + `buildRecipeCopyText` (markdown incl. macros) on generate + saved detail |
-| Legacy nutrition backfill | Saved detail parses nutrition from legacy markdown content when top-level nutrition fields are missing |
-| Saved-library serving adjustment | Saved detail can rescale a modern structured recipe and save a scaled copy |
-| Session generation history | `/generate` keeps the last 5 complete generated recipes in memory only |
-| Server-side generation rate limit | Authenticated generation is capped before OpenAI is called |
-| Refine from saved recipe | Saved detail can open `/generate` with an editable variation prompt |
-| Saved-library metadata filters | Saved library filters by difficulty and cuisine alongside text search |
-
----
-
-### Next
-
-No approved active roadmap items remain after the 2026-06-19 product-improvement
-run. Future candidates should be proposed through the product-improvement
-workflow before implementation.
-
----
-
-### Deferred (not next — README aspirational)
-
-These are **not** current roadmap commitments unless product scope expands:
-
-- Meal planning calendar
-- Shopping list generation
-- Public recipe community
-- Mobile native app
-- Voice-guided cooking
-- Smart appliance integration
-- Unit conversion (metric/imperial) as a standalone toggle — could extend the serving-scale utility
-
----
-
-## Document maintenance
-
-When shipping a milestone, update the **Feature inventory** table and move the item out of the roadmap. Agent and architecture changes go to [`AGENTS.md`](AGENTS.md) only.
+- Cancel aborts the OpenAI stream only on the server instance that started it.
+- Sign-in still has a distinct message for `auth/user-not-found`.
+- Saved recipes that lack structured fields can be listed, but serving controls and some filters do not apply.
+- Storage rules exist. There is no upload UI.
+- There is no end-user billing.
+- Tests do not cover the browser. CI does not call OpenAI.

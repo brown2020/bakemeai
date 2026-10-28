@@ -21,13 +21,13 @@ Help home cooks turn what they have (or what they crave) into actionable recipes
 | Framework | Next.js 16 (App Router, RSC, Turbopack) | `src/proxy.ts` for route protection |
 | UI | React 19, Tailwind CSS v4, `@tailwindcss/typography` | Custom UI primitives in `src/components/ui/` |
 | Language | TypeScript 6 (strict) | Path alias `@/*` → `./src/*` |
-| AI | Vercel AI SDK 6, `@ai-sdk/openai`, `@ai-sdk/rsc` | `streamObject` + Zod schema, model `gpt-4o` |
+| AI | Vercel AI SDK 7 (`ai`), `@ai-sdk/openai` 4, `@ai-sdk/rsc` 3 | `streamObject` + Zod schema, model `gpt-4o` |
 | Backend | Firebase Auth, Firestore, Storage (init only) | Client SDK; rules enforce ownership |
 | State | Zustand 5 (`persist` on recipe inputs only) | Three stores |
 | Validation | Zod 4 | Schemas in `src/lib/schemas/` |
 | Lint | ESLint 10 flat config | No Prettier npm script |
 | Package manager | **npm** (`package-lock.json`, `.npmrc` `legacy-peer-deps=true`) | Do not switch managers |
-| Tests | Vitest 4 (`node` env, `src/**/*.test.ts`) | Pure-util unit tests only; no E2E/component runner |
+| Tests | Vitest 5 (`node` env, `src/**/*.test.ts`) | Pure-util unit tests only; no E2E/component runner |
 
 **Not present**: REST API routes (`src/app/api/`), background jobs/cron/queues, E2E/browser tests. **CI**: GitHub Actions [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (lint → test → build on `dev`/`main` and PRs). Ops runbook: [`docs/OPERATIONS.md`](docs/OPERATIONS.md). The only server entry point is the `generateRecipe` server action.
 
@@ -90,7 +90,7 @@ Components → Hooks → Services → DB / Server Actions (AI)
 1. **Auth** — Email/password + Google; remember-me; email verification on signup; password reset; auth cookie `bakemeai_firebaseAuth`.
 2. **Profile** — Dietary tags, allergies, disliked ingredients, cuisines, experience, default serving size → fed into AI system prompt.
 3. **Post-signup onboarding** — `ProfileOnboardingBanner` on `/generate` when no `userProfiles/{uid}` doc exists; skip persisted per-user in localStorage (`useProfileOnboarding`).
-4. **Generate** — Two modes (`specific` | `ingredients`); streaming structured JSON; debounced submit (`UI_TIMING.AI_GENERATION_DEBOUNCE`); AbortController cancels stale streams. Server action **requires an authenticated user** before calling OpenAI.
+4. **Generate** — Two modes (`specific` | `ingredients`); streaming structured JSON; debounced submit (`UI_TIMING.AI_GENERATION_DEBOUNCE`); Cancel stops the pending start and aborts the in-flight stream on this server instance. Server action **requires a verified email** before calling OpenAI.
 5. **Regenerate / refine** — Optional tweak field + Regenerate button on `RecipeDisplay`; reuses inputs via `appendTweakToPrompt` and resets save state (`useRecipeGeneration.handleRegenerate`). Saved detail can also prefill `/generate` with an editable variation prompt.
 6. **Session generation history** — `/generate` keeps the last 5 complete generated recipes in memory only; selecting one restores display/save state; clear action and sign-out reset it.
 7. **Serving-size adjustment** — `NumberInput` (1–12) + `scaleRecipeServings` deterministically rescales ingredients/calories on `/generate` (`useRecipeServingScale`) and in saved detail (`useSavedRecipeServingScale`); saved detail can explicitly save a scaled copy.
@@ -222,9 +222,9 @@ Race patterns in use: AbortController (generation, auth token fetch), version re
 
 ## Testing Expectations
 
-Vitest is configured (`vitest.config.ts`, `node` environment, glob `src/**/*.test.ts`, `@` alias). `npm run test` runs once and is CI-safe — never use watch mode.
+Vitest is configured (`vitest.config.mts`, `node` environment, glob `src/**/*.test.ts`, `@` alias). `npm run test` runs once and is CI-safe — never use watch mode.
 
-Current coverage is **pure-function / static-invariant unit tests only** (19 files, 97 tests), colocated next to their source:
+Current coverage is **pure-function / static-invariant unit tests only**, colocated next to their source:
 `jwt`, `route-match`, `navigation`, `onboarding`, `recipe-prompt`, `recipe-servings`, `saved-recipe`, `saved-recipe-refine`, `recipe-history`, `recipe-library`, `rate-limit`, `nutrition`, `print-recipe`, `recipe-copy`, `markdown`, `error-handler`, `firestore`, plus `proxy` (asserts `config.matcher` stays in sync with the route constants).
 
 When extending tests, keep targeting deterministic boundaries first: `lib/utils/`, `lib/schemas/`, store selectors. Firebase, the OpenAI server action, and React components are **not** unit-tested — do not add tests that require network, Firebase, or a browser/component runner unless the task explicitly asks for that infrastructure. Cover new pure utilities with a colocated `*.test.ts`.
