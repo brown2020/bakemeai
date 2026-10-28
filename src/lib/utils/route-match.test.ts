@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  decideProxyAccess,
   isAuthPage,
   isPrivateRoute,
   matchesRoute,
@@ -28,6 +29,27 @@ describe("route-match utilities", () => {
     expect(isAuthPage("/reset-password")).toBe(true);
     expect(isAuthPage("/reset-password/confirm")).toBe(true);
     expect(isAuthPage("/about")).toBe(false);
+  });
+
+  it("lets an expired cookie through so the client can refresh", () => {
+    expect(decideProxyAccess("/generate", true, false)).toEqual({ type: "next" });
+    expect(decideProxyAccess("/saved", true, false)).toEqual({ type: "next" });
+    expect(decideProxyAccess("/profile", true, false)).toEqual({ type: "next" });
+  });
+
+  it("redirects private routes only when the auth cookie is missing", () => {
+    expect(decideProxyAccess("/generate", false, false)).toEqual({
+      type: "redirect",
+      pathname: "/login",
+    });
+  });
+
+  it("sends a valid session away from auth pages", () => {
+    expect(decideProxyAccess("/login", true, true)).toEqual({
+      type: "redirect",
+      pathname: "/generate",
+    });
+    expect(decideProxyAccess("/login", true, false)).toEqual({ type: "next" });
   });
 
   it("leaves public routes unprotected", () => {

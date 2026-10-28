@@ -29,3 +29,28 @@ export function isPrivateRoute(pathname: string): boolean {
 export function isAuthPage(pathname: string): boolean {
   return matchesAnyRoute(pathname, AUTH_PAGES);
 }
+
+export type ProxyAccess =
+  | { type: "next" }
+  | { type: "redirect"; pathname: "/login" | "/generate" };
+
+/**
+ * Route decision for the proxy.
+ * A present but expired cookie is allowed through so the client can refresh
+ * the Firebase session. Only a missing cookie redirects private routes.
+ */
+export function decideProxyAccess(
+  pathname: string,
+  cookiePresent: boolean,
+  jwtValid: boolean
+): ProxyAccess {
+  if (isAuthPage(pathname) && cookiePresent && jwtValid) {
+    return { type: "redirect", pathname: "/generate" };
+  }
+
+  if (isPrivateRoute(pathname) && !cookiePresent) {
+    return { type: "redirect", pathname: "/login" };
+  }
+
+  return { type: "next" };
+}

@@ -1,16 +1,18 @@
 /**
- * Next.js 16 Proxy - handles route protection at the edge.
+ * Next.js 16 Proxy - handles route protection before the route renders.
  *
  * SECURITY MODEL:
- * This proxy validates JWT expiry claims WITHOUT signature verification.
- * Signature verification requires Firebase Admin SDK (Node.js runtime), which
- * is unavailable in Edge runtime where proxy.ts executes.
+ * This proxy checks that a Firebase ID token cookie is present and unexpired.
+ * It does not verify the signature. Signature verification happens in
+ * `requireGenerationUser` / `verifyFirebaseIdToken` (Node.js, Identity Toolkit)
+ * before OpenAI is called. Firestore rules are the data boundary.
  *
- * RISK ACCEPTANCE:
- * - Unsigned validation is intentional for this use case
- * - Primary purpose: Prevent flash of protected content and improve UX
- * - Security boundary: Firestore rules + server action token verification
- * - Impact: Attacker with forged token could briefly see protected UI shells (no data)
+ * An expired cookie is left in place and the request continues. The Firebase
+ * client can refresh the ID token and rewrite the cookie. Deleting it here
+ * bounced still-signed-in users to /login on every cold load after one hour.
+ *
+ * A forged unexpired token can only reach the protected UI shell. It cannot
+ * read another user's recipes or call OpenAI.
  */
 
 import { NextResponse } from "next/server";
@@ -21,18 +23,13 @@ import {
   AUTH_PAGES,
   FIREBASE_AUTH_COOKIE,
 } from "@/lib/constants/auth";
-import { deleteAuthCookies } from "@/lib/utils/auth-cookies";
 import {
   getUserIdFromJwtPayload,
   hasUnexpiredJwtClaimUnsigned,
   parseJwtPayload,
 } from "@/lib/utils/jwt";
 import { logError } from "@/lib/utils/logger";
-import { isAuthPage, isPrivateRoute } from "@/lib/utils/route-match";
-
-// ============================================================================
-// RESPONSE BUILDING UTILITIES
-// ============================================================================
+import { decideProxyAccess, isAuthPage, isPrivateRoute } from "@/lib/utils/route-match";
 
 interface DebugContext {
   path: string;
@@ -66,51 +63,20 @@ function withDebugHeaders(
   return response;
 }
 
-function handleAuthenticatedOnAuthPage(
+function redirectTo(
   request: NextRequest,
+  pathname: "/login" | "/generate",
+  returnPath: string,
   debugContext: DebugContext
 ): NextResponse {
   const url = request.nextUrl.clone();
-  url.pathname = "/generate";
+  url.pathname = pathname;
+  url.search = "";
+  if (pathname === "/login") {
+    url.searchParams.set("redirect", returnPath);
+  }
   return withDebugHeaders(NextResponse.redirect(url), debugContext);
 }
-
-function handleInvalidCookieOnAuthPage(
-  debugContext: DebugContext
-): NextResponse {
-  const response = NextResponse.next();
-  deleteAuthCookies(response);
-  return withDebugHeaders(response, debugContext);
-}
-
-function handleUnauthenticatedOnPrivateRoute(
-  request: NextRequest,
-  pathname: string,
-  debugContext: DebugContext
-): NextResponse {
-  const url = request.nextUrl.clone();
-  url.pathname = "/login";
-  url.searchParams.set("redirect", pathname);
-  const response = NextResponse.redirect(url);
-  deleteAuthCookies(response);
-  return withDebugHeaders(response, debugContext);
-}
-
-function handleNormalRequest(
-  userId: string | null,
-  jwtValid: boolean,
-  debugContext: DebugContext
-): NextResponse {
-  const response = NextResponse.next();
-  if (userId && jwtValid) {
-    response.headers.set("x-user-id", userId);
-  }
-  return withDebugHeaders(response, debugContext);
-}
-
-// ============================================================================
-// MAIN PROXY FUNCTION
-// ============================================================================
 
 export function proxy(request: NextRequest) {
   try {
@@ -118,14 +84,13 @@ export function proxy(request: NextRequest) {
     const onAuthPage = isAuthPage(pathname);
 
     const authToken = request.cookies.get(FIREBASE_AUTH_COOKIE)?.value;
-    const cookiePresent = authToken != null;
-    const payload = authToken != null ? parseJwtPayload(authToken) : null;
+    const cookiePresent = typeof authToken === "string" && authToken.length > 0;
+    const payload = cookiePresent ? parseJwtPayload(authToken) : null;
     const jwtValid =
-      authToken != null &&
+      cookiePresent &&
       payload != null &&
       hasUnexpiredJwtClaimUnsigned(authToken);
     const userId = getUserIdFromJwtPayload(payload);
-    const isAuthenticated = cookiePresent && jwtValid;
 
     if (cookiePresent && !jwtValid && process.env.NODE_ENV === "development") {
       logError("Expired or invalid auth token detected", undefined, {
@@ -143,42 +108,27 @@ export function proxy(request: NextRequest) {
       isAuthPage: onAuthPage,
     };
 
-    if (onAuthPage && isAuthenticated) {
-      return handleAuthenticatedOnAuthPage(request, debugContext);
+    const decision = decideProxyAccess(pathname, cookiePresent, jwtValid);
+    if (decision.type === "redirect") {
+      return redirectTo(request, decision.pathname, pathname, debugContext);
     }
 
-    if (onAuthPage && cookiePresent && !jwtValid) {
-      return handleInvalidCookieOnAuthPage(debugContext);
-    }
-
-    if (isPrivateRoute(pathname) && !isAuthenticated) {
-      return handleUnauthenticatedOnPrivateRoute(
-        request,
-        pathname,
-        debugContext
-      );
-    }
-
-    return handleNormalRequest(userId, jwtValid, debugContext);
+    return withDebugHeaders(NextResponse.next(), debugContext);
   } catch (error) {
     const { pathname } = request.nextUrl;
 
     logError("Proxy error encountered", error, { pathname });
 
-    const onAuthPage = isAuthPage(pathname);
-    const isPrivate = isPrivateRoute(pathname);
-
-    if (onAuthPage) {
+    if (isAuthPage(pathname)) {
       return NextResponse.next();
     }
 
-    if (isPrivate) {
+    if (isPrivateRoute(pathname)) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
+      url.search = "";
       url.searchParams.set("redirect", pathname);
-      const response = NextResponse.redirect(url);
-      deleteAuthCookies(response);
-      return response;
+      return NextResponse.redirect(url);
     }
 
     return NextResponse.next();
