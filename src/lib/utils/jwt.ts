@@ -6,7 +6,10 @@
  * server-auth.ts via Firebase Identity Toolkit REST API when possible.
  */
 
-import { JWT_VALIDATION_CONFIG } from "@/lib/constants/auth";
+import {
+  AUTH_COOKIE_MAX_AGE_SECONDS,
+  JWT_VALIDATION_CONFIG,
+} from "@/lib/constants/auth";
 
 /** Base64 encoding uses groups of 4 characters. */
 const BASE64_PADDING_SIZE = 4;
@@ -17,6 +20,7 @@ interface FirebaseJwtPayload {
   exp?: number;
   sub?: string;
   user_id?: string;
+  email_verified?: boolean;
 }
 
 /**
@@ -85,4 +89,19 @@ export function isUnexpiredJwtWithUserId(token: string): boolean {
   const payload = parseJwtPayload(token);
   if (!hasUnexpiredJwtClaimUnsigned(token)) return false;
   return getUserIdFromJwtPayload(payload) != null;
+}
+
+/**
+ * Cookie max-age for a Firebase ID token, capped at one hour and never past exp.
+ */
+export function getIdTokenCookieMaxAgeSeconds(
+  token: string,
+  nowMs: number = Date.now()
+): number {
+  const payload = parseJwtPayload(token);
+  if (!payload?.exp) return 0;
+
+  const remaining = payload.exp - Math.floor(nowMs / MILLISECONDS_PER_SECOND);
+  if (remaining <= 0) return 0;
+  return Math.min(AUTH_COOKIE_MAX_AGE_SECONDS, remaining);
 }

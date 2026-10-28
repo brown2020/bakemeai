@@ -53,6 +53,8 @@ export const ERROR_MESSAGES = {
       "Recipe generation is temporarily unavailable. Please try again later.",
     NO_RECIPE_TO_SAVE: "No recipe to save. Please generate a recipe first.",
     RATE_LIMIT: "Please wait a moment before generating another recipe.",
+    INVALID_PREFERENCES:
+      "Those cooking preferences can't be used. Shorten them in Preferences and try again.",
   },
   PROFILE: {
     SAVE_FAILED: "Unable to save profile. Please try again.",
@@ -71,6 +73,8 @@ export const ERROR_MESSAGES = {
     TOO_MANY_REQUESTS: "Too many failed attempts. Please try again later.",
     USER_DISABLED: "This account has been disabled.",
     NETWORK_ERROR: "Network error. Please check your connection and try again.",
+    EMAIL_NOT_VERIFIED:
+      "Verify your email before generating recipes. Check your inbox for the Bake.me link.",
   },
   GENERIC: {
     UNKNOWN: "An unexpected error occurred. Please try again.",
@@ -146,6 +150,14 @@ function getErrorMessage(error: unknown): string {
 export function isKnownFirebaseAuthError(error: unknown): boolean {
   const code = getErrorCode(error);
   return code ? code in FIREBASE_ERROR_MESSAGES : false;
+}
+
+/**
+ * Password reset must not reveal whether an email is registered.
+ * Firebase returns auth/user-not-found when enumeration protection is off.
+ */
+export function shouldConcealAccountExistence(error: unknown): boolean {
+  return getErrorCode(error) === "auth/user-not-found";
 }
 
 function isRecipeProviderError(error: unknown): boolean {

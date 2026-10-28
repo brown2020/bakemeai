@@ -55,12 +55,10 @@ export const PRIVATE_ROUTES = ["/generate", "/profile", "/saved"] as const;
 export const AUTH_PAGES = ["/login", "/signup", "/reset-password"] as const;
 
 /**
- * Cookie configuration for client-side auth token storage.
+ * Session cookie lifetime cap. The cookie stores a Firebase ID token, which
+ * expires in about an hour, so the cookie must not outlive that token.
  */
-export const COOKIE_CONFIG = {
-  /** Cookie expiry in days */
-  EXPIRY_DAYS: 7,
-} as const;
+export const AUTH_COOKIE_MAX_AGE_SECONDS = 60 * 60;
 
 /**
  * JWT validation configuration for server-side token verification.

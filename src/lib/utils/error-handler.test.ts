@@ -7,6 +7,7 @@ import {
   convertErrorToMessage,
   isKnownFirebaseAuthError,
   isAppError,
+  shouldConcealAccountExistence,
 } from "@/lib/utils/error-handler";
 
 const FALLBACK = "Fallback message";
@@ -63,6 +64,16 @@ describe("isKnownFirebaseAuthError", () => {
     expect(isKnownFirebaseAuthError({ code: "auth/invalid-credential" })).toBe(
       true
     );
+  });
+
+  it("hides account existence only for the reset enumeration code", () => {
+    expect(shouldConcealAccountExistence({ code: "auth/user-not-found" })).toBe(
+      true
+    );
+    expect(
+      shouldConcealAccountExistence({ code: "auth/invalid-credential" })
+    ).toBe(false);
+    expect(shouldConcealAccountExistence(new Error("network"))).toBe(false);
   });
 
   it("rejects unknown error codes", () => {

@@ -1,6 +1,7 @@
 /**
  * Authentication cookie management utilities.
- * Provides both client-side and server-side cookie operations.
+ * The live session cookie is HttpOnly and is set from a server action.
+ * This module only clears legacy client-readable cookies.
  */
 
 import Cookies from "js-cookie";
@@ -8,7 +9,6 @@ import { NextResponse } from "next/server";
 import {
   FIREBASE_AUTH_COOKIE,
   LEGACY_FIREBASE_AUTH_COOKIE,
-  COOKIE_CONFIG,
 } from "@/lib/constants/auth";
 
 /**
@@ -20,44 +20,9 @@ const AUTH_COOKIE_NAMES = [
   LEGACY_FIREBASE_AUTH_COOKIE,
 ] as const;
 
-// ============================================================================
-// CLIENT-SIDE COOKIE OPERATIONS (browser context, uses js-cookie)
-// ============================================================================
-
 /**
- * Cookie configuration for Firebase authentication tokens.
- * 
- * Security settings:
- * - SameSite=Strict: Prevents CSRF attacks
- * - Secure: HTTPS only in production
- * - Path=/: Available across entire app
- * - 7-day expiry: Balances security and UX
- */
-const cookieOptions = {
-  expires: COOKIE_CONFIG.EXPIRY_DAYS,
-  path: "/",
-  sameSite: "strict" as const,
-  secure: process.env.NODE_ENV === "production",
-} as const;
-
-/**
- * Sets the Firebase authentication token in a client-side cookie.
- * Used after successful login/signup to persist authentication state.
- * 
- * @param token - The Firebase ID token (JWT) from successful authentication
- */
-export function setAuthCookieToken(token: string): void {
-  Cookies.set(FIREBASE_AUTH_COOKIE, token, cookieOptions);
-}
-
-/**
- * Clears all authentication cookies from the client.
- * Removes both current and legacy cookie names to ensure clean logout.
- * 
- * Used during:
- * - User logout
- * - Session expiration
- * - Authentication errors
+ * Clears legacy non-HttpOnly authentication cookies from the browser.
+ * The HttpOnly session cookie is cleared by `clearAuthSessionCookie`.
  */
 export function clearAuthCookie(): void {
   AUTH_COOKIE_NAMES.forEach((name) => {
@@ -65,27 +30,20 @@ export function clearAuthCookie(): void {
   });
 }
 
-// ============================================================================
-// SERVER-SIDE COOKIE OPERATIONS (Next.js middleware/proxy context)
-// ============================================================================
-
 /**
- * Deletes all auth-related cookies from a Next.js response.
- * 
- * This function:
- * - Clears the current authentication cookie
- * - Clears legacy cookie names for backward compatibility
- * - Ensures clean logout state across all cookie versions
- * 
- * Used during:
- * - User logout
- * - Invalid/expired token detection
- * - Authentication error recovery
- * 
- * @param response - The NextResponse object to modify
+ * Deletes auth cookies on a proxy response.
+ * Matches the HttpOnly session cookie attributes so the browser drops it.
  */
 export function deleteAuthCookies(response: NextResponse): void {
+  const clearOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict" as const,
+    path: "/",
+    maxAge: 0,
+  };
+
   AUTH_COOKIE_NAMES.forEach((cookieName) => {
-    response.cookies.delete(cookieName);
+    response.cookies.set(cookieName, "", clearOptions);
   });
 }

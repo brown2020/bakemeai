@@ -11,7 +11,7 @@ import { useAuthStore } from "@/lib/store/auth-store";
 import { useRecipeStore } from "@/lib/store/recipe-store";
 import { useUserProfileStore } from "@/lib/store/user-profile-store";
 import { auth } from "@/lib/firebase";
-import { clearAuthCookie } from "@/lib/utils/auth-cookies";
+import { clearUserAuthSession } from "@/lib/utils/auth";
 import { logError } from "@/lib/utils/logger";
 
 /**
@@ -30,16 +30,15 @@ export const Navbar = memo(function Navbar() {
   );
 
   const handleSignOut = useCallback(async () => {
-    // Clear client state/cookies immediately to ensure proxy.ts sees a signed-out request.
-    clearAuthCookie();
+    // Clear the HttpOnly session cookie before navigation so proxy.ts sees a signed-out request.
     resetUserInput();
     clearUserProfile();
 
     try {
+      await clearUserAuthSession();
       await auth.signOut();
     } catch (error) {
       logError("Sign out error", error, {});
-      // Continue with redirect even if sign out fails
     } finally {
       // Force a full navigation to drop any prefetched/cached protected route payloads.
       window.location.assign("/login");

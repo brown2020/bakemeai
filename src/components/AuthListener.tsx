@@ -3,8 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { onIdTokenChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { clearAuthCookie } from "@/lib/utils/auth-cookies";
-import { setUserAuthToken } from "@/lib/utils/auth";
+import { clearUserAuthSession, setUserAuthToken } from "@/lib/utils/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useRecipeStore } from "@/lib/store/recipe-store";
 import { useUserProfileStore } from "@/lib/store/user-profile-store";
@@ -12,7 +11,7 @@ import { toSerializableAuthUser } from "@/lib/schemas/auth";
 import { logError } from "@/lib/utils/logger";
 
 function clearSignedOutSession(): void {
-  clearAuthCookie();
+  void clearUserAuthSession();
   useAuthStore.getState().setUser(null);
   useAuthStore.getState().setLoading(false);
   useRecipeStore.getState().resetUserInput();

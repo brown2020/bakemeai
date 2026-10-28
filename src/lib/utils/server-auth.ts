@@ -15,17 +15,45 @@ import {
   parseJwtPayload,
 } from "@/lib/utils/jwt";
 
+export interface VerifiedFirebaseUser {
+  uid: string;
+  emailVerified: boolean;
+}
+
+interface FirebaseLookupUser {
+  localId?: unknown;
+  emailVerified?: unknown;
+}
+
 interface FirebaseLookupResponse {
-  users?: Array<{ localId?: string }>;
+  users?: FirebaseLookupUser[];
+}
+
+/**
+ * Reads the Identity Toolkit lookup payload. emailVerified must be exactly
+ * true; a missing flag is treated as unverified.
+ */
+export function readLookupUser(data: unknown): VerifiedFirebaseUser | null {
+  if (!data || typeof data !== "object" || !("users" in data)) return null;
+  const users = (data as FirebaseLookupResponse).users;
+  const user = users?.[0];
+  if (!user || typeof user.localId !== "string" || user.localId.length === 0) {
+    return null;
+  }
+
+  return {
+    uid: user.localId,
+    emailVerified: user.emailVerified === true,
+  };
 }
 
 /**
  * Verifies a Firebase ID token via Identity Toolkit REST API.
- * Falls back to unsigned expiry validation only in development when API key is missing.
+ * Falls back to unsigned expiry validation only in development when the API key is missing.
  */
-async function verifyFirebaseIdToken(
+export async function verifyFirebaseIdToken(
   idToken: string
-): Promise<string | null> {
+): Promise<VerifiedFirebaseUser | null> {
   const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 
   if (!apiKey) {
@@ -34,7 +62,13 @@ async function verifyFirebaseIdToken(
         "Firebase API key missing — using unsigned JWT expiry check for server auth",
         {}
       );
-      return getUserIdFromJwtPayload(parseJwtPayload(idToken));
+      const payload = parseJwtPayload(idToken);
+      const uid = getUserIdFromJwtPayload(payload);
+      if (!uid) return null;
+      return {
+        uid,
+        emailVerified: payload?.email_verified === true,
+      };
     }
     return null;
   }
@@ -46,15 +80,31 @@ async function verifyFirebaseIdToken(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ idToken }),
       cache: "no-store",
+      redirect: "error",
     });
 
     if (!response.ok) return null;
 
-    const data = (await response.json()) as FirebaseLookupResponse;
-    return data.users?.[0]?.localId ?? null;
+    return readLookupUser(await response.json());
   } catch {
     return null;
   }
+}
+
+interface SessionUser extends VerifiedFirebaseUser {
+  idToken: string;
+}
+
+async function readSessionUser(): Promise<SessionUser | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(FIREBASE_AUTH_COOKIE)?.value;
+
+  if (!token || !hasUnexpiredJwtClaimUnsigned(token)) return null;
+
+  const verified = await verifyFirebaseIdToken(token);
+  if (!verified) return null;
+
+  return { ...verified, idToken: token };
 }
 
 /**
@@ -62,22 +112,30 @@ async function verifyFirebaseIdToken(
  * @throws AppError when the user is not authenticated
  */
 export async function requireAuthenticatedUserId(): Promise<string> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(FIREBASE_AUTH_COOKIE)?.value;
-
-  if (!token) {
+  const user = await readSessionUser();
+  if (!user) {
     throw new AppError(ERROR_MESSAGES.AUTH.LOGIN_REQUIRED, "UNAUTHORIZED");
   }
 
-  // Fast reject for obviously invalid/expired tokens before network call
-  if (!hasUnexpiredJwtClaimUnsigned(token)) {
+  return user.uid;
+}
+
+/**
+ * Auth gate for recipe generation. Unverified email/password accounts are rejected
+ * so they cannot spend the OpenAI quota. Google accounts are already verified.
+ */
+export async function requireGenerationUser(): Promise<SessionUser> {
+  const user = await readSessionUser();
+  if (!user) {
     throw new AppError(ERROR_MESSAGES.AUTH.LOGIN_REQUIRED, "UNAUTHORIZED");
   }
 
-  const uid = await verifyFirebaseIdToken(token);
-  if (!uid) {
-    throw new AppError(ERROR_MESSAGES.AUTH.LOGIN_REQUIRED, "UNAUTHORIZED");
+  if (!user.emailVerified) {
+    throw new AppError(
+      ERROR_MESSAGES.AUTH.EMAIL_NOT_VERIFIED,
+      "EMAIL_NOT_VERIFIED"
+    );
   }
 
-  return uid;
+  return user;
 }

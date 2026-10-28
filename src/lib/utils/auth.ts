@@ -1,19 +1,28 @@
 import type { User } from "firebase/auth";
-import { setAuthCookieToken } from "@/lib/utils/auth-cookies";
+
+import { clearAuthSessionCookie, setAuthSessionCookie } from "@/lib/auth-session.server";
+import { clearAuthCookie } from "@/lib/utils/auth-cookies";
+import { logError, logWarning } from "@/lib/utils/logger";
 
 /**
- * Authentication utility functions.
- * Centralizes common auth operations to eliminate duplication.
- */
-
-/**
- * Extracts and sets the auth cookie from a Firebase user.
- * Centralizes the token extraction logic used across login, signup, and Google auth.
- * 
- * @param user - The Firebase user object
- * @returns Promise that resolves when the token is set
+ * Verifies the Firebase ID token and stores it in an HttpOnly session cookie.
  */
 export async function setUserAuthToken(user: User): Promise<void> {
   const token = await user.getIdToken();
-  setAuthCookieToken(token);
+  const saved = await setAuthSessionCookie(token);
+  if (!saved) {
+    logWarning("Auth session cookie was not saved", {});
+  }
+}
+
+/**
+ * Clears legacy client-readable cookies and the HttpOnly session cookie.
+ */
+export async function clearUserAuthSession(): Promise<void> {
+  clearAuthCookie();
+  try {
+    await clearAuthSessionCookie();
+  } catch (error) {
+    logError("Failed to clear auth session cookie", error, {});
+  }
 }
