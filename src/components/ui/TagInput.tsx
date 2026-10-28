@@ -3,6 +3,11 @@
 import { useId, useState } from "react";
 
 import { FORM_VALIDATION, RECIPE } from "@/lib/constants/ui";
+import {
+  commitTagDraft,
+  sameTags,
+  splitTrailingTagDraft,
+} from "@/lib/utils/tags";
 
 interface TagInputProps {
   label: string;
@@ -11,57 +16,44 @@ interface TagInputProps {
   placeholder?: string;
   maxLength?: number;
   maxItemLength?: number;
-}
-
-
-/**
- * Parses comma-separated text into trimmed, length-validated tags.
- */
-function parseTags(input: string, maxItemLength: number): string[] {
-  return input
-    .split(",")
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0 && item.length <= maxItemLength);
+  maxItems?: number;
 }
 
 /**
- * Comma-separated tag input component.
- * Converts comma-separated text to/from string arrays for easy entry.
- *
- * Keeps the raw text in local state so in-progress separators (e.g. a trailing
- * comma) are not stripped mid-typing by the parsed value. The parsed array is
- * still emitted to the parent on every change, and local text is reconciled
- * when the external value changes for a different reason (e.g. profile load).
- *
- * Features:
- * - Validates total input length to prevent excessive data
- * - Validates individual item length to prevent abuse
- * - Trims whitespace and filters empty items
- * - Prevents script injection via length limits
+ * Comma-separated tag input.
+ * `value` is the committed list and stays visible as chips. Keystrokes stay in
+ * local draft state until a comma, Enter, or blur, so typing cannot replace
+ * tags that were already saved.
  */
 export function TagInput({
   label,
-  value: _value,
+  value,
   onChange,
   placeholder = "Enter values separated by commas",
   maxLength = FORM_VALIDATION.TEXTAREA_MAX_LENGTH,
   maxItemLength = RECIPE.MAX_TITLE_LENGTH,
+  maxItems = 50,
 }: TagInputProps) {
   const id = useId();
-  // Local draft starts empty; parents should remount via `key` when the
-  // committed tag list is replaced from outside (e.g. profile load).
-  const [text, setText] = useState("");
+  const [draft, setDraft] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value;
+  const commit = (nextDraft: string, clearDraft: boolean) => {
+    const next = commitTagDraft(value, nextDraft, maxItemLength, maxItems);
+    if (!sameTags(value, next)) onChange(next);
+    if (clearDraft) setDraft("");
+  };
 
-    // Prevent excessive input length (defense against DoS/memory issues)
-    if (input.length > maxLength) {
+  const handleChange = (input: string) => {
+    if (input.length > maxLength) return;
+
+    if (input.includes(",")) {
+      const { committed, remainder } = splitTrailingTagDraft(input);
+      setDraft(remainder);
+      commit(committed, false);
       return;
     }
 
-    setText(input);
-    onChange(parseTags(input, maxItemLength));
+    setDraft(input);
   };
 
   return (
@@ -69,11 +61,37 @@ export function TagInput({
       <label htmlFor={id} className="block text-base sm:text-lg font-medium mb-3">
         {label}
       </label>
+      {value.length > 0 && (
+        <ul className="mb-3 flex flex-wrap gap-2">
+          {value.map((tag) => (
+            <li
+              key={tag}
+              className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-800"
+            >
+              <span>{tag}</span>
+              <button
+                type="button"
+                className="text-gray-500 hover:text-gray-900"
+                aria-label={`Remove ${tag}`}
+                onClick={() => onChange(value.filter((item) => item !== tag))}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       <input
         id={id}
         type="text"
-        value={text}
-        onChange={handleChange}
+        value={draft}
+        onChange={(event) => handleChange(event.target.value)}
+        onBlur={() => commit(draft, true)}
+        onKeyDown={(event) => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          commit(draft, true);
+        }}
         placeholder={placeholder}
         maxLength={maxLength}
         className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
@@ -81,4 +99,3 @@ export function TagInput({
     </div>
   );
 }
-

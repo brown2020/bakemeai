@@ -81,21 +81,21 @@ export function ProfilePageClient({ isWelcomeFlow }: { isWelcomeFlow: boolean })
             />
 
             <TagInput
-              key={`allergies-${profile.allergies.join("|")}`}
               label="Allergies"
               value={profile.allergies}
               onChange={(allergies) => setProfileField("allergies", allergies)}
               placeholder="e.g., peanuts, shellfish (comma separated)"
+              maxItems={50}
             />
 
             <TagInput
-              key={`disliked-${profile.dislikedIngredients.join("|")}`}
               label="Ingredients You Dislike"
               value={profile.dislikedIngredients}
               onChange={(dislikedIngredients) =>
                 setProfileField("dislikedIngredients", dislikedIngredients)
               }
               placeholder="e.g., cilantro, olives (comma separated)"
+              maxItems={50}
             />
 
             <ChipSelect
