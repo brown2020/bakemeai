@@ -2,7 +2,7 @@ import type {
   CompleteRecipeStructure,
   Recipe,
 } from "@/lib/schemas/recipe";
-import { completeRecipeStructureSchema } from "@/lib/schemas/recipe";
+import { completeRecipeStructureSchema, recipeSchema } from "@/lib/schemas/recipe";
 
 /**
  * Returns complete structured recipe data from a saved recipe when available.
@@ -26,4 +26,27 @@ export function getCompleteStructureFromSavedRecipe(
 
   const result = completeRecipeStructureSchema.safeParse(candidate);
   return result.success ? result.data : null;
+}
+
+/**
+ * Keeps valid saved recipes and skips documents that fail the schema.
+ * One legacy or corrupt document must not hide the rest of the library.
+ */
+export function partitionSavedRecipes(rawRecipes: unknown[]): {
+  recipes: Recipe[];
+  skippedCount: number;
+} {
+  const recipes: Recipe[] = [];
+  let skippedCount = 0;
+
+  for (const raw of rawRecipes) {
+    const parsed = recipeSchema.safeParse(raw);
+    if (parsed.success) {
+      recipes.push(parsed.data);
+    } else {
+      skippedCount += 1;
+    }
+  }
+
+  return { recipes, skippedCount };
 }

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import type { Recipe } from "@/lib/schemas/recipe";
-import { getCompleteStructureFromSavedRecipe } from "@/lib/utils/saved-recipe";
+import {
+  getCompleteStructureFromSavedRecipe,
+  partitionSavedRecipes,
+} from "@/lib/utils/saved-recipe";
 
 function makeRecipe(overrides: Partial<Recipe> = {}): Recipe {
   return {
@@ -61,5 +64,23 @@ describe("getCompleteStructureFromSavedRecipe", () => {
     );
 
     expect(structure).toBeNull();
+  });
+});
+
+describe("partitionSavedRecipes", () => {
+  it("keeps valid recipes when one document fails validation", () => {
+    const valid = {
+      id: "ok",
+      userId: "user-id",
+      title: "Soup",
+      content: "# Soup",
+      createdAt: { seconds: 1, nanoseconds: 0 },
+    };
+    const invalid = { id: "bad", title: "" };
+
+    const result = partitionSavedRecipes([invalid, valid]);
+
+    expect(result.skippedCount).toBe(1);
+    expect(result.recipes.map((recipe) => recipe.id)).toEqual(["ok"]);
   });
 });

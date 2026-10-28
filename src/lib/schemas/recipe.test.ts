@@ -63,6 +63,51 @@ describe("completeRecipeStructureSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("rounds fractional servings into the integer range Firestore accepts", () => {
+    const low = completeRecipeStructureSchema.safeParse({
+      title: "Soup",
+      preparationTime: "10 mins",
+      cookingTime: "20 mins",
+      servings: 4.6,
+      difficulty: "Easy",
+      ingredients: ["broth"],
+      instructions: ["Simmer."],
+    });
+    const high = completeRecipeStructureSchema.safeParse({
+      title: "Soup",
+      preparationTime: "10 mins",
+      cookingTime: "20 mins",
+      servings: 100.6,
+      difficulty: "Easy",
+      ingredients: ["broth"],
+      instructions: ["Simmer."],
+    });
+
+    const tiny = completeRecipeStructureSchema.safeParse({
+      title: "Soup",
+      preparationTime: "10 mins",
+      cookingTime: "20 mins",
+      servings: 0.2,
+      difficulty: "Easy",
+      ingredients: ["broth"],
+      instructions: ["Simmer."],
+    });
+    const notANumber = completeRecipeStructureSchema.safeParse({
+      title: "Soup",
+      preparationTime: "10 mins",
+      cookingTime: "20 mins",
+      servings: Number.NaN,
+      difficulty: "Easy",
+      ingredients: ["broth"],
+      instructions: ["Simmer."],
+    });
+
+    expect(low.success && low.data.servings).toBe(5);
+    expect(high.success && high.data.servings).toBe(100);
+    expect(tiny.success && tiny.data.servings).toBe(1);
+    expect(notANumber.success).toBe(false);
+  });
+
   it("keeps final recipe difficulty validation strict", () => {
     const result = completeRecipeStructureSchema.safeParse({
       title: "Vegetable Soup",

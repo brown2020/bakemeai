@@ -5,16 +5,26 @@ service firebase.storage {
       return request.auth != null;
     }
 
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAllowedImage() {
+      return request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|gif|webp)');
+    }
+
     // Deny everything by default.
     match /{allPaths=**} {
       allow read, write: if false;
     }
 
-    // Minimal private user folder convention (safe even if unused today).
+    // Private user folder. Reads and deletes are owner-only.
+    // Creates and updates also require a small image so unbounded uploads cannot land.
     match /users/{userId}/{allPaths=**} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      allow read: if isOwner(userId);
+      allow delete: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isAllowedImage();
     }
   }
 }
-
-

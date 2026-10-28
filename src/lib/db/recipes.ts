@@ -33,21 +33,18 @@ import {
   orderBy,
   serverTimestamp,
 } from "firebase/firestore";
-import { z } from "zod";
 
 import { db } from "../firebase";
 import type {
   Recipe,
   RecipeStructure,
 } from "../schemas/recipe";
-import {
-  recipeSchema,
-  completeRecipeStructureSchema,
-} from "../schemas/recipe";
+import { completeRecipeStructureSchema } from "../schemas/recipe";
 import { COLLECTIONS } from "../constants/domain";
 import { getFirestoreErrorMessage } from "../utils/firestore";
 import { AppError, ERROR_MESSAGES } from "../utils/error-handler";
-import { logError } from "../utils/logger";
+import { logError, logWarning } from "../utils/logger";
+import { partitionSavedRecipes } from "../utils/saved-recipe";
 
 interface SaveRecipeParams {
   userId: string;
@@ -86,22 +83,21 @@ export async function saveRecipe({
       );
     }
 
+    const data = validationResult.data;
     const recipe = {
       userId,
-      title: structuredData.title,
+      title: data.title,
       content,
       createdAt: serverTimestamp(),
-      ingredients: structuredData.ingredients,
-      instructions: structuredData.instructions,
-      ...(structuredData.tips != null ? { tips: structuredData.tips } : {}),
-      preparationTime: structuredData.preparationTime,
-      cookingTime: structuredData.cookingTime,
-      servings: structuredData.servings,
-      difficulty: structuredData.difficulty,
-      ...(structuredData.calories != null
-        ? { calories: structuredData.calories }
-        : {}),
-      ...(structuredData.macros != null ? { macros: structuredData.macros } : {}),
+      ingredients: data.ingredients,
+      instructions: data.instructions,
+      ...(data.tips != null ? { tips: data.tips } : {}),
+      preparationTime: data.preparationTime,
+      cookingTime: data.cookingTime,
+      servings: data.servings,
+      difficulty: data.difficulty,
+      ...(data.calories != null ? { calories: data.calories } : {}),
+      ...(data.macros != null ? { macros: data.macros } : {}),
     };
 
     const docRef = await addDoc(collection(db, COLLECTIONS.RECIPES), recipe);
@@ -139,17 +135,13 @@ export async function getUserRecipes(userId: string): Promise<Recipe[]> {
       ...doc.data(),
     }));
 
-    // Validate data with Zod schema
-    const result = z.array(recipeSchema).safeParse(rawRecipes);
-    if (!result.success) {
-      logError("Recipe validation failed", new Error("Zod validation error"), {
-        userId,
-        validationErrors: result.error.flatten(),
-      });
-      throw new AppError("Invalid recipe data from Firestore", "INVALID_RECIPE_DATA");
+    const { recipes, skippedCount } = partitionSavedRecipes(rawRecipes);
+    if (skippedCount > 0) {
+      logWarning("Skipped invalid saved recipes", { userId, skippedCount });
     }
-    return result.data;
+    return recipes;
   } catch (error) {
+    if (error instanceof AppError) throw error;
     logError("Failed to fetch user recipes from Firestore", error, { userId });
     const message = getFirestoreErrorMessage(error, ERROR_MESSAGES.RECIPE.LOAD_FAILED);
     throw new AppError(message, "RECIPE_LOAD_FAILED", { userId });

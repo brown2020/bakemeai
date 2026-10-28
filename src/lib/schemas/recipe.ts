@@ -157,7 +157,11 @@ export const completeRecipeStructureSchema = z.object({
   title: z.string(),
   preparationTime: z.string(),
   cookingTime: z.string(),
-  servings: z.number(),
+  servings: z
+    .number()
+    .finite()
+    .transform((value) => Math.min(100, Math.max(1, Math.round(value))))
+    .pipe(z.number().int().min(1).max(100)),
   difficulty: recipeDifficultySchema,
   ingredients: z.array(z.string()).min(1, "Recipe must have at least one ingredient"),
   instructions: z.array(z.string()).min(1, "Recipe must have at least one instruction"),
