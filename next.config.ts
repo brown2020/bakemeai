@@ -1,8 +1,18 @@
 import type { NextConfig } from "next";
 
+import { securityHeaders } from "./src/lib/utils/security-headers";
+
 const nextConfig: NextConfig = {
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
   reactStrictMode: true,
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: securityHeaders,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

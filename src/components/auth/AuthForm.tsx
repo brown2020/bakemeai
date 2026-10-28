@@ -157,12 +157,12 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
           state.rememberMe
         );
         dispatch({ type: "submitSuccess" });
-      } else {
-        await signUpWithEmailVerification(state.email, state.password);
-        dispatch({ type: "submitSuccess", verificationSent: true });
+        router.push(safeRedirectTo);
+        return;
       }
-      // Session cookie is set inside sign-in/sign-up helpers before navigate.
-      router.push(safeRedirectTo);
+
+      await signUpWithEmailVerification(state.email, state.password);
+      dispatch({ type: "submitSuccess", verificationSent: true });
     } catch (err) {
       const errorMessage = convertErrorToMessage(
         err,
@@ -177,7 +177,7 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
         });
       } else {
         logError(`${isLogin ? "Sign in" : "Sign up"} failed`, err, {
-          email: state.email,
+          code: getErrorCode(err),
         });
       }
 

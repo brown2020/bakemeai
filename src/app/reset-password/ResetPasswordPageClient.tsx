@@ -11,6 +11,7 @@ import {
   convertErrorToMessage,
   getErrorCode,
   isKnownFirebaseAuthError,
+  shouldConcealAccountExistence,
 } from "@/lib/utils/error-handler";
 import { logError, logWarning } from "@/lib/utils/logger";
 
@@ -30,6 +31,11 @@ export function ResetPasswordPageClient() {
       await sendPasswordResetEmail(auth, email);
       setStatus("success");
     } catch (error) {
+      if (shouldConcealAccountExistence(error)) {
+        setStatus("success");
+        return;
+      }
+
       setStatus("error");
       const message = convertErrorToMessage(
         error,
@@ -38,7 +44,7 @@ export function ResetPasswordPageClient() {
       if (isKnownFirebaseAuthError(error)) {
         logWarning("Password reset rejected", { code: getErrorCode(error) });
       } else {
-        logError("Password reset failed", error, { email });
+        logError("Password reset failed", error, { code: getErrorCode(error) });
       }
       setErrorMessage(message);
     }
