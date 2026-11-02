@@ -27,7 +27,7 @@ Local vs CI vs host:
 
 | Concern | Local | CI | Host (Vercel + Firebase) |
 | --- | --- | --- | --- |
-| Node | developer machine | Actions Node 22 | Vercel Node |
+| Node | 24.12 or newer | Actions Node 24 | Vercel Node 24.x |
 | `NEXT_PUBLIC_FIREBASE_*` | `.env.local` | workflow `env` | Vercel project env |
 | `OPENAI_API_KEY` | `.env.local` | absent (build does not call OpenAI) | Vercel secret |
 | Auth/data | live Firebase project | none (unit tests mock) | live Firebase project |

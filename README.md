@@ -27,11 +27,11 @@ AI-powered recipe generator: describe a dish or list pantry ingredients, stream 
 | UI | React 19, Tailwind CSS 4, Lucide, CVA, clsx |
 | Language | TypeScript 6 |
 | AI | Vercel AI SDK 7 (`ai`), `@ai-sdk/openai` 4, `@ai-sdk/rsc` 3, Zod 4 |
-| Backend | Firebase 12 client SDK (Auth, Firestore, Storage init only) |
+| Backend | Firebase 13 client SDK (Auth, Firestore, Storage init only) |
 | State | Zustand 5 |
 | Tests | Vitest 5, Vite 8 |
 | Lint | ESLint 10 |
-| Node (CI) | 22 |
+| Node (CI and host) | 24.12 or newer |
 
 `.npmrc` sets `legacy-peer-deps=true`. Package manager is npm.
 
@@ -62,7 +62,7 @@ bakemeai/
 
 ### Prerequisites
 
-- Node.js 22 (22.12 or newer for the test runner)
+- Node.js 24.12 or newer (Firebase JS SDK 13)
 - npm
 - A Firebase project with Auth and Firestore
 - An OpenAI API key
@@ -126,7 +126,7 @@ GitHub Actions (`.github/workflows/ci.yml`) on `dev`, `main`, and pull requests:
 
 ## Deployment
 
-Deploy the Next.js app (for example on Vercel) and set the environment variable names above in the host. Keep the host on Node 22. Firestore rules, the composite index, and Storage rules are deployed separately.
+Deploy the Next.js app (for example on Vercel) and set the environment variable names above in the host. Keep the host on Node 24.12 or newer. Firestore rules, the composite index, and Storage rules are deployed separately.
 
 ## Contributing
 

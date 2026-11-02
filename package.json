@@ -10,15 +10,15 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^4.0.104",
-    "@ai-sdk/rsc": "^3.0.156",
-    "@grpc/grpc-js": "^1.14.6",
-    "ai": "^7.0.156",
+    "@ai-sdk/openai": "^4.0.106",
+    "@ai-sdk/rsc": "^3.0.159",
+    "@grpc/grpc-js": "^1.14.7",
+    "ai": "^7.0.159",
     "class-variance-authority": "0.7.1",
     "clsx": "^2.1.1",
-    "firebase": "^12.19.0",
+    "firebase": "^13.1.0",
     "js-cookie": "^3.0.8",
-    "lucide-react": "^1.63.0",
+    "lucide-react": "^1.66.0",
     "next": "^16.4.3",
     "postcss-selector-parser": "^7.1.7",
     "react": "^19.3.1",
@@ -38,7 +38,7 @@
     "@types/react-dom": "^19.3.0",
     "@typescript-eslint/eslint-plugin": "^8.72.1",
     "@typescript-eslint/parser": "^8.72.1",
-    "eslint": "^10.13.0",
+    "eslint": "^10.14.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "postcss": "^8.5.32",
@@ -48,7 +48,11 @@
     "vitest": "^5.0.5"
   },
   "overrides": {
-    "@grpc/grpc-js": "^1.14.6",
-    "postcss-selector-parser": "^7.1.7"
+    "@grpc/grpc-js": "^1.14.7",
+    "postcss-selector-parser": "^7.1.7",
+    "minimatch": "^11.0.4"
+  },
+  "engines": {
+    "node": ">=24.12.0"
   }
 }

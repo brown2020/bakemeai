@@ -77,6 +77,29 @@ describe("recovery integrity", () => {
     expect(saveRecipeToDb).not.toHaveBeenCalled();
   });
 
+  it("saves a complete recipe for the signed-in user", async () => {
+    vi.mocked(saveRecipeToDb).mockResolvedValue({
+      id: "doc-saved",
+      userId: "user-recovery-1",
+      title: completeRecipe.title,
+    } as never);
+
+    await expect(
+      saveRecipeToDatabase("user-recovery-1", completeRecipe)
+    ).resolves.toBeUndefined();
+
+    expect(saveRecipeToDb).toHaveBeenCalledTimes(1);
+    const saved = vi.mocked(saveRecipeToDb).mock.calls[0]?.[0];
+    expect(saved?.userId).toBe("user-recovery-1");
+    expect(saved?.structuredData).toMatchObject({
+      title: "Recovery Toast",
+      servings: 1,
+      ingredients: ["1 slice bread", "1 tsp butter"],
+    });
+    expect(saved?.content).toContain("Recovery Toast");
+    expect(saved?.content).toContain("1 slice bread");
+  });
+
   it("fails Firestore save and surfaces RECIPE_SAVE_FAILED (no silent success)", async () => {
     vi.mocked(saveRecipeToDb).mockRejectedValue(new Error("Firestore unavailable"));
 

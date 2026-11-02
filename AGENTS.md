@@ -22,7 +22,7 @@ Help home cooks turn what they have (or what they crave) into actionable recipes
 | UI | React 19, Tailwind CSS v4, `@tailwindcss/typography` | Custom UI primitives in `src/components/ui/` |
 | Language | TypeScript 6 (strict) | Path alias `@/*` → `./src/*` |
 | AI | Vercel AI SDK 7 (`ai`), `@ai-sdk/openai` 4, `@ai-sdk/rsc` 3 | `streamObject` + Zod schema, model `gpt-4o` |
-| Backend | Firebase Auth, Firestore, Storage (init only) | Client SDK; rules enforce ownership |
+| Backend | Firebase 13 client SDK (Auth, Firestore, Storage init only) | Rules enforce ownership. Node `>=24.12.0` |
 | State | Zustand 5 (`persist` on recipe inputs only) | Three stores |
 | Validation | Zod 4 | Schemas in `src/lib/schemas/` |
 | Lint | ESLint 10 flat config | No Prettier npm script |

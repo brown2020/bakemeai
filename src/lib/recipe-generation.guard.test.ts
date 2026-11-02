@@ -34,6 +34,8 @@ vi.mock("@ai-sdk/rsc", () => ({
   })),
 }));
 
+import { openai } from "@ai-sdk/openai";
+import { createStreamableValue } from "@ai-sdk/rsc";
 import { AppError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 import {
   cancelRecipeGeneration,
@@ -119,6 +121,63 @@ describe("generateRecipe guards", () => {
     await expect(generateRecipe("weeknight pasta", false)).resolves.toMatchObject(
       { ok: false, code: "RECIPE_PROVIDER_ERROR" }
     );
+  });
+
+  it("streams a recipe for a verified user on gpt-4o", async () => {
+    const updates: unknown[] = [];
+    const done = vi.fn();
+    vi.mocked(createStreamableValue).mockReturnValue({
+      value: "stream-value",
+      update: (value: unknown) => {
+        updates.push(value);
+      },
+      done,
+      error: vi.fn(),
+    } as never);
+
+    async function* partials() {
+      yield { title: "Weeknight Pasta" };
+      yield {
+        title: "Weeknight Pasta",
+        ingredients: ["200g pasta"],
+        instructions: ["Boil, then toss"],
+      };
+    }
+
+    streamObject.mockReturnValue({
+      partialObjectStream: partials(),
+    });
+
+    const result = await generateRecipe("  weeknight pasta  ", false);
+
+    expect(result).toMatchObject({ ok: true, stream: "stream-value" });
+    if (!result.ok) return;
+    expect(result.generationId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    );
+    expect(openai).toHaveBeenCalledWith("gpt-4o");
+    expect(streamObject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: "mock-model",
+        prompt: "weeknight pasta",
+        temperature: 0,
+      })
+    );
+
+    await vi.waitFor(() => {
+      expect(done).toHaveBeenCalledOnce();
+    });
+    expect(updates).toEqual([
+      { kind: "recipe", recipe: { title: "Weeknight Pasta" } },
+      {
+        kind: "recipe",
+        recipe: {
+          title: "Weeknight Pasta",
+          ingredients: ["200g pasta"],
+          instructions: ["Boil, then toss"],
+        },
+      },
+    ]);
   });
 
   it("ignores cancel ids that are not generation ids", async () => {

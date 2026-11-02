@@ -33,10 +33,14 @@ GitHub has no open issues or pull requests. Nothing below is scheduled.
 
 ## Upgrade notes
 
-Held back on purpose in this pass:
+Adopted on 2026-11-02. `package.json` `engines.node` is `>=24.12.0`. CI (`.github/workflows/ci.yml`) and the Vercel project are already on Node 24.
 
-- **Firebase JS SDK 13** requires Node `>=24.12.0`. CI and the app stay on Node 22 and Firebase 12.
-- **TypeScript 7** is published, and `typescript-eslint` does not support it yet. The app stays on TypeScript 6.0.3.
+- **Firebase JS SDK 13.1.0.** Auth, Firestore, and client init are unchanged. The 13.0 breaks are in Firebase AI Logic, which this app does not call.
+- **minimatch 11.0.4** override. ESLint 10 and `typescript-eslint` still request minimatch 10.2.6 (`GHSA-g3hv-75wg-m249`). Lint passes on 11. The `@grpc/grpc-js` and `postcss-selector-parser` overrides stay.
+
+Held back on purpose:
+
+- **TypeScript 7.0.2** is latest. `@typescript-eslint/parser` 8.72.1 (latest) peers `typescript >=4.8.4 <6.1.0`, so the app stays on TypeScript 6.0.3.
 - **`firebase-admin` is not a dependency.** `require('firebase-admin/auth')` fails with `MODULE_NOT_FOUND`, not `ERR_REQUIRE_ESM`. Do not add a `jwks-rsa` / `jose` override unless that package is added and the require fails that way.
 
 No new environment variables. Do not rotate secrets for this list.

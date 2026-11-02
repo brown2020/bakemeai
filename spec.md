@@ -18,7 +18,7 @@ There is no public feed, meal planner, shopping list, or billing.
 | UI | React 19, Tailwind CSS 4 |
 | Language | TypeScript 6 |
 | AI | Vercel AI SDK 7, `@ai-sdk/openai`, model `gpt-4o`, Zod 4 |
-| Data | Firebase 12 client SDK. Firestore collections `recipes`, `userProfiles`, `generationRateLimits` |
+| Data | Firebase 13 client SDK. Firestore collections `recipes`, `userProfiles`, `generationRateLimits` |
 | Auth | Firebase Auth (email/password and Google) plus an HttpOnly session cookie |
 | Tests | Vitest 5 on Node. CI is GitHub Actions: lint, test, build |
 
