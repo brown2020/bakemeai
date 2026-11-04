@@ -5,7 +5,10 @@
 
 import { cookies } from "next/headers";
 
-import { FIREBASE_AUTH_COOKIE } from "@/lib/constants/auth";
+import {
+  AUTH_ID_TOKEN_MAX_LENGTH,
+  FIREBASE_AUTH_COOKIE,
+} from "@/lib/constants/auth";
 import { AppError, ERROR_MESSAGES } from "@/lib/utils/error-handler";
 import { logWarning } from "@/lib/utils/logger";
 import {
@@ -54,6 +57,8 @@ export function readLookupUser(data: unknown): VerifiedFirebaseUser | null {
 export async function verifyFirebaseIdToken(
   idToken: string
 ): Promise<VerifiedFirebaseUser | null> {
+  if (!idToken || idToken.length > AUTH_ID_TOKEN_MAX_LENGTH) return null;
+
   const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 
   if (!apiKey) {
@@ -105,6 +110,14 @@ async function readSessionUser(): Promise<SessionUser | null> {
   if (!verified) return null;
 
   return { ...verified, idToken: token };
+}
+
+/**
+ * Verified session from the auth cookie, or null when it is missing or invalid.
+ * Does not throw, so sign-out can still clear the cookie.
+ */
+export async function getSessionUser(): Promise<SessionUser | null> {
+  return readSessionUser();
 }
 
 /**

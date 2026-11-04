@@ -60,6 +60,9 @@ export const AUTH_PAGES = ["/login", "/signup", "/reset-password"] as const;
  */
 export const AUTH_COOKIE_MAX_AGE_SECONDS = 60 * 60;
 
+/** Firebase ID tokens are rejected above this length before any lookup. */
+export const AUTH_ID_TOKEN_MAX_LENGTH = 4096;
+
 /**
  * JWT validation configuration for server-side token verification.
  */

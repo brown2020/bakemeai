@@ -4,14 +4,13 @@ import { cookies } from "next/headers";
 
 import {
   AUTH_COOKIE_MAX_AGE_SECONDS,
+  AUTH_ID_TOKEN_MAX_LENGTH,
   FIREBASE_AUTH_COOKIE,
   LEGACY_FIREBASE_AUTH_COOKIE,
 } from "@/lib/constants/auth";
 import { getIdTokenCookieMaxAgeSeconds } from "@/lib/utils/jwt";
 import { logWarning } from "@/lib/utils/logger";
-import { verifyFirebaseIdToken } from "@/lib/utils/server-auth";
-
-const MAX_ID_TOKEN_LENGTH = 4096;
+import { getSessionUser, verifyFirebaseIdToken } from "@/lib/utils/server-auth";
 
 function sessionCookieOptions(maxAge: number) {
   return {
@@ -30,13 +29,13 @@ function sessionCookieOptions(maxAge: number) {
  * Firebase client session so the UI can show a sign-in error.
  */
 export async function setAuthSessionCookie(idToken: string): Promise<boolean> {
-  if (!idToken || idToken.length > MAX_ID_TOKEN_LENGTH) {
-    logWarning("Rejected an auth token that cannot fit in a session cookie", {});
+  const verified = await verifyFirebaseIdToken(idToken);
+  if (!idToken || idToken.length > AUTH_ID_TOKEN_MAX_LENGTH || !verified) {
+    if (!idToken || idToken.length > AUTH_ID_TOKEN_MAX_LENGTH) {
+      logWarning("Rejected an auth token that cannot fit in a session cookie", {});
+    }
     return false;
   }
-
-  const verified = await verifyFirebaseIdToken(idToken);
-  if (!verified) return false;
 
   const maxAge = getIdTokenCookieMaxAgeSeconds(idToken);
   if (maxAge <= 0 || maxAge > AUTH_COOKIE_MAX_AGE_SECONDS) return false;
@@ -48,6 +47,8 @@ export async function setAuthSessionCookie(idToken: string): Promise<boolean> {
 
 /** Clears the HttpOnly session cookie. Legacy non-HttpOnly cookies are cleared too. */
 export async function clearAuthSessionCookie(): Promise<void> {
+  // Read the session first. A missing or expired cookie still gets cleared.
+  await getSessionUser();
   const jar = await cookies();
   jar.set(FIREBASE_AUTH_COOKIE, "", sessionCookieOptions(0));
   jar.set(LEGACY_FIREBASE_AUTH_COOKIE, "", sessionCookieOptions(0));

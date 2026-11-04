@@ -122,7 +122,7 @@ There is no `STRIPE_WEBHOOK_SECRET` or other billing variable. The app does not 
 
 Vitest covers pure utilities (auth, quota, recipes, redirects, rules invariants) and the generation deny/guard paths. It does not drive a browser.
 
-GitHub Actions (`.github/workflows/ci.yml`) on `dev`, `main`, and pull requests: `npm ci`, lint, test, build. The workflow needs the six `NEXT_PUBLIC_FIREBASE_*` secrets. `OPENAI_API_KEY` is required to generate recipes at runtime, not for that CI build.
+GitHub Actions (`.github/workflows/ci.yml`) on `dev`, `main`, and pull requests: `npm ci`, lint, test, build. Install, lint, and test run before the six `NEXT_PUBLIC_FIREBASE_*` secrets are available. The build step needs those secrets. `OPENAI_API_KEY` is required to generate recipes at runtime, not for that CI build.
 
 ## Deployment
 
